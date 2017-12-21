@@ -1,0 +1,6 @@
+A Language and Compiler for Homomorphic Encryption Made easY
+
+This project gives embedded domain-specific languages (in typed
+"tagless-final" style) and interpreters/compilers for fully
+homomorphic encryption (FHE). It is based on the FHE implementation in
+the Lol library for lattice cryptography.
