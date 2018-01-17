@@ -65,7 +65,7 @@ executable alchemy-arithmetic
 
   build-depends:
     alchemy,
-    base >= 4.9 && < 4.10,
+    base >= 4.9 && < 4.11,
     deepseq,
     lol,
     lol-cpp,
@@ -85,7 +85,7 @@ executable alchemy-homomrlwr
 
   build-depends:
     alchemy,
-    base >= 4.9 && < 4.10,
+    base >= 4.9 && < 4.11,
     lol,
     lol-cpp,
     mtl,
@@ -103,7 +103,7 @@ executable alchemy-tunnel
 
   build-depends:
     alchemy,
-    base >= 4.9 && < 4.10,
+    base >= 4.9 && < 4.11,
     deepseq,
     lol,
     lol-cpp,

@@ -187,6 +187,6 @@ instance (SHE expr, Applicative_ expr, Applicative k, Applicative w) =>
 instance (ErrorRate expr, Applicative_ expr, Applicative k, Applicative w) =>
   ErrorRate (ErrorRateWriter expr z k w) where
 
-  type ErrorRateCtx (ErrorRateWriter expr z' k w) ct z = ErrorRateCtx expr ct z
+  type ErrorRateCtx (ErrorRateWriter expr z k w) ct z = ErrorRateCtx expr ct z
 
   errorRate_  sk = ERW $ pure $ liftA_ $: errorRate_ sk

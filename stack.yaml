@@ -16,8 +16,8 @@
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
 
-resolver: lts-8.2
-compiler-check: newer-minor
+resolver: nightly-2017-10-10
+system-ghc: true
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -41,22 +41,32 @@ compiler-check: newer-minor
 packages:
 - ./
 
+- location:
+    git:    git@github.com:cpeikert/Lol.git
+    # current tip of master-8.2
+    commit: cd4387c68935b215547ef67e532d499dc9645a07
+  extra-dep: true
+  subdirs:
+    - 'lol'
+    - 'lol-apps'
+    - 'lol-cpp'
+
+
+
+
 # Dependency packages to be pulled from upstream that are not in the resolver
 
 extra-deps:
-- lol-0.6.0.0
-- lol-cpp-0.0.0.3
-- lol-apps-0.2.0.2
 - non-negative-0.1.1
 - numeric-prelude-0.4.2
 - tagged-transformer-0.8
 - syntactic-3.6.3
-- type-natural-0.7.1.3
-- ghc-typelits-presburger-0.1.1.0
-- equational-reasoning-0.4.1.1
+- type-natural-0.7.1.4
+- ghc-typelits-presburger-0.1.1.1
+- equational-reasoning-0.5.0.0
 - monomorphic-0.0.3.3
-#
 - nist-beacon-0.2.0.0
+- presburger-1.3.1
 
 # Override default flag values for local packages and extra-deps
 
