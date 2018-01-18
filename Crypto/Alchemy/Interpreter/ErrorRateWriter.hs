@@ -5,6 +5,7 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeFamilyDependencies     #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
 module Crypto.Alchemy.Interpreter.ErrorRateWriter
@@ -29,8 +30,6 @@ import           Crypto.Alchemy.Language.Pair
 import           Crypto.Alchemy.Language.SHE
 import qualified Crypto.Alchemy.Language.String       as LS
 
-import Crypto.Alchemy.Interpreter.Eval
-
 -- | A transformer that additionally logs the sizes of the noise terms
 -- of any ciphertexts created during interpretation.
 newtype ErrorRateWriter
@@ -41,12 +40,9 @@ newtype ErrorRateWriter
   w                             -- | (writer) monad for logging error rates
   e                             -- | environment
   a                             -- | represented type
-    = ERW { unERW :: k (expr (Monadify w e) (w (Monadify w a))) }
+  = ERW { unERW :: k (expr (Monadify w e) (w (Monadify w a))) }
 
-{--- EAC: can't make this injective because there's ambiguity involving `w`:-}
-{--- Consider `m Bool -> m Bool`: this could be the result of-}
-{--- `Monadify (m Bool ->) (m Bool)` or `Monadify m (Bool -> Bool)`-}
-type family Monadify w a where
+type family Monadify w a = r | r -> a where
   Monadify w (a,b) = (Monadify w a, w (Monadify w b))
   Monadify w (a -> b) = Monadify w a -> w (Monadify w b)
   Monadify w a = a
@@ -71,10 +67,8 @@ tellError :: forall w expr m zp t m' zq z e .
   (MonadWriter ErrorRateLog w, Show (ArgType zq),
    List expr, MonadWriter_ expr, ErrorRate expr, LS.String expr, Pair expr,
    ErrorRateCtx expr (CT m zp (Cyc t m' zq)) z) =>
-   String -> SK (Cyc t m' z) -> expr e (CT m zp (Cyc t m' zq) -> w ())
+  String -> SK (Cyc t m' z) -> expr e (CT m zp (Cyc t m' zq) -> w ())
 tellError str sk = lam (tell_ $: (cons_ $: (pair_ $: (LS.string_ $ str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: v0)) $: nil_))
---
-
 
 type WriteErrorCtx expr z k w ct t m m' zp zq =
   (MonadWriter ErrorRateLog w, MonadReader Keys k, Typeable (SK (Cyc t m' z)), 
@@ -92,7 +86,7 @@ liftWriteError :: forall expr z k w ct t m m' zp zq a e .
   -> k (expr e (w (a -> w ct)))
 liftWriteError _ str f_ = do
     key :: Maybe (SK (Cyc t m' z)) <- lookupKey
-    return $ (liftWriteError' str key) $: f_ -- lam $ after_ $: tellError str sk $: ((return_ .: (s f_)) $: v0)
+    return $ (liftWriteError' str key) $: f_
 
 liftWriteError' :: forall expr z w m m' t ct zp zq a e .
   (Show (ArgType zq), MonadWriter ErrorRateLog w,
@@ -104,7 +98,7 @@ liftWriteError' :: forall expr z w m m' t ct zp zq a e .
    -> expr e ((a -> ct) -> w (a -> w ct))
 
 liftWriteError' str (Just sk) = lam $ return_ $: (lam $ after_ $: tellError str sk $: (return_ $: (v1 $: v0)))
-liftWriteError' str  Nothing  = return_ .: lam (return_ .: v0)
+liftWriteError' _    Nothing  = return_ .: lam (return_ .: v0)
 
 liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
   (WriteErrorCtx expr z k w ct t m m' zp zq)
