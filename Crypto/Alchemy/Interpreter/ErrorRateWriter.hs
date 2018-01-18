@@ -7,7 +7,7 @@
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
-module Crypto.Alchemy.Interpreter.ErrorRateWriter2
+module Crypto.Alchemy.Interpreter.ErrorRateWriter
 ( ErrorRateWriter, writeErrorRates, Monadify, ErrorRateLog )
 where
 
@@ -81,6 +81,7 @@ type WriteErrorCtx expr z k w ct t m m' zp zq =
    List expr, LS.String expr, Pair expr, MonadWriter_ expr, ErrorRate expr,
    ct ~ (CT m zp (Cyc t m' zq)), ErrorRateCtx expr ct z, Show (ArgType zq))
 
+
 -- | Convert an object-language function to a (monadic) one that
 -- writes the error rate of its ciphertext output.
 liftWriteError :: forall expr z k w ct t m m' zp zq a e .
@@ -91,13 +92,19 @@ liftWriteError :: forall expr z k w ct t m m' zp zq a e .
   -> k (expr e (w (a -> w ct)))
 liftWriteError _ str f_ = do
     key :: Maybe (SK (Cyc t m' z)) <- lookupKey
-    return $ return_ $: case key of
-      Just sk -> lam $ after_ $: tellError str sk $: ((return_ .: (s f_)) $: v0)
-      Nothing -> return_ .: f_
+    return $ (liftWriteError' str key) $: f_ -- lam $ after_ $: tellError str sk $: ((return_ .: (s f_)) $: v0)
 
--- TODO: this is a hack; liftWriteError2 should be reimplemented without this
-kleislify2 :: (Monad_ expr, Monad m) => expr e ((m a -> m b -> m c) -> a -> m (b -> m c)) 
-kleislify2 = lam $ return_ .: lam (v0 .: return_) .: v0 .: return_
+liftWriteError' :: forall expr z w m m' t ct zp zq a e .
+  (Show (ArgType zq), MonadWriter ErrorRateLog w,
+   List expr, LS.String expr, Pair expr, MonadWriter_ expr, 
+   ErrorRate expr, ErrorRateCtx expr (CT m zp (Cyc t m' zq)) z,
+   ct ~ (CT m zp (Cyc t m' zq)))
+   => String
+   -> Maybe (SK (Cyc t m' z))
+   -> expr e ((a -> ct) -> w (a -> w ct))
+
+liftWriteError' str (Just sk) = lam $ return_ $: (lam $ after_ $: tellError str sk $: (return_ $: (v1 $: v0)))
+liftWriteError' str  Nothing  = return_ .: lam (return_ .: v0)
 
 liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
   (WriteErrorCtx expr z k w ct t m m' zp zq)
@@ -106,19 +113,14 @@ liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
   -> expr e (a -> b -> ct)      -- | the function to lift
   -> k (expr e (w (a -> w (b -> w ct))))
 
-liftWriteError2 _ str f_ =
-  let mf_ = liftA2_ $: s (s f_) -- shift because we use between lam/lam,v0/v1
-  in do
-    key :: Maybe (SK (Cyc t m' z)) <- lookupKey
-    return $ return_ .: kleislify2 $: case key of
-      Just sk -> lam $ lam $ after_ $: tellError str sk $: (mf_ $: v1 $: v0)
-      Nothing -> liftA2_ $: f_
+liftWriteError2 _ str f_ = do
+  key :: Maybe (SK (Cyc t m' z)) <- lookupKey
+  return $ return_ $: ((liftWriteError' str key) .: f_)
 
 instance (WriteErrorCtx expr z k w ct t m m' zp zq, Add expr ct) =>
   Add (ErrorRateWriter expr z k w) (CT m zp (Cyc t m' zq)) where
 
   add_ = ERW $ liftWriteError2 (Proxy::Proxy z) "add_" add_
-
   neg_ = ERW $ liftWriteError (Proxy::Proxy z) "neg_" neg_
 
 instance (WriteErrorCtx expr z k w ct t m m' zp zq, Mul expr ct,
