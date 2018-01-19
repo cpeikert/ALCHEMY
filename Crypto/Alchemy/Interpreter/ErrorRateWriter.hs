@@ -43,7 +43,7 @@ newtype ErrorRateWriter
   = ERW { unERW :: k (expr (Monadify w e) (w (Monadify w a))) }
 
 type family Monadify w a = r | r -> a where
-  Monadify w (a,b) = (Monadify w a, w (Monadify w b))
+  Monadify w (a, b) = (Monadify w a, w (Monadify w b))
   Monadify w (a -> b) = Monadify w a -> w (Monadify w b)
   Monadify w a = a
 
@@ -67,14 +67,14 @@ tellError :: forall w expr m zp t m' zq z e .
   (MonadWriter ErrorRateLog w, Show (ArgType zq),
    List expr, MonadWriter_ expr, ErrorRate expr, LS.String expr, Pair expr,
    ErrorRateCtx expr (CT m zp (Cyc t m' zq)) z) =>
-  String -> SK (Cyc t m' z) -> expr e (CT m zp (Cyc t m' zq) -> w ())
+   String -> SK (Cyc t m' z) -> expr e (CT m zp (Cyc t m' zq) -> w ())
 tellError str sk = lam (tell_ $: (cons_ $: (pair_ $: (LS.string_ $ str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: v0)) $: nil_))
+
 
 type WriteErrorCtx expr z k w ct t m m' zp zq =
   (MonadWriter ErrorRateLog w, MonadReader Keys k, Typeable (SK (Cyc t m' z)), 
    List expr, LS.String expr, Pair expr, MonadWriter_ expr, ErrorRate expr,
    ct ~ (CT m zp (Cyc t m' zq)), ErrorRateCtx expr ct z, Show (ArgType zq))
-
 
 -- | Convert an object-language function to a (monadic) one that
 -- writes the error rate of its ciphertext output.
@@ -84,32 +84,21 @@ liftWriteError :: forall expr z k w ct t m m' zp zq a e .
   -> String                     -- | annotation
   -> expr e (a -> ct)           -- | the function to lift
   -> k (expr e (w (a -> w ct)))
+
 liftWriteError _ str f_ = do
-    key :: Maybe (SK (Cyc t m' z)) <- lookupKey
-    return $ (liftWriteError' str key) $: f_
-
-liftWriteError' :: forall expr z w m m' t ct zp zq a e .
-  (Show (ArgType zq), MonadWriter ErrorRateLog w,
-   List expr, LS.String expr, Pair expr, MonadWriter_ expr, 
-   ErrorRate expr, ErrorRateCtx expr (CT m zp (Cyc t m' zq)) z,
-   ct ~ (CT m zp (Cyc t m' zq)))
-   => String
-   -> Maybe (SK (Cyc t m' z))
-   -> expr e ((a -> ct) -> w (a -> w ct))
-
-liftWriteError' str (Just sk) = lam $ return_ $: (lam $ after_ $: tellError str sk $: (return_ $: (v1 $: v0)))
-liftWriteError' _    Nothing  = return_ .: lam (return_ .: v0)
-
+  key :: Maybe (SK (Cyc t m' z)) <- lookupKey
+  return $ return_ $: 
+    case key of 
+      Just sk -> lam $ after_ $: tellError str sk $: (return_ $: ((s f_) $: v0))
+      Nothing -> return_ .: f_
+              
 liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
   (WriteErrorCtx expr z k w ct t m m' zp zq)
   => Proxy z
   -> String                     -- | annotation
   -> expr e (a -> b -> ct)      -- | the function to lift
   -> k (expr e (w (a -> w (b -> w ct))))
-
-liftWriteError2 _ str f_ = do
-  key :: Maybe (SK (Cyc t m' z)) <- lookupKey
-  return $ return_ $: ((liftWriteError' str key) .: f_)
+liftWriteError2 z str f_ = fmap ((return_ $:) . lam) $ liftWriteError z str $ s f_ $: v0
 
 instance (WriteErrorCtx expr z k w ct t m m' zp zq, Add expr ct) =>
   Add (ErrorRateWriter expr z k w) (CT m zp (Cyc t m' zq)) where
@@ -146,14 +135,14 @@ instance (WriteErrorCtx expr z k w ct t m m' zp zq,
 
   div2_ = ERW $ liftWriteError (Proxy::Proxy z) "div2_" div2_
 
-{------ TRIVIAL WRAPPER INSTANCES ------}
-
 instance (Monad_ expr, Monad w, Applicative k)
   => Lambda (ErrorRateWriter expr z k w) where
   lam f  = ERW $ fmap ((return_ $:) . (.: return_) . lam) (unERW f)
   f $: x = ERW $ ((>>=:) <$> (unERW f)) <*> ((bind_ $:) <$> (unERW x))
   v0     = ERW $ pure v0
   s a    = ERW $ s <$> (unERW a)
+
+{------ TRIVIAL WRAPPER INSTANCES ------}
 
 instance (SHE expr, Applicative_ expr, Applicative k, Applicative w) =>
   SHE (ErrorRateWriter expr z k w) where
@@ -184,7 +173,7 @@ instance (SHE expr, Applicative_ expr, Applicative k, Applicative w) =>
   keySwitchQuad_ = ERW . liftWriteError (Proxy::Proxy z) "keySwitchQuad_" . keySwitchQuad_
   tunnel_        = ERW . liftWriteError (Proxy::Proxy z) "tunnel_" . tunnel_
 
-instance (ErrorRate expr, Applicative k, MonadWriter ErrorRateLog w, MonadWriter_ expr) =>
+instance (ErrorRate expr, Applicative k, MonadWriter ErrorRateLog w, Monad_ expr) =>
   ErrorRate (ErrorRateWriter expr z k w) where
 
   type ErrorRateCtx (ErrorRateWriter expr z' k w) ct z = ErrorRateCtx expr ct z
