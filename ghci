@@ -1,0 +1,6 @@
+#!/bin/bash
+stack exec /opt/ghc/bin/ghci -- $@
+
+# change history so that :r is the "last" ghci command
+# without this, :q is always the most recent command in the history
+sed -i "1s/.*/:r/" ~/.ghc/ghci_history
