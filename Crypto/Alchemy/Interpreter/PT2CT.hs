@@ -107,10 +107,9 @@ decrypt x = do
 instance (Lambda ctex, Applicative mon)
   => Lambda (PT2CT m'map zqs gad z ctex mon) where
 
-  lamS (PC f) = PC $ lamS <$> f
+  lamDB (PC f) = PC $ lamDB <$> f
   (PC f) $: (PC a) = PC $ ($:) <$> f <*> a
-
-  var       = PC $ pure var
+  v0 = PC $ pure v0
   weaken (PC a) = PC $ weaken <$> a
 
 instance (List ctex, Applicative mon)
@@ -185,7 +184,7 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
         hint :: KSQuadCircHint gad (Cyc t m' hintzq) <- 
           -- the reader stores r, so use errors with svar = r/sqrt(phi(m'))
           local (svar (Proxy::Proxy m')) $ getQuadCircHint (Proxy::Proxy z)
-        let prod = (v x) *: y :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin)))
+        let prod = (var x *: y :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin))))
          in return $ modSwitch_ $: (keySwitchQuad_ hint $: (modSwitch_ $: prod))
 
 instance (SHE ctex, Applicative mon,
@@ -241,7 +240,7 @@ instance LinearCyc (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p) where
     return $ modSwitch_ $:     -- then scale back to the target modulus zq
               (tunnel_ hint $: -- linear w/ the hint
                 (modSwitch_ $: -- scale (up) to the hint modulus zq'
-                  (x :: ctex _ (Cyc2CT m'map zqs (PNoiseTag pin rp)))))
+                  (var (x :: ctex _ (Cyc2CT m'map zqs (PNoiseTag pin rp))))))
 
 ----- Type families -----
 

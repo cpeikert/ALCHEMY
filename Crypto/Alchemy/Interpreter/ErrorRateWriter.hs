@@ -59,14 +59,14 @@ writeErrorRates = unERW
 -- | Perform the action, then perform the action given by the result,
 -- and return the (first) result.
 after_ :: (Monad_ expr, Monad m) => expr e ((a -> m ()) -> m a -> m a)
-after_ = lam $ \f -> lam $ \x -> x >>=: (liftA2_ $: then_ $: (v f) $: return_)
+after_ = (flip_ $: bind_) .: (flip_ $: (liftA2_ $: then_) $: return_)
 
 tellError :: forall w expr m zp t m' zq z e .
   (MonadWriter ErrorRateLog w, Show (ArgType zq),
    List expr, MonadWriter_ expr, ErrorRate expr, LS.String expr, Pair expr,
    ErrorRateCtx expr (CT m zp (Cyc t m' zq)) z) =>
    String -> SK (Cyc t m' z) -> expr e (CT m zp (Cyc t m' zq) -> w ())
-tellError str sk = lam $ \x -> (tell_ $: (cons_ $: (pair_ $: (LS.string_ $ str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: x)) $: nil_))
+tellError str sk = lam $ \x -> tell_ $: (cons_ $: (pair_ $: (LS.string_ $ str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: x)) $: nil_)
 
 type WriteErrorCtx expr z k w ct t m m' zp zq =
   (MonadWriter ErrorRateLog w, MonadReader Keys k, Typeable (SK (Cyc t m' z)), 
@@ -87,7 +87,7 @@ liftWriteError _ str f_ = do
   key :: Maybe (SK (Cyc t m' z)) <- lookupKey
   return $ return_ $: 
     case key of 
-      Just sk -> lam $ \x -> after_ $: tellError str sk $: (return_ $: ((v f_) $: x))
+      Just sk -> lam $ \x -> after_ $: tellError str sk $: (return_ $: (var f_ $: x))
       Nothing -> return_ .: f_
               
 liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
@@ -96,7 +96,7 @@ liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
   -> String                     -- | annotation
   -> expr e (a -> b -> ct)      -- | the function to lift
   -> k (expr e (w (a -> w (b -> w ct))))
-liftWriteError2 z str f_ = fmap ((return_ $:) . lamS) $ liftWriteError z str $ v f_ $: var
+liftWriteError2 z str f_ = fmap ((return_ $:) . lamDB) $ liftWriteError z str $ var f_ $: v0
 
 instance (WriteErrorCtx expr z k w ct t m m' zp zq, Add expr ct) =>
   Add (ErrorRateWriter expr z k w) (CT m zp (Cyc t m' zq)) where
@@ -135,9 +135,9 @@ instance (WriteErrorCtx expr z k w ct t m m' zp zq,
 
 instance (Monad_ expr, Monad w, Applicative k)
   => Lambda (ErrorRateWriter expr z k w) where
-  lamS f   = ERW $ fmap ((return_ $:) . (.: return_) . lamS) (unERW f)
+  lamDB f  = ERW $ fmap ((return_ $:) . (.: return_) . lamDB) (unERW f)
   f $: x   = ERW $ ((>>=:) <$> (unERW f)) <*> ((bind_ $:) <$> (unERW x))
-  var      = ERW $ pure var
+  v0       = ERW $ pure v0
   weaken a = ERW $ weaken <$> (unERW a)
 
 {------ TRIVIAL WRAPPER INSTANCES ------}

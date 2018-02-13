@@ -44,11 +44,11 @@ liftA2_ :: (Applicative_ expr, Applicative f) =>
            expr e ((a -> b -> c) -> f a -> f b -> f c)
 -- everything must be written in the object language here because
 -- that's where liftA2_ lives
-liftA2_ = lam $ \f -> lam $ \x -> ap_ $: (liftA_ $: (v f) $: x)
+liftA2_ = lam $ \f -> lam $ \x -> ap_ $: (liftA_ $: var f $: x)
 
 liftA3_ :: (Applicative_ expr, Applicative f) =>
            expr e ((a -> b -> c -> d) -> f a -> f b -> f c -> f d)
-liftA3_ = lam $ \f -> lam $ \x -> lam $ \y -> ap_ $: (liftA2_ $: (v f) $: (v x) $: y) 
+liftA3_ = lam $ \f -> lam $ \x -> lam $ \y -> ap_ $: (liftA2_ $: var f $: var x $: var y) 
 
 -- | Symantics for monads: promotes any 'Monad' to the object
 -- language. (Instances should obey the monad laws.)
@@ -65,8 +65,7 @@ infixl 1 >>=:
 a >>=: f = bind_ $: a $: f
 
 then_ :: (Monad_ expr, Monad m) => expr e (m a -> m b -> m b)
-then_ = lam $ \x -> lam $ \y -> bind_ $: (v x) $: (const_ $: y)
-  where const_ = lam $ \x -> lam $ \y -> v x
+then_ = lam $ \x -> lam $ \y -> bind_ $: var x $: (const_ $: var y)
 
 infixl 1 >>:
 (>>:) :: (Monad_ expr, Monad m) =>

@@ -47,9 +47,9 @@ eval :: E () a -> a
 eval = flip unE ()
 
 instance Lambda E where
-  lamS f   = E $ curry $ unE f
+  lamDB f  = E $ curry $ unE f
   f $: a   = E $ unE f <*> unE a
-  var      = E snd
+  v0       = E snd
   weaken a = E $ unE a . fst
 
 pureE :: a -> E e a

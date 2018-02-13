@@ -37,10 +37,10 @@ params _ (P str) = str
 -- implementation is simpler that way.
 
 instance Lambda (Params expr) where
-  lam (P f) = P f
+  lamDB (P f) = P f
   (P f) $: (P a) = P $ f ++ "\n" ++ a
   v0 = P ""
-  s (P v) = P v
+  weaken (P v) = P v
 {-
 instance List P where
   nil_  = pureP "nil"
