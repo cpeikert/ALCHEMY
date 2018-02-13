@@ -1,6 +1,9 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE TypeFamilies #-}
 
 module Crypto.Alchemy.Language.Lambda where
 
@@ -8,40 +11,38 @@ module Crypto.Alchemy.Language.Lambda where
 
 class Lambda expr where
   -- | Lambda abstraction.
-  lam :: expr (e,a) b -> expr e (a -> b)
+  lamS :: expr (e,a) b -> expr e (a -> b)
 
   -- | Application.
   infixl 1 $:             -- ($) is infixr, but l is nicer for obj lang
   ($:) :: expr e (a -> b) -> expr e a -> expr e b
 
   -- | The zero'th (most-recently bound) variable.
-  v0 :: expr (b,a) a
+  var :: expr (b,a) a
 
   -- | Extend environment.
-  s  :: expr e a -> expr (e,x) a
+  weaken  :: expr e a -> expr (e,x) a
+
+lam :: Lambda expr => (forall x. expr (e,x) a -> expr (e,x) b) -> expr e (a -> b)
+lam body = lamS $ body var
+
+lamM :: (Functor f, Lambda expr) => (forall x. expr (e, x) a -> f (expr (e, x) b)) -> f (expr e (a -> b))
+lamM body = lamS <$> body var
 
 -- | Let-sharing.
-let_ :: Lambda expr => expr e a -> expr (e,a) b -> expr e b
+let_ :: Lambda expr => expr e a -> (forall x. expr (e,x) a -> expr (e, x) b) -> expr e b
 let_ a f = lam f $: a
 
 -- | Composition.
 infixr 9 .:
 (.:) :: (Lambda expr) => expr e (b -> c) -> expr e (a -> b) -> expr e (a -> c)
-f .: g = lam (s f $: (s g $: v0))
+f .: g = lam $ \x -> (v f) $: ((v g) $: x)
 
+class Extends m n where
+  v :: Lambda expr => expr m a -> expr n a
 
--- CJP: for some reason have to give signature here, even though ghci
--- infers them correctly
+instance {-# OVERLAPS #-} Extends m m where
+  v = id
 
--- | The one'th (second-most-recently bound) variable.
-v1 :: Lambda expr => expr ((c,b),a) b
-v1 = s v0
-
-v2 :: Lambda expr => expr (((d,c),b),a) c
-v2 = s v1
-
-v3 :: Lambda expr => expr ((((e,d),c),b),a) d
-v3 = s v2
-
-v4 :: Lambda expr => expr (((((f,e),d),c),b),a) e
-v4 = s v3
+instance (Extends m n, x ~ (n, e)) => Extends m x where
+  v = weaken . v

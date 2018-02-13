@@ -107,11 +107,11 @@ decrypt x = do
 instance (Lambda ctex, Applicative mon)
   => Lambda (PT2CT m'map zqs gad z ctex mon) where
 
-  lam (PC f) = PC $ lam <$> f
+  lamS (PC f) = PC $ lamS <$> f
   (PC f) $: (PC a) = PC $ ($:) <$> f <*> a
 
-  v0       = PC $ pure v0
-  s (PC a) = PC $ s <$> a
+  var       = PC $ pure var
+  weaken (PC a) = PC $ weaken <$> a
 
 instance (List ctex, Applicative mon)
   => List (PT2CT m'map zqs gad z ctex mon) where
@@ -180,16 +180,13 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
      PT2CTMulCtx m'map p zqs m zp gad ctex t z mon) =>
     PT2CT m'map zqs gad z ctex mon env
     (PNoiseTag pin (Cyc t m zp) -> PNoiseTag pin (Cyc t m zp) -> PNoiseTag p (Cyc t m zp))
-  mul_ = PC $ do
-    hint :: KSQuadCircHint gad (Cyc t m' hintzq) <-
-      -- the reader stores r, so use errors with svar = r/sqrt(phi(m'))
-      local (svar (Proxy::Proxy m')) $ getQuadCircHint (Proxy::Proxy z)
-    return $ lam $ lam $
-      modSwitch_ $:
-      (keySwitchQuad_ hint $:
-        (modSwitch_ $:
-         (v1 *: v0 :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin)))))
-        :: ctex _ (CT m zp (Cyc t m' hintzq)))
+  mul_ = PC $ 
+    lamM $ \x -> lamM $ \y -> do
+        hint :: KSQuadCircHint gad (Cyc t m' hintzq) <- 
+          -- the reader stores r, so use errors with svar = r/sqrt(phi(m'))
+          local (svar (Proxy::Proxy m')) $ getQuadCircHint (Proxy::Proxy z)
+        let prod = (v x) *: y :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin)))
+         in return $ modSwitch_ $: (keySwitchQuad_ hint $: (modSwitch_ $: prod))
 
 instance (SHE ctex, Applicative mon,
           LSHE.ModSwitchPTCtx ctex
@@ -237,15 +234,14 @@ instance LinearCyc (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p) where
      PT2CTLinearCtx ctex mon m'map zqs p t e r s (Lookup r m'map)
       (Lookup s m'map) z zp (PNoise2Zq zqs p) (PNoise2Zq zqs pin) gad)
       => Linear t zp e r s -> expr env (PNoiseTag pin rp -> PNoiseTag p (Cyc t s zp))
-  linearCyc_ f = PC $ do
+  linearCyc_ f = PC $ lamM $ \x -> do
     -- the reader stores r, so run the hint generation with s/sqrt(n)
     hint <- local (svar (Proxy::Proxy s')) $
             getTunnelHint @gad @(PNoise2KSZq gad zqs p) (Proxy::Proxy z) f
-    return $ lam $
-      modSwitch_ $:    -- then scale back to the target modulus zq
-      (tunnel_ hint $: -- linear w/ the hint
-        (modSwitch_ $: -- scale (up) to the hint modulus zq'
-          (v0 :: ctex _ (Cyc2CT m'map zqs (PNoiseTag pin rp)))))
+    return $ modSwitch_ $:     -- then scale back to the target modulus zq
+              (tunnel_ hint $: -- linear w/ the hint
+                (modSwitch_ $: -- scale (up) to the hint modulus zq'
+                  (x :: ctex _ (Cyc2CT m'map zqs (PNoiseTag pin rp)))))
 
 ----- Type families -----
 
