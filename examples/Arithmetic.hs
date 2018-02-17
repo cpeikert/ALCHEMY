@@ -45,22 +45,17 @@ import Data.Type.Natural (Nat (Z))
 -- EAC: We can get rid of signatures once #13524 is fixed (should be in 8.2)
 
 -- we give a type signature for easy partial type application
-{-
-addMul :: forall a e expr .
-  (Add expr a, Lambda expr)
-  => expr e (a -> a -> a)
-addMul = lam $ lam $ v0 +: v0
--}
 addMul :: forall b e expr a .
   (a ~ PreMul expr b, Mul expr b, Add expr a, Lambda expr)
   => expr e (a -> a -> b)
-addMul = lam $ lam $ v0 *: (v0 +: v1)
+addMul = lam $ \x -> lam $ \y -> var y *: (var y +: var x)
 
 {-
 addMul :: forall a e expr .
   (Add expr a, Lambda expr)
   => expr e (a -> a -> a)
-addMul = lam $ lam $ (lam $ v0 +: v0) $: (v1 +: v0)
+addMul = lam $ \z -> lam $ \y ->
+  (lam $ \x -> var x +: var x) $: (var z +: var y)
 -}
 type M = F512
 type M'Map = '[ '(F4, M) ]
