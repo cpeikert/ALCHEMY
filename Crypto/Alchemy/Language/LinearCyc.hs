@@ -7,33 +7,26 @@
 module Crypto.Alchemy.Language.LinearCyc where
 
 import Crypto.Alchemy.Language.Lambda
-import Crypto.Lol
+import Crypto.Lol.Factored
 import GHC.Exts                       (Constraint)
 
 -- | Symantics for evaluating a linear function on cyclotomics.
 
-class LinearCyc expr rep where
+class LinearCyc expr where
 
   -- | Constraints needed to linear
   type LinearCycCtx
          expr
-         (rep :: * -> *)
-         (t :: Factored -> * -> *)
+         (c :: Factored -> * -> *)
          (e :: Factored)
          (r :: Factored)
          (s :: Factored)
          zp :: Constraint
 
   -- | 'Cyc' wrapper for the input to linearCyc_
-  type PreLinearCyc expr rep :: * -> *
+  type PreLinearCyc expr c :: Factored -> * -> *
 
   -- | An object-language expression representing the given linear function.
-  linearCyc_ :: (LinearCycCtx expr rep t e r s zp)
-    => Linear t zp e r s
-    -> expr env ((PreLinearCyc expr rep) (Cyc t r zp) -> rep (Cyc t s zp))
-
-linearCyc :: (LinearCyc expr rep, LinearCycCtx expr rep t e r s zp, Lambda expr)
-  => Linear t zp e r s
-  -> expr env ((PreLinearCyc expr rep) (Cyc t r zp))
-  -> expr env (rep (Cyc t s zp))
-linearCyc f a = linearCyc_ f $: a
+  linearCyc_ :: (LinearCycCtx expr c e r s zp)
+    => Linear c e r s zp
+    -> expr env ((PreLinearCyc expr c) r zp -> c s zp)
