@@ -42,7 +42,7 @@ newtype ErrorRateWriter
   a                             -- | represented type
   = ERW { unERW :: k (expr (Monadify w e) (w (Monadify w a))) }
 
-type family Monadify w a where
+type family Monadify w a = r | r -> a where
   Monadify w (a, b) = (Monadify w a, w (Monadify w b))
   Monadify w (a -> b) = Monadify w a -> w (Monadify w b)
   Monadify w a = a
