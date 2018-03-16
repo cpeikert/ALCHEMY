@@ -87,7 +87,7 @@ liftWriteError _ str f_ = do
   key :: Maybe (SK (Cyc t m' z)) <- lookupKey
   return $ return_ $: 
     case key of 
-      Just sk -> lam $ \x -> after_ $: tellError str sk $: (return_ $: (var f_ $: x))
+      Just sk -> lam $ \x -> after_ $: tellError str sk $: (return_ $: (var f_ $: var x))
       Nothing -> return_ .: f_
               
 liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .

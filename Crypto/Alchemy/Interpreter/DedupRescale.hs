@@ -106,7 +106,7 @@ instance (SHE expr, Lambda expr) => SHE (DedupRescale expr) where
   modSwitch_ =
     -- check if this rescale is a no-op
     case (eqT :: Maybe (ct :~: CT m zp (Cyc t m' zq'))) of
-      Just Refl -> Unscaled $ lam id
+      Just Refl -> Unscaled $ lam id -- skip it, w/identity function
       Nothing   -> Rescaled undefined modSwitch_
 
   addPublic_     p = Unscaled $ addPublic_ p

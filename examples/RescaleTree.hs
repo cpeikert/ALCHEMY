@@ -19,4 +19,4 @@ rescale4to2 :: forall t m m2 ct2 ct4 m4 expr env .
    Ring ct4, Div2 expr ct2, Lambda expr,
    AddLit expr ct4, Mul expr (PreDiv2 expr ct2))
   => expr env (ct4 -> ct2)
-rescale4to2 = lam $ div2_ $: v0 *: (one >+: v0)
+rescale4to2 = lam $ \x -> div2_ $: var x *: (one >+: var x)
