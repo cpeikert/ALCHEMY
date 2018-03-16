@@ -10,10 +10,10 @@ where
 
 import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
+import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.Monad
 import Crypto.Alchemy.Language.SHE
-import Crypto.Alchemy.Language.LinearCyc
 
 newtype D expr a = D { depth :: Int }
 
@@ -36,10 +36,10 @@ instance Div2 D a where
   div2_ = D 0
 
 instance Lambda D where
-  lam (D i) = D i
+  lamDB (D i) = D i
   (D f) $: (D a) = D $ f + a
   v0 = D 0
-  s (D i) = D i
+  weaken (D i) = D i
 
 instance List D where
   nil_ = D 0

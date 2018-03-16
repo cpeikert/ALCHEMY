@@ -59,17 +59,17 @@ type family PreRescaleTreePow2 expr k r2 where
 rescaleTreePow2_ :: forall r2 k expr e . (RescaleTreePow2Ctx expr k r2)
   => Tagged k (expr e (PreRescaleTreePow2 expr k r2 -> r2))
 rescaleTreePow2_ = case (sing :: SPos k) of
-  SO     -> tag $ lam v0
+  SO     -> tag $ lamDB v0
   (SS _) -> rescaleTreePow2_'
 
 rescaleTreePow2_' :: forall r2 k expr e . (RescaleTreePow2Ctx expr ('S k) r2)
   => Tagged ('S k) (expr e (PreRescaleTreePow2 expr ('S k) r2 -> r2))
-rescaleTreePow2_' = tag $ lam $
+rescaleTreePow2_' = tag $ lamDB $
   let v'    = v0 *: (one >+: v0)
       kval  = proxy value (Proxy::Proxy k) :: Int
       pDiv4 = 2^(kval-1)
-  in let_ v' $ treeMul (Proxy::Proxy k) $
-       map ((div2_ $:) . (>+: v0)) $ take pDiv4 $ [fromInteger $ y * (-y+1) | y <- [1..]]
+   in (lamDB $ treeMul (Proxy::Proxy k) $
+     map ((div2_ $:) . (>+: v0)) $ take pDiv4 $ [fromInteger $ z * (-z+1) | z <- [1..]]) $: v'
 
 class TreeMul expr (k :: Pos) r2 where
   treeMul :: Proxy k

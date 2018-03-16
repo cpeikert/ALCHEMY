@@ -12,15 +12,16 @@ where
 import Crypto.Alchemy.Interpreter.PT2CT.Noise
 import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
+import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.Monad
 import Crypto.Alchemy.Language.SHE
-import Crypto.Alchemy.Language.LinearCyc
 
-import Crypto.Lol                      (Cyc,PrimePower(..), Prime2)
-import qualified Crypto.Lol as L
-import Crypto.Lol.Applications.SymmSHE (CT)
-import Crypto.Lol.Types
+import           Crypto.Lol                      (Cyc, Prime2,
+                                                  PrimePower (..))
+import qualified Crypto.Lol                      as L
+import           Crypto.Lol.Applications.SymmSHE (CT)
+import           Crypto.Lol.Types
 
 import Control.Monad.Identity
 
@@ -68,10 +69,10 @@ instance Div2 S (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
   div2_ = S 1
 
 instance Lambda S where
-  lam (S i) = S $ i+1
+  lamDB (S i) = S $ i+1
   (S f) $: (S a) = S $ f + a
   v0 = S 1
-  s (S i) = S i
+  weaken (S i) = S i
 
 instance List S where
   nil_ = S 1

@@ -46,10 +46,10 @@ expr :: forall t r s hout zp expr env hin preTunnelNoise .
    preTunnelNoise ~ PreLinearCyc expr hout,
    PreMul expr (PreMul expr (preTunnelNoise (Cyc t r zp))) ~ hin (Cyc t r zp))
   => expr env (hin (Cyc t r zp) -> hout (Cyc t s zp))
-expr = lam $ (lam $ linearDecToCRT_ @s @r $: (v0 *: v0)) $: (v0 *: v0)
+expr = lam $ \x -> (lam $ \y -> linearDecToCRT_ @s @r $: (var y *: var y)) $: (var x *: var x)
 
 expr2 :: forall a expr env . (Add expr a, Lambda expr) => expr env (a -> a)
-expr2 = lam $ (lam $ v0 +: v0) $: (v0 +: v0)
+expr2 = lam $ \x -> (lam $ \y -> var y +: var y) $: (var x +: var x)
 
 type K = P4
 type M'Map = '[ '(F8,F16)]

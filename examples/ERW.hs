@@ -6,14 +6,12 @@
 
 module ERW where
 
-
 import Control.Monad.Writer
 import Control.Monad.Random
-import Data.List
 import Data.Type.Natural (Nat (Z))
 
 import Crypto.Alchemy.MonadAccumulator
-import Crypto.Alchemy.Interpreter.ErrorRateWriter2
+import Crypto.Alchemy.Interpreter.ErrorRateWriter
 import Crypto.Alchemy.Interpreter.Eval
 import Crypto.Alchemy.Interpreter.KeysHints
 import Crypto.Alchemy.Interpreter.PT2CT
@@ -31,11 +29,13 @@ type F = F4
 type M'Map = '[ '(F, M) ]
 type Zqs = '[Zq $(mkTLNatNat 268440577), Zq $(mkTLNatNat 65537), Zq $(mkTLNatNat 1073753089), Zq $(mkTLNatNat 36355)]
 
-squareTwice :: forall c b e expr a . 
-  (a ~ PreMul expr b, b ~ PreMul expr c, Mul expr b, Mul expr c, Lambda expr)
-  => expr e (a -> c)
-squareTwice = lam $ (lam $ v0 *: v0) $: (v0 *: v0)
+square :: (Lambda expr, Mul expr a, b ~ PreMul expr a) => expr e (b -> a)
+square = lam $ \x -> x *: x
 
+squareTwice :: forall a b c expr e . -- needed for type applications below
+  (Lambda expr, Mul expr a, Mul expr b, b ~ PreMul expr a, c ~ PreMul expr b)
+  => expr e (c -> a)
+squareTwice = square .: square
 
 main :: IO ()
 main = evalKeysHints 8.0 $ do
