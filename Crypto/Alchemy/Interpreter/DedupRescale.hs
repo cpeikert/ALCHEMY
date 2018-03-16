@@ -44,13 +44,13 @@ dr = dedupRescale
 -- we rescaleUp twice (but remove the duplicate)
 
 instance (Lambda expr) => Lambda (DedupRescale expr) where
-  lam (Rescaled b a) = Rescaled (lam b) (lam a)
-  lam (Unscaled   a) = Unscaled         (lam a)
+  lamDB (Rescaled b a) = Rescaled (lamDB b) (lamDB a)
+  lamDB (Unscaled   a) = Unscaled           (lamDB a)
 
   v0 = Unscaled v0
 
-  s   (Rescaled b a) = Rescaled (s b) (s a)
-  s   (Unscaled   a) = Unscaled       (s a)
+  weaken   (Rescaled b a) = Rescaled (weaken b) (weaken a)
+  weaken   (Unscaled   a) = Unscaled            (weaken a)
 
   ($:) :: DedupRescale expr e (a -> b)
        -> DedupRescale expr e a
@@ -106,7 +106,7 @@ instance (SHE expr, Lambda expr) => SHE (DedupRescale expr) where
   modSwitch_ =
     -- check if this rescale is a no-op
     case (eqT :: Maybe (ct :~: CT m zp (Cyc t m' zq'))) of
-      Just Refl -> Unscaled $ lam v0 -- skip it, w/identity function
+      Just Refl -> Unscaled $ lam id
       Nothing   -> Rescaled undefined modSwitch_
 
   addPublic_     p = Unscaled $ addPublic_ p
