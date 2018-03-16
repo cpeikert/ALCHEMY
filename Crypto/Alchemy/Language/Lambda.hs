@@ -36,7 +36,7 @@ let_ a f = lam f $: a
 -- | Composition.
 infixr 9 .:
 (.:) :: (Lambda expr) => expr e (b -> c) -> expr e (a -> b) -> expr e (a -> c)
-f .: g = lam $ \x -> var f $: (var g $: x)
+f .: g = lam $ \x -> var f $: (var g $: var x)
 
 class Extends m n where
   var :: Lambda expr => expr m a -> expr n a

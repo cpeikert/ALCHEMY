@@ -44,7 +44,7 @@ liftA2_ :: (Applicative_ expr, Applicative f) =>
            expr e ((a -> b -> c) -> f a -> f b -> f c)
 -- everything must be written in the object language here because
 -- that's where liftA2_ lives
-liftA2_ = lam $ \f -> lam $ \x -> ap_ $: (liftA_ $: var f $: x)
+liftA2_ = lam $ \f -> lam $ \x -> ap_ $: (liftA_ $: var f $: var x)
 
 liftA3_ :: (Applicative_ expr, Applicative f) =>
            expr e ((a -> b -> c -> d) -> f a -> f b -> f c -> f d)
