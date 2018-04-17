@@ -211,7 +211,7 @@ type PT2CTLinearCtx' ctex mon m'map zqs p t e r s r' s' z zp zq zqin hintzq gad 
    -- input ciphertext type
    CT r zp (Cyc t r' zqin) ~ Cyc2CT m'map zqs (PNoiseTag (p :+ TunnPNoise) (Cyc t r zp)),
    TunnelCtx ctex t e r s (e * (r' / r)) r' s'   zp hintzq gad,
-   TunnelHintCtx       t e r s (e * (r' / r)) r' s' z zp hintzq gad,
+   TunnelHintCtx  t e r s (e * (r' / r)) r' s' z zp hintzq gad,
    GenSKCtx t r' z Double, GenSKCtx t s' z Double,
    ModSwitchCtx ctex (CT r zp (Cyc t r' zqin)) hintzq,
    ModSwitchCtx ctex (CT s zp (Cyc t s' hintzq))  zq,
