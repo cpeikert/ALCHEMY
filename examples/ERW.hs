@@ -27,7 +27,7 @@ import Common
 type M = F512
 type F = F4
 type M'Map = '[ '(F, M) ]
-type Zqs = '[Zq $(mkTLNatNat 268440577), Zq $(mkTLNatNat 65537), Zq $(mkTLNatNat 1073753089), Zq $(mkTLNatNat 36355)]
+type Zqs = '[Zq $(mkTLNatNat 268440577), Zq $(mkTLNatNat 65537), Zq $(mkTLNatNat 1073753089), Zq $(mkTLNatNat 1049089)]
 
 square :: (Lambda expr, Mul expr a, b ~ PreMul expr a) => expr e (b -> a)
 square = lam $ \x -> x *: x
@@ -43,4 +43,4 @@ main = evalKeysHints 8.0 $ do
                      (squareTwice @(PNoiseTag ('PN 'Z) (Cyc CT F4 (Zq 7))))
     f' <- readerToAccumulator . writeErrorRates @Int64 @() $ f
     arg1 <- getRandom >>= argToReader encrypt
-    liftIO $ mapM_ print $ execWriter $ ((eval f') >>= ($ arg1))
+    liftIO $ mapM_ print $ execWriter $ eval f' >>= ($ arg1)
