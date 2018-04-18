@@ -152,7 +152,7 @@ type PT2CTMulCtx m'map p zqs m zp gad ctex t z mon =
 
 type PT2CTMulCtx' m zp p zqs gad hintzq ctex t z mon m' =
   PT2CTMulCtx'' p zqs gad hintzq ctex t z mon m' (CT m zp (Cyc t m'
-    (PNoise2Zq zqs (Units2PNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))))))
+    (PNoise2Zq zqs (Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))))))
     (CT m zp (Cyc t m' hintzq))
 
 type PT2CTMulCtx'' p zqs gad hintzq ctex t z mon m' ctin hintct =
@@ -170,10 +170,10 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
   => Mul (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p (Cyc t m zp)) where
 
   type PreMul (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p (Cyc t m zp)) =
-    PNoiseTag (Units2PNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))) (Cyc t m zp)
+    PNoiseTag (Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))) (Cyc t m zp)
 
   mul_ :: forall m' env pin hintzq .
-    (pin ~ Units2PNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise))),
+    (pin ~ Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise))),
      hintzq ~ PNoise2KSZq gad zqs p,
      m' ~ Lookup m m'map,
      PT2CTMulCtx m'map p zqs m zp gad ctex t z mon) =>
@@ -256,8 +256,8 @@ type family KSPNoise2Units (p :: PNoise) where
 
 -- | (An upper bound on) the pNoise of a ciphertext whose modulus has
 -- exactly the given number of units
-type family Units2PNoise (h :: Units) where
-  Units2PNoise ('Units h) = 'PN (h :-: MinUnits)
+type family Units2CTPNoise (h :: Units) where
+  Units2CTPNoise ('Units h) = 'PN (h :-: MinUnits)
 
 -- | The modulus (nested pairs) for a ciphertext with pNoise @p@
 type PNoise2Zq zqs (p :: PNoise) = ZqPairsWithUnits zqs (CTPNoise2Units p)
