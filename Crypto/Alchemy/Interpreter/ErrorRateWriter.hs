@@ -9,7 +9,7 @@
 {-# LANGUAGE UndecidableInstances       #-}
 
 module Crypto.Alchemy.Interpreter.ErrorRateWriter
-( ErrorRateWriter, writeErrorRates, Monadify, ErrorRateLog )
+( ErrorRateWriter, writeErrorRates, Kleislify, ErrorRateLog )
 where
 
 import Control.Applicative
@@ -40,12 +40,19 @@ newtype ErrorRateWriter
   w                             -- | (writer) monad for logging error rates
   e                             -- | environment
   a                             -- | represented type
-  = ERW { unERW :: k (expr (Monadify w e) (w (Monadify w a))) }
+  = ERW { unERW :: k (expr (KleislifyEnv w e) (w (Kleislify w a))) }
 
-type family Monadify w a = r | r -> a where
-  Monadify w (a, b) = (Monadify w a, w (Monadify w b))
-  Monadify w (a -> b) = Monadify w a -> w (Monadify w b)
-  Monadify w a = a
+-- Convert object-language arrows into Kleisli arrows
+type family Kleislify w a = r | r -> a where
+  Kleislify w (a -> b) = Kleislify w a -> w (Kleislify w b)
+  Kleislify _ a        = a
+
+-- | Kleislify every element in the environment. This must be separate from 
+-- the @Kleisli@ family since we do not want to modify pairs in the object language.
+type family KleislifyEnv w e = r | r -> e where
+  KleislifyEnv w (e, a) = (KleislifyEnv w e, w (Kleislify w a))
+  KleislifyEnv _ ()     = ()
+
 
 type ErrorRateLog = [(String,Double)]
 
@@ -53,7 +60,7 @@ type ErrorRateLog = [(String,Double)]
 -- rates, where the needed keys are obtained from the monad.
 writeErrorRates :: forall z e expr k w a .
   (MonadWriter ErrorRateLog w, MonadReader Keys k)
-  => ErrorRateWriter expr z k w e a -> k (expr (Monadify w e) (w (Monadify w a)))
+  => ErrorRateWriter expr z k w e a -> k (expr (KleislifyEnv w e) (w (Kleislify w a)))
 writeErrorRates = unERW
 
 -- | Perform the action, then perform the action given by the result,
@@ -106,7 +113,7 @@ instance (WriteErrorCtx expr z k w ct t m m' zp zq, Add expr ct) =>
 
 instance (WriteErrorCtx expr z k w ct t m m' zp zq, Mul expr ct,
           -- needed because PreMul could take some crazy form
-          Monadify w (PreMul expr ct) ~ PreMul expr ct)
+          Kleislify w (PreMul expr ct) ~ PreMul expr ct)
          => Mul (ErrorRateWriter expr z k w) (CT m zp (Cyc t m' zq)) where
 
   type PreMul (ErrorRateWriter expr z k w) (CT m zp (Cyc t m' zq)) =
@@ -125,7 +132,7 @@ instance (WriteErrorCtx expr z k w ct t m m' zp zq, MulLit expr ct) =>
   mulLit_ = ERW . liftWriteError (Proxy::Proxy z) "mulLit_" . mulLit_
 
 instance (WriteErrorCtx expr z k w ct t m m' zp zq,
-          Monadify w (PreDiv2 expr ct) ~ PreDiv2 expr ct, ct ~ CT m zp (Cyc t m' zq),
+          Kleislify w (PreDiv2 expr ct) ~ PreDiv2 expr ct, ct ~ CT m zp (Cyc t m' zq),
           Div2 expr ct, Applicative k)
   => Div2 (ErrorRateWriter expr z k w) (CT m zp (Cyc t m' zq)) where
   type PreDiv2 (ErrorRateWriter expr z k w) (CT m zp (Cyc t m' zq)) =
