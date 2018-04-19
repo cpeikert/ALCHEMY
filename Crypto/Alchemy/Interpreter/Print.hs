@@ -9,22 +9,20 @@ module Crypto.Alchemy.Interpreter.Print
 )
 where
 
-import Crypto.Alchemy.Interpreter.PT2CT.Noise
-import Crypto.Alchemy.Language.Arithmetic
-import Crypto.Alchemy.Language.Lambda
-import Crypto.Alchemy.Language.LinearCyc
-import Crypto.Alchemy.Language.List
-import Crypto.Alchemy.Language.Monad
-import Crypto.Alchemy.Language.Pair
-import Crypto.Alchemy.Language.SHE
-import qualified Crypto.Alchemy.Language.String as DSL
+import           Crypto.Alchemy.Interpreter.PT2CT.Noise
+import           Crypto.Alchemy.Language.Arithmetic
+import           Crypto.Alchemy.Language.Lambda
+import           Crypto.Alchemy.Language.LinearCyc
+import           Crypto.Alchemy.Language.List
+import           Crypto.Alchemy.Language.Monad
+import           Crypto.Alchemy.Language.Pair
+import           Crypto.Alchemy.Language.SHE
+import qualified Crypto.Alchemy.Language.String         as DSL
 
-import Crypto.Lol                      (Cyc, Pos (..), Prime2,
+import Crypto.Lol                      (Cyc, Linear, Pos (..), Prime2,
                                         PrimePower (..))
 import Crypto.Lol.Applications.SymmSHE (CT)
 import Crypto.Lol.Types
-
-import Control.Monad.Identity
 
 -- the Int is the nesting depth of lambdas outside the expression
 newtype P e a = P { unP :: Int -> String }
@@ -75,14 +73,9 @@ instance Div2 P (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) where
     Cyc t m (ZqBasic ('PP '(Prime2, 'S k)) i)
   div2_ = pureP "div2"
 
-instance Div2 P (PNoiseTag h (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) where
-  type PreDiv2 P (PNoiseTag h (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) =
-    PNoiseTag h (Cyc t m (ZqBasic ('PP '(Prime2, 'S k)) i))
-  div2_ = pureP "div2"
-
-instance Div2 P (Identity (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) where
-  type PreDiv2 P (Identity (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) =
-    Identity (Cyc t m (ZqBasic ('PP '(Prime2, 'S k)) i))
+instance Div2 P (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) where
+  type PreDiv2 P (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) =
+    PNoiseCyc h t m (ZqBasic ('PP '(Prime2, 'S k)) i)
   div2_ = pureP "div2"
 
 instance Div2 P (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
@@ -125,9 +118,15 @@ instance SHE P where
   keySwitchQuad_ _ = pureP   "keySwitchQuad <HINT>"
   tunnel_        _ = pureP   "tunnel <HINT>"
 
-instance LinearCyc P rep where
-  type PreLinearCyc P rep = rep
-  type LinearCycCtx P rep t e r s zp = ()
+instance LinearCyc P (Linear t) (Cyc t) where
+  type PreLinearCyc P (Cyc t) = Cyc t
+  type LinearCycCtx P (Linear t) (Cyc t) e r s zp = ()
+
+  linearCyc_ _ = pureP "linearCyc <FUNC>"
+
+instance LinearCyc P (Linear t) (PNoiseCyc p t) where
+  type PreLinearCyc P (PNoiseCyc p t) = PNoiseCyc p t
+  type LinearCycCtx P (Linear t) (PNoiseCyc p t) e r s zp = ()
 
   linearCyc_ _ = pureP "linearCyc <FUNC>"
 

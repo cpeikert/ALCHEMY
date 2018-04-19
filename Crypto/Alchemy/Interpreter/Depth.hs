@@ -15,6 +15,8 @@ import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.Monad
 import Crypto.Alchemy.Language.SHE
 
+import Crypto.Lol (Cyc, Linear)
+
 newtype D expr a = D { depth :: Int }
 
 instance Add D a where
@@ -78,8 +80,8 @@ instance SHE D where
   keySwitchQuad_ _ = D 0
   tunnel_ _ = D 0
 
-instance LinearCyc D rep where
-  type PreLinearCyc D rep = rep
-  type LinearCycCtx D rep t e r s zp = ()
+instance LinearCyc D (Linear t) (Cyc t) where
+  type PreLinearCyc D (Cyc t) = Cyc t
+  type LinearCycCtx D (Linear t) (Cyc t) e r s zp = ()
 
   linearCyc_ _ = D 0

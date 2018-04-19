@@ -18,7 +18,7 @@
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module Crypto.Alchemy.Interpreter.PT2CT
-( PT2CT, PNoiseTag
+( PT2CT, PNoiseCyc
 , pt2ct, encrypt, decrypt
 , KSPNoise
 ) where
@@ -49,7 +49,7 @@ import Crypto.Alchemy.MonadAccumulator
 
 -- | Interprets plaintext operations as their corresponding
 -- (homomorphic) ciphertext operations.  The represented plaintext
--- types should have the form 'PNoiseTag h (Cyc t m zp)'.
+-- types should have the form 'PNoiseCyc p t m zp'.
 newtype PT2CT
   m'map    -- | list (map) of (plaintext index m, ciphertext index m')
   zqs      -- | list of pairwise coprime Zq components for ciphertexts
@@ -58,13 +58,13 @@ newtype PT2CT
   ctex     -- | interpreter of ciphertext operations
   mon      -- | monad for creating keys/noise
   e        -- | environment
-  a        -- | plaintext type; should be of the form 'PNoiseTag h (Cyc t m zp)'
+  a        -- | plaintext type; should be of the form 'PNoiseCyc p t m zp'
   = PC { unPC :: mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a)) }
 
 -- | Transform a plaintext expression to a ciphertext expression.
-pt2ct :: forall m'map zqs gad z e ctex a mon .
-  (MonadAccumulator Keys mon, MonadAccumulator Hints mon) =>
+pt2ct :: forall m'map zqs gad z a ctex e mon .
       -- this forall is for use with TypeApplications at the top level
+  (MonadAccumulator Keys mon, MonadAccumulator Hints mon) =>
   Double   -- | Gaussian parameter \( r \) of decoding-basis coeffs of
            -- keys/errors.  (Scaled variance over \( R^\vee \) is \( r
            -- / \sqrt{\varphi(m')} \).)
@@ -124,16 +124,16 @@ instance (Add ctex (Cyc2CT m'map zqs a), Applicative mon)
   neg_ = PC $ pure neg_
 
 instance (SHE ctex, Applicative mon,
-          AddPublicCtx ctex (Cyc2CT m'map zqs (PNoiseTag h (Cyc t m zp)))) =>
-  AddLit (PT2CT m'map zqs gad z ctex mon) (PNoiseTag h (Cyc t m zp)) where
+          AddPublicCtx ctex (Cyc2CT m'map zqs (PNoiseCyc h t m zp))) =>
+  AddLit (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc h t m zp) where
 
-  addLit_ (PTag a) = PC $ pure $ addPublic_ a
+  addLit_ (PNC a) = PC $ pure $ addPublic_ a
 
 instance (SHE ctex, Applicative mon,
-          MulPublicCtx ctex (Cyc2CT m'map zqs (PNoiseTag h (Cyc t m zp)))) =>
-  MulLit (PT2CT m'map zqs gad z ctex mon) (PNoiseTag h (Cyc t m zp)) where
+          MulPublicCtx ctex (Cyc2CT m'map zqs (PNoiseCyc h t m zp))) =>
+  MulLit (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc h t m zp) where
 
-  mulLit_ (PTag a) = PC $ pure $ mulPublic_ a
+  mulLit_ (PNC a) = PC $ pure $ mulPublic_ a
 
 type PNoise2KSZq gad zqs p = ZqPairsWithUnits zqs (KSPNoise2Units (KSPNoise gad zqs p))
 
@@ -167,10 +167,10 @@ type PT2CTMulCtx'' p zqs gad hintzq ctex t z mon m' ctin hintct =
    MonadAccumulator Keys mon, MonadAccumulator Hints mon)
 
 instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
-  => Mul (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p (Cyc t m zp)) where
+  => Mul (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t m zp) where
 
-  type PreMul (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p (Cyc t m zp)) =
-    PNoiseTag (Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))) (Cyc t m zp)
+  type PreMul (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t m zp) =
+    PNoiseCyc (Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))) t m zp
 
   mul_ :: forall m' env pin hintzq .
     (pin ~ Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise))),
@@ -178,7 +178,7 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
      m' ~ Lookup m m'map,
      PT2CTMulCtx m'map p zqs m zp gad ctex t z mon) =>
     PT2CT m'map zqs gad z ctex mon env
-    (PNoiseTag pin (Cyc t m zp) -> PNoiseTag pin (Cyc t m zp) -> PNoiseTag p (Cyc t m zp))
+    (PNoiseCyc pin t m zp -> PNoiseCyc pin t m zp -> PNoiseCyc p t m zp)
   mul_ = PC $ 
     lamM $ \x -> lamM $ \y -> do
         hint :: KSQuadCircHint gad (Cyc t m' hintzq) <- 
@@ -192,11 +192,11 @@ instance (SHE ctex, Applicative mon,
            (CT m (ZqBasic ('PP '(Prime2, 'Lol.S e)) i) (Cyc t (Lookup m m'map) (PNoise2Zq zqs p)))
            (ZqBasic ('PP '(Prime2, e)) i)) =>
   Div2 (PT2CT m'map zqs gad z ctex mon)
-  (PNoiseTag p (Cyc t m (ZqBasic ('PP '(Prime2, e)) i))) where
+  (PNoiseCyc p t m (ZqBasic ('PP '(Prime2, e)) i)) where
 
   type PreDiv2 (PT2CT m'map zqs gad z ctex mon)
-       (PNoiseTag p (Cyc t m (ZqBasic ('PP '(Prime2, e)) i))) =
-    PNoiseTag p (Cyc t m (ZqBasic ('PP '(Prime2, 'Lol.S e)) i))
+       (PNoiseCyc p t m (ZqBasic ('PP '(Prime2, e)) i)) =
+    PNoiseCyc p t m (ZqBasic ('PP '(Prime2, 'Lol.S e)) i)
 
   div2_ = PC $ pure modSwitchPT_
 
@@ -207,9 +207,9 @@ type PT2CTLinearCtx' ctex mon m'map zqs p t e r s r' s' z zp zq zqin hintzq gad 
   (SHE ctex, Lambda ctex, Fact s',
    MonadAccumulator Keys mon, MonadRandom mon, MonadReader Double mon,
    -- output ciphertext type
-   CT s zp (Cyc t s' zq)   ~ Cyc2CT m'map zqs (PNoiseTag p (Cyc t s zp)),
+   CT s zp (Cyc t s' zq)   ~ Cyc2CT m'map zqs (PNoiseCyc p t s zp),
    -- input ciphertext type
-   CT r zp (Cyc t r' zqin) ~ Cyc2CT m'map zqs (PNoiseTag (p :+ TunnPNoise) (Cyc t r zp)),
+   CT r zp (Cyc t r' zqin) ~ Cyc2CT m'map zqs (PNoiseCyc (p :+ TunnPNoise) t r zp),
    TunnelCtx ctex t e r s (e * (r' / r)) r' s'   zp hintzq gad,
    TunnelHintCtx  t e r s (e * (r' / r)) r' s' z zp hintzq gad,
    GenSKCtx t r' z Double, GenSKCtx t s' z Double,
@@ -217,22 +217,23 @@ type PT2CTLinearCtx' ctex mon m'map zqs p t e r s r' s' z zp zq zqin hintzq gad 
    ModSwitchCtx ctex (CT s zp (Cyc t s' hintzq))  zq,
    Typeable t, Typeable r', Typeable s', Typeable z)
 
-instance LinearCyc (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p) where
+instance LinearCyc (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) where
 
-  type PreLinearCyc (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p) =
-    PNoiseTag (p :+ TunnPNoise)
+  type PreLinearCyc (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t) =
+    PNoiseCyc (p :+ TunnPNoise) t
 
-  type LinearCycCtx (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p) t e r s zp =
+  type LinearCycCtx (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) e r s zp =
     (PT2CTLinearCtx ctex mon m'map zqs p t e r s (Lookup r m'map) (Lookup s m'map)
       z zp (PNoise2Zq zqs p) (PNoise2Zq zqs (p :+ TunnPNoise)) gad)
 
-  linearCyc_ :: forall t zp e r s env expr rp r' s' zq pin .
-    (expr ~ PT2CT m'map zqs gad z ctex mon, s' ~ Lookup s m'map, rp ~ Cyc t r zp,
+  linearCyc_ :: forall t zp e r s env expr r' s' zq pin .
+    (expr ~ PT2CT m'map zqs gad z ctex mon, s' ~ Lookup s m'map,
      pin ~ (p :+ TunnPNoise),
-     Cyc2CT m'map zqs (PNoiseTag p (Cyc t r zp)) ~ CT r zp (Cyc t r' zq),
+     Cyc2CT m'map zqs (PNoiseCyc p t r zp) ~ CT r zp (Cyc t r' zq),
      PT2CTLinearCtx ctex mon m'map zqs p t e r s (Lookup r m'map)
       (Lookup s m'map) z zp (PNoise2Zq zqs p) (PNoise2Zq zqs pin) gad)
-      => Linear t zp e r s -> expr env (PNoiseTag pin rp -> PNoiseTag p (Cyc t s zp))
+      => Linear t zp e r s -> expr env (PNoiseCyc pin t r zp -> PNoiseCyc p t s zp)
+
   linearCyc_ f = PC $ lamM $ \x -> do
     -- the reader stores r, so run the hint generation with s/sqrt(n)
     hint <- local (svar (Proxy::Proxy s')) $
@@ -240,7 +241,7 @@ instance LinearCyc (PT2CT m'map zqs gad z ctex mon) (PNoiseTag p) where
     return $ modSwitch_ $:     -- then scale back to the target modulus zq
               (tunnel_ hint $: -- linear w/ the hint
                 (modSwitch_ $: -- scale (up) to the hint modulus zq'
-                  (var (x :: ctex _ (Cyc2CT m'map zqs (PNoiseTag pin rp))))))
+                  (var (x :: ctex _ (Cyc2CT m'map zqs (PNoiseCyc pin t r zp))))))
 
 ----- Type families -----
 
@@ -264,7 +265,7 @@ type PNoise2Zq zqs (p :: PNoise) = ZqPairsWithUnits zqs (CTPNoise2Units p)
 
 type family Cyc2CT (m'map :: [(Factored, Factored)]) zqs e = cte | cte -> e where
 
-  Cyc2CT m'map zqs (PNoiseTag p (Cyc t m zp)) =
+  Cyc2CT m'map zqs (PNoiseCyc p t m zp) =
     CT m zp (Cyc t (Lookup m m'map) (PNoise2Zq zqs p))
 
   -- for environments
@@ -280,7 +281,7 @@ type family Cyc2CT (m'map :: [(Factored, Factored)]) zqs e = cte | cte -> e wher
   Cyc2CT m'map zqs c = Tagged c
     (TypeError ('Text "Type family 'Cyc2CT' can't convert type '"
                 ':<>: 'ShowType c ':<>: 'Text "'."
-                ':$$: 'Text "It only converts types of the form 'PNoiseTag p (Cyc t m zp) and pairs/lists/functions thereof."))
+                ':$$: 'Text "It only converts types of the form 'PNoiseCyc p t m zp' and pairs/lists/functions thereof."))
 
 -- type-level map lookup
 type family Lookup m (map :: [(Factored, Factored)]) where

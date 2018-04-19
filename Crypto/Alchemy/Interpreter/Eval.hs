@@ -33,7 +33,7 @@ import Crypto.Alchemy.Language.Pair
 import Crypto.Alchemy.Language.SHE
 import Crypto.Alchemy.Language.String
 
-import Crypto.Lol hiding (String)
+import Crypto.Lol                      hiding (String)
 import Crypto.Lol.Applications.SymmSHE as SHE
 import Crypto.Lol.Types
 
@@ -79,19 +79,13 @@ instance (RescaleCyc (Cyc t) (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(P
 
 instance (RescaleCyc (Cyc t) (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i),
           Fact m)
-  => Div2 E (PNoiseTag h (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) where
-  type PreDiv2 E (PNoiseTag h (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) =
-    PNoiseTag h (Cyc t m (ZqBasic ('PP '(Prime2, 'S k)) i))
-  -- since input is divisible by two, it doesn't matter which basis we use
-  div2_ = pureE $ PTag . rescalePow . unPTag
+  => Div2 E (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) where
 
-instance (RescaleCyc (Cyc t) (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i),
-          Fact m)
-  => Div2 E (Identity (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) where
-  type PreDiv2 E (Identity (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) =
-    Identity (Cyc t m (ZqBasic ('PP '(Prime2, 'S k)) i))
+  type PreDiv2 E (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) =
+    PNoiseCyc h t m (ZqBasic ('PP '(Prime2, 'S k)) i)
+
   -- since input is divisible by two, it doesn't matter which basis we use
-  div2_ = pureE $ Identity . rescalePow . runIdentity
+  div2_ = pureE $ PNC . rescalePow . unPNC
 
 instance (SHE.ModSwitchPTCtx t m' (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i) zq) =>
   Div2 E (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
@@ -138,11 +132,19 @@ instance SHE E where
   keySwitchQuad_   = pureE . keySwitchQuadCirc
   tunnel_          = pureE . SHE.tunnel
 
-instance (Applicative rep) => LinearCyc E rep where
-  type PreLinearCyc E rep = rep
-  type LinearCycCtx E rep t e r s zp = (e `Divides` r, e `Divides` s, CElt t zp)
+instance LinearCyc E (Linear t) (Cyc t) where
+  type PreLinearCyc E (Cyc t) = Cyc t
+  type LinearCycCtx E (Linear t) (Cyc t) e r s zp =
+    (e `Divides` r, e `Divides` s, CElt t zp)
 
-  linearCyc_ f = pureE $ fmap (evalLin f)
+  linearCyc_ f = pureE $ evalLin f
+
+instance LinearCyc E (Linear t) (PNoiseCyc p t) where
+  type PreLinearCyc E (PNoiseCyc p t) = PNoiseCyc p t
+  type LinearCycCtx E (Linear t) (PNoiseCyc p t) e r s zp =
+    (e `Divides` r, e `Divides` s, CElt t zp)
+
+  linearCyc_ f = pureE $ PNC . evalLin f . unPNC
 
 -- | Uses 'SHE.errorTermUnrestricted' to compute 'errorRate'.
 instance ErrorRate E where

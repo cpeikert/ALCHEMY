@@ -1,6 +1,7 @@
 {-# LANGUAGE ConstraintKinds            #-}
 {-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE DeriveFunctor              #-}
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE FlexibleInstances          #-}
 {-# LANGUAGE GADTs                      #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
@@ -10,6 +11,7 @@
 {-# LANGUAGE PolyKinds                  #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE StandaloneDeriving         #-}
 {-# LANGUAGE TemplateHaskell            #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -20,25 +22,25 @@
 
 -- should be a hidden/internal module
 module Crypto.Alchemy.Interpreter.PT2CT.Noise
-( PNoise(..)--, PNoise2Nat
-, Units(..)--,  Units2Nat
-, (:+)
-, PNZ
+( PNoise(..), Units(..), PNoiseCyc(..)
+, PNZ, (:+)
 , pNoiseUnit
-, PNoiseTag(..),ZqPairsWithUnits, TotalUnits
-, TLNatNat, mkTLNatNat, mkTypeNat) where
+, ZqPairsWithUnits, TotalUnits
+, TLNatNat, mkTLNatNat, mkTypeNat)
+where
 
-import           Algebra.Additive          as Additive (C)
-import           Algebra.Ring              as Ring (C)
+import           Algebra.Additive             as Additive (C)
+import           Algebra.Ring                 as Ring (C)
 import           Data.Functor.Trans.Tagged
-import           Data.Singletons.Prelude   hiding ((:<), (:+))
+import           Data.Singletons.Prelude      hiding ((:+), (:<))
 import           Data.Singletons.Prelude.List (Sum)
-import           Data.Singletons.TH        hiding ((:<))
-import           Data.Type.Natural         hiding ((:+))
-import qualified GHC.TypeLits              as TL (Nat)
-import           GHC.TypeLits              hiding (Nat)
+import           Data.Singletons.TH           hiding ((:<))
+import           Data.Type.Natural            hiding ((:+))
+import           GHC.TypeLits                 hiding (Nat)
+import qualified GHC.TypeLits                 as TL (Nat)
 import           Language.Haskell.TH
 
+import Crypto.Lol                      (Cyc)
 import Crypto.Lol.Reflects
 import Crypto.Lol.Types.Unsafe.ZqBasic
 
@@ -47,10 +49,10 @@ import Crypto.Lol.Types.Unsafe.ZqBasic
 -- from @Units@.
 newtype PNoise = PN Nat
 
---
+-- | Zero noise.
 type PNZ = 'PN 'Z
 
--- | Adds a @Nat@ to @PNoise@.
+-- | Adds a @Nat@ to a @PNoise@.
 type family (:+) a b where
   'PN a :+ b = 'PN (a :+: b)
 
@@ -63,19 +65,12 @@ newtype Units = Units Nat
 type family UnitsToNat (u :: Units) where
   UnitsToNat ('Units h) = h
 
--- convenient synonym for Tagged. Useful for kind inference, and because we need
--- the partially applied "PNoiseTag p" type, which we can't write niceyl with
--- 'Tagged' because it is in fact a type synonym
--- | A value tagged by @pNoise =~ -log(noise rate)@.
-newtype PNoiseTag (p :: PNoise) a = PTag {unPTag :: a}
-  -- EAC: Okay to derive Functor and Applicative? It makes life easier because
-  -- we can define a single instance (e.g., of E) rather than one for Identity
-  -- and one for (PNoise h)
-  deriving (Additive.C, Ring.C, Functor, Show)
+-- | A cyclotomic ring element tagged by @pNoise =~ -log(noise rate)@.
+newtype PNoiseCyc (p :: PNoise) t m r = PNC { unPNC :: Cyc t m r }
 
-instance Applicative (PNoiseTag h) where
-  pure = PTag
-  (PTag f) <*> (PTag a) = PTag $ f a
+deriving instance (Additive.C (Cyc t m r)) => Additive.C (PNoiseCyc p t m r)
+deriving instance (Ring.C     (Cyc t m r)) => Ring.C     (PNoiseCyc p t m r)
+deriving instance (Show       (Cyc t m r)) => Show       (PNoiseCyc p t m r)
 
 -- CJP: why should this be defined here?
 type family Modulus zq :: k
@@ -169,7 +164,7 @@ mkTypeLit = litT . numTyLit
 mkTLNatNat :: Integer -> TypeQ
 mkTLNatNat q =
   let units = floor $ logBase 2 (fromInteger q) / pNoiseUnit
-  in conT 'NN `appT` (mkTypeLit q) `appT` (mkTypeNat units)
+  in conT 'NN `appT` mkTypeLit q `appT` mkTypeNat units
 
 instance (Reflects x i) => Reflects ('NN x y) i where
   value = retag $ value @x

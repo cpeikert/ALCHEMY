@@ -17,13 +17,11 @@ import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.Monad
 import Crypto.Alchemy.Language.SHE
 
-import           Crypto.Lol                      (Cyc, Prime2,
+import           Crypto.Lol                      (Cyc, Linear, Prime2,
                                                   PrimePower (..))
 import qualified Crypto.Lol                      as L
 import           Crypto.Lol.Applications.SymmSHE (CT)
 import           Crypto.Lol.Types
-
-import Control.Monad.Identity
 
 newtype S e a = S { size :: Int }
 
@@ -48,19 +46,15 @@ instance MulLit S a where
 --    the size of a computation, then do an optimization pass, then check the size again.)
 --    Of course this can be done already using dup. And, if we made (all) of the
 --    interpreters recursive, then we'd need a dummy interpreter for the bottom of the stack.
+
 instance Div2 S (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) where
   type PreDiv2 S (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) =
     Cyc t m (ZqBasic ('PP '(Prime2, 'L.S k)) i)
   div2_ = S 1
 
-instance Div2 S (PNoiseTag h (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) where
-  type PreDiv2 S (PNoiseTag h (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) =
-    PNoiseTag h (Cyc t m (ZqBasic ('PP '(Prime2, 'L.S k)) i))
-  div2_ = S 1
-
-instance Div2 S (Identity (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) where
-  type PreDiv2 S (Identity (Cyc t m (ZqBasic ('PP '(Prime2, k)) i))) =
-    Identity (Cyc t m (ZqBasic ('PP '(Prime2, 'L.S k)) i))
+instance Div2 S (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) where
+  type PreDiv2 S (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) =
+    PNoiseCyc h t m (ZqBasic ('PP '(Prime2, 'L.S k)) i)
   div2_ = S 1
 
 instance Div2 S (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
@@ -104,15 +98,21 @@ instance SHE S where
   type KeySwitchQuadCtx S ct gad = ()
   type TunnelCtx S t e r s e' r' s' zp zq gad = ()
 
-  modSwitchPT_ = S 1
-  modSwitch_ = S 1
-  addPublic_ _ = S 1
-  mulPublic_ _ = S 1
+  modSwitchPT_     = S 1
+  modSwitch_       = S 1
+  addPublic_ _     = S 1
+  mulPublic_ _     = S 1
   keySwitchQuad_ _ = S 1
-  tunnel_ _ = S 1
+  tunnel_ _        = S 1
 
-instance LinearCyc S rep where
-  type PreLinearCyc S rep = rep
-  type LinearCycCtx S rep t e r s zp = ()
+instance LinearCyc S (Linear t) (Cyc t) where
+  type PreLinearCyc S (Cyc t) = (Cyc t)
+  type LinearCycCtx S (Linear t) (Cyc t) e r s zp = ()
+
+  linearCyc_ _ = S 1
+
+instance LinearCyc S (Linear t) (PNoiseCyc p t) where
+  type PreLinearCyc S (PNoiseCyc p t) = (PNoiseCyc p t)
+  type LinearCycCtx S (Linear t) (PNoiseCyc p t) e r s zp = ()
 
   linearCyc_ _ = S 1

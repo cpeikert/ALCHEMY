@@ -71,13 +71,13 @@ instance (SHE ex1, SHE ex2) => SHE (Dup ex1 ex2) where
   keySwitchQuad_ h = Dup (keySwitchQuad_ h) (keySwitchQuad_ h)
   tunnel_        h = Dup (tunnel_ h)        (tunnel_ h)
 
-instance (LinearCyc ex1 rep, LinearCyc ex2 rep,
+instance (LinearCyc ex1 lin rep, LinearCyc ex2 lin rep,
           PreLinearCyc ex1 rep ~ PreLinearCyc ex2 rep)
-  => LinearCyc (Dup ex1 ex2) rep where
+  => LinearCyc (Dup ex1 ex2) lin rep where
   type PreLinearCyc (Dup ex1 ex2) rep = PreLinearCyc ex1 rep
 
-  type LinearCycCtx (Dup ex1 ex2) rep t e r s zp =
-    (LinearCycCtx ex1 rep t e r s zp, LinearCycCtx ex2 rep t e r s zp)
+  type LinearCycCtx (Dup ex1 ex2) lin rep e r s zp =
+    (LinearCycCtx ex1 lin rep e r s zp, LinearCycCtx ex2 lin rep e r s zp)
 
   linearCyc_ f = Dup (linearCyc_ f) (linearCyc_ f)
 
