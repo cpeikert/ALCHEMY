@@ -116,8 +116,9 @@ main = do
     --liftIO $ putStrLn $ "CT expression size: " ++ (show $ size w2)
 
     z2' <- readerToAccumulator $ writeErrorRates @Int64 @() z2
-    let (result,errors) = runWriter $ eval z2' (return arg1) (return arg2)
-    liftIO $ print $ "Error rates: " ++ show errors
+    let (result,errors) = runWriter $ eval z2' >>= ($ arg1) >>= ($ arg2)
+    liftIO $ putStrLn "Error rates: "
+    liftIO $ mapM_ print errors
 
     -- show the encrypted result
     --liftIO $ putStrLn $ "Encrypted evaluation result: " ++ show result
