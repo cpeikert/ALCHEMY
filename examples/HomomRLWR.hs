@@ -81,14 +81,14 @@ main = do
 
   putStrLn "Tunnel:"
   -- EAC: 'Z noise is important here so that we can print the composition of P expr
-  let (ex11,ex12) = dup $ linear5 @CT @PTRngs @(Z2E K) @(PNoiseTag ('PN N0)) Proxy
+  let (ex11,ex12) = dup $ linear5 @CT @PTRings @(Z2E K) @(PNoiseTag ('PN N0)) Proxy
   putStrLn $ "PT Tunnel: " ++ pprint ex11
   putStrLn $ "PT Tunnel size: " ++ show (size ex12)
 
   -- EAC: This needs to have a non-zero output pNoise level!!
   -- EAC: can remove type sig and use ptexpr as the argument to pt2ct below (which infers the signature),
   -- but this requires compiling PT2CT which takes a long time.
-  let (pttunnel :: PT2CT' CTRngs ZqList Gad _, paramsexpr2) = dup $ linear5 @CT @PTRngs @(Z2E K) @(PNoiseTag ('PN N6)) Proxy
+  let (pttunnel :: PT2CT' CTRings ZqList Gad _, paramsexpr2) = dup $ linear5 @CT @PTRings @(Z2E K) @(PNoiseTag ('PN N6)) Proxy
   putStrLn $ "PT expression params:\n" ++ params pttunnel paramsexpr2
 
   putStrLn $ "PT Composition: " ++ pprint (ex01 .: ex11)
@@ -107,15 +107,11 @@ main = do
 
     tunn <- timeIO "Compiling tunnel sequence..." $
                argToReader (pt2ct
-                  @CTRngs
+                  @CTRings
                   @ZqList
                   @Gad
                   @Int64)
-<<<<<<< HEAD
-                  (linear5 @CT @PTRngs @(Z2E K) @(PNoise N9) Proxy)
-=======
-                  (linear5 @CT @PTRngs @(Z2E K) @(PNoiseTag ('PN N11)) Proxy)
->>>>>>> alchemy-noise-kinds
+                  (linear5 @CT @PTRings @(Z2E K) @(PNoiseTag ('PN N11)) Proxy)
 
     let (r1,r)  = dup roundTree
         (r2,r') = dup r
