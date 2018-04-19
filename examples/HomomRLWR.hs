@@ -144,8 +144,8 @@ main = do
     arg1 <- argToReader encrypt ptin
 
     timeIO "Evaluating with error rates..." $ do
-      f <- readerToAccumulator $ writeErrorRates @Int64 @() r3
-      g <- readerToAccumulator $ writeErrorRates @Int64 @() s3
+      f <- readerToAccumulator $ writeErrorRates @Int64 r3
+      g <- readerToAccumulator $ writeErrorRates @Int64 s3
       let (_,errors) = runWriter $ eval (f .: g) (return arg1)
       liftIO $ print errors
 
@@ -214,7 +214,7 @@ main = do
 
     let (z1,z2) = dup y
     liftIO $ putStrLn $ pprint z1
-    z2' <- readerToAccumulator $ writeErrorRates @Int64 @() z2
+    z2' <- readerToAccumulator $ writeErrorRates @Int64 z2
     let (z2'',errors) = runWriter $ eval z2' $ return 2
     liftIO $ putStrLn $ show z2''
     liftIO $ print errors
