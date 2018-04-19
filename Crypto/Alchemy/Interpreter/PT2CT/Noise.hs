@@ -62,9 +62,10 @@ type family UnitsToNat (u :: Units) where
 -- | A cyclotomic ring element tagged by @pNoise =~ -log(noise rate)@.
 newtype PNoiseCyc (p :: PNoise) t m r = PNC { unPNC :: Cyc t m r }
 
+deriving instance (Eq         (Cyc t m r)) => Eq         (PNoiseCyc p t m r)
+deriving instance (Show       (Cyc t m r)) => Show       (PNoiseCyc p t m r)
 deriving instance (Additive.C (Cyc t m r)) => Additive.C (PNoiseCyc p t m r)
 deriving instance (Ring.C     (Cyc t m r)) => Ring.C     (PNoiseCyc p t m r)
-deriving instance (Show       (Cyc t m r)) => Show       (PNoiseCyc p t m r)
 
 -- CJP: why should this be defined here?
 type family Modulus zq :: k
