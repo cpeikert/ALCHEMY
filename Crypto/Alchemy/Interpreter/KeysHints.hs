@@ -2,6 +2,7 @@
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
@@ -19,10 +20,12 @@ import Control.Monad.Reader
 import Control.Monad.State
 
 import Data.Dynamic
+import Data.Functor
 import Data.Maybe   (mapMaybe)
+import Data.Monoid
 
 import Crypto.Alchemy.MonadAccumulator
-import Crypto.Lol hiding (lift)
+import Crypto.Lol                      hiding (lift)
 import Crypto.Lol.Applications.SymmSHE
 
 ---- Monad helper functions
@@ -36,7 +39,7 @@ newtype Hints = Hints { unHints :: [Dynamic] } deriving (Monoid, Show)
 -- | Convenience function.
 runKeysHints :: (Functor m)
   => v -> StateT Keys (StateT Hints (ReaderT v m)) a -> m (a, Keys, Hints)
-runKeysHints v = ((\((a,b),c) -> (a,b,c)) <$>) . 
+runKeysHints v = ((\((a,b),c) -> (a,b,c)) <$>) .
   flip runReaderT v . runAccumulatorT . runAccumulatorT
 
 -- | Output the output of the computation, discarding the accumulated result.
@@ -76,22 +79,27 @@ f >=< a = do
   f a'
   return a'
 
+-- | Return \( r / \varphi(m') \).
+svar :: (Fact m') => Proxy m' -> Double -> Double
+svar pm' r = r / (sqrt $ fromIntegral $ proxy totientFact pm')
+
 -- | Lookup a key, generating one if it doesn't exist, and return it.
-getKey :: (MonadReader v mon, MonadAccumulator Keys mon,
-           MonadRandom mon, GenSKCtx t m' z v, Typeable (Cyc t m' z))
+getKey :: forall z t m' mon . -- z first for type applications
+  (MonadReader Double mon, MonadAccumulator Keys mon,
+   MonadRandom mon, GenSKCtx t m' z Double, Typeable (Cyc t m' z))
   => mon (SK (Cyc t m' z))
 getKey = readerToAccumulator lookupKey >>= \case
   (Just t) -> return t
-  -- generate and save a key (using the variance from the monad)
-  Nothing -> appendKey >=< (ask >>= genSK)
+  -- generate and save a key, using the adjusted variance from the monad
+  Nothing -> appendKey >=< (genSK =<< svar (Proxy::Proxy m') <$> ask)
 
 -- | Lookup a (quadratic, circular) key-switch hint, generating one
 -- (and the underlying key if necessary) if it doesn't exist, and
 -- return it.
 getQuadCircHint :: forall v mon t z gad m' zq' .
   (-- constraints for getKey
-   MonadReader v mon, MonadAccumulator Keys mon, MonadAccumulator Hints mon,
-   MonadRandom mon, GenSKCtx t m' z v, Typeable (Cyc t m' z),
+   MonadReader Double mon, MonadRandom mon, MonadAccumulator Keys mon, 
+   MonadAccumulator Hints mon, GenSKCtx t m' z Double, Typeable (Cyc t m' z),
    -- constraints for lookup
    Typeable (KSQuadCircHint gad (Cyc t m' zq')),
    -- constraints for ksQuadCircHint
@@ -108,14 +116,14 @@ getQuadCircHint _ = readerToAccumulator lookupHint >>= \case
 
 -- EAC: https://ghc.haskell.org/trac/ghc/ticket/13490
 -- | Generate a hint for tunneling. The result is /not/ memoized.
-getTunnelHint :: forall gad zq mon t e r s e' r' s' z zp v .
-  (MonadReader v mon, MonadAccumulator Keys mon, MonadRandom mon,
-   GenSKCtx t r' z v, Typeable (Cyc t r' z),
-   GenSKCtx t s' z v, Typeable (Cyc t s' z),
+getTunnelHint :: forall gad zq mon t e r s e' r' s' z zp .
+  (MonadReader Double mon, MonadAccumulator Keys mon, MonadRandom mon,
+   GenSKCtx t r' z Double, Typeable (Cyc t r' z),
+   GenSKCtx t s' z Double, Typeable (Cyc t s' z),
    TunnelHintCtx t e r s e' r' s' z zp zq gad)
   => Proxy z -> Linear t zp e r s
   -> mon (TunnelHint gad t e r s e' r' s' zp zq)
 getTunnelHint _ linf = do
-  skout <- getKey @_ @_ @_ @_ @z
-  skin <- getKey @_ @_ @_ @_ @z
+  skout <- getKey @z
+  skin <- getKey @z
   tunnelHint linf skout skin

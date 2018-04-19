@@ -18,9 +18,10 @@
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module Crypto.Alchemy.Interpreter.PT2CT
-( PT2CT, PNoiseCyc
+( PT2CT
 , pt2ct, encrypt, decrypt
-, KSPNoise
+-- * re-exports
+, PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkTLNatNat
 ) where
 
 import Control.Applicative
@@ -58,39 +59,38 @@ newtype PT2CT
   ctex     -- | interpreter of ciphertext operations
   mon      -- | monad for creating keys/noise
   e        -- | environment
-  a        -- | plaintext type; should be of the form 'PNoiseCyc p t m zp'
+  a        -- | plaintext type; use 'PNoiseCyc p t m zp' for cyclotomics
   = PC { unPC :: mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a)) }
 
--- | Transform a plaintext expression to a ciphertext expression.
+-- | Transform a plaintext expression to a (monadic) ciphertext
+-- expression.  In addition to being a 'MonadAccumulator' for 'Keys'
+-- and 'Hints', the monad must be able to provide a 'Double'
+-- representing a Gaussian parameter \( r \) of the decoding-basis
+-- coefficients for generated keys and errors.  (I.e., the scaled
+-- variance over \( R^\vee \) is \( r / \sqrt{\varphi(m')} \).)
 pt2ct :: forall m'map zqs gad z a ctex e mon .
       -- this forall is for use with TypeApplications at the top level
-  (MonadAccumulator Keys mon, MonadAccumulator Hints mon) =>
-  Double   -- | Gaussian parameter \( r \) of decoding-basis coeffs of
-           -- keys/errors.  (Scaled variance over \( R^\vee \) is \( r
-           -- / \sqrt{\varphi(m')} \).)
-  -> PT2CT m'map zqs gad z ctex (ReaderT Double mon) e a  -- | plaintext expression
-  -> mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a)) -- | (monadic) ctex expression
-pt2ct r = flip runReaderT r . unPC
-
-svar :: (Fact m') => Proxy m' -> Double -> Double
-svar pm' r = r / (sqrt $ fromIntegral $ proxy totientFact pm')
+  (MonadAccumulator Keys mon, MonadAccumulator Hints mon,
+   MonadReader Double mon) =>
+  PT2CT m'map zqs gad z ctex mon e a
+  -- | plaintext expression
+  -> mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a))
+ -- | (monadic) ctex expression
+pt2ct = unPC
 
 -- | Encrypt a plaintext (using the given scaled variance) under an
 -- appropriate key (from the monad), generating one if necessary.
 encrypt :: forall mon t m m' zp zq z .
-  (MonadRandom mon, MonadAccumulator Keys mon,
+  (MonadRandom mon, MonadAccumulator Keys mon, MonadReader Double mon,
    -- CJP: DON'T LOVE THIS CHOICE OF z HERE; IT'S ARBITRARY
    EncryptCtx t m m' z zp zq, z ~ LiftOf zp, GenSKCtx t m' z Double,
    Typeable t, Typeable m', Typeable z)
-  => Double -- | Gaussian parameter of decoding-basis coeffs of errors
-  -> Cyc t m zp                  -- | plaintext
+  => Cyc t m zp                  -- | plaintext
   -> mon (CT m zp (Cyc t m' zq)) -- | (monadic) ciphertext
-encrypt r x =
-  let v = svar (Proxy::Proxy m') r
-  in flip runReaderT v $ do
-    -- generate key if necessary
-    (sk :: SK (Cyc t m' z)) <- getKey
-    SHE.encrypt sk x
+encrypt x = do
+  -- generate key if necessary
+  (sk :: SK (Cyc t m' z)) <- getKey
+  SHE.encrypt sk x
 
 -- | Decrypt a ciphertext under an appropriate key (from the monad),
 -- if one exists.
@@ -138,7 +138,6 @@ instance (SHE ctex, Applicative mon,
 type PNoise2KSZq gad zqs p = ZqPairsWithUnits zqs (KSPNoise2Units (KSPNoise gad zqs p))
 
 
--- The pNoise for the key-switch hint depends on the gadget:
 -- | pNoise of a key-switch hint for a particular gadget, given the
 -- pNoise of the input ciphertext.
 type family KSPNoise gad (zqs :: [*]) (p :: PNoise) :: PNoise
@@ -181,9 +180,8 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
     (PNoiseCyc pin t m zp -> PNoiseCyc pin t m zp -> PNoiseCyc p t m zp)
   mul_ = PC $ 
     lamM $ \x -> lamM $ \y -> do
-        hint :: KSQuadCircHint gad (Cyc t m' hintzq) <- 
-          -- the reader stores r, so use errors with svar = r/sqrt(phi(m'))
-          local (svar (Proxy::Proxy m')) $ getQuadCircHint (Proxy::Proxy z)
+        hint :: KSQuadCircHint gad (Cyc t m' hintzq) <-
+          getQuadCircHint (Proxy::Proxy z)
         let prod = (var x *: y :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin))))
          in return $ modSwitch_ $: (keySwitchQuad_ hint $: (modSwitch_ $: prod))
 
@@ -235,9 +233,7 @@ instance LinearCyc (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) w
       => Linear t zp e r s -> expr env (PNoiseCyc pin t r zp -> PNoiseCyc p t s zp)
 
   linearCyc_ f = PC $ lamM $ \x -> do
-    -- the reader stores r, so run the hint generation with s/sqrt(n)
-    hint <- local (svar (Proxy::Proxy s')) $
-            getTunnelHint @gad @(PNoise2KSZq gad zqs p) (Proxy::Proxy z) f
+    hint <- getTunnelHint @gad @(PNoise2KSZq gad zqs p) (Proxy::Proxy z) f
     return $ modSwitch_ $:     -- then scale back to the target modulus zq
               (tunnel_ hint $: -- linear w/ the hint
                 (modSwitch_ $: -- scale (up) to the hint modulus zq'

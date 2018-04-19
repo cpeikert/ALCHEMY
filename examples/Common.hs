@@ -1,14 +1,19 @@
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DataKinds                  #-}
+{-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE MultiParamTypeClasses      #-}
+{-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE PartialTypeSignatures      #-}
+{-# LANGUAGE PolyKinds                  #-}
+{-# LANGUAGE RankNTypes                 #-}
+{-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
+{-# LANGUAGE TypeOperators              #-}
+
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module Common where
-
-import qualified Algebra.Additive as Additive (C(..))
-import qualified Algebra.Ring as Ring (C(..))
 
 import Control.DeepSeq
 import Control.Monad.Identity
@@ -18,8 +23,12 @@ import Control.Monad.State
 import Crypto.Alchemy.Interpreter.KeysHints
 import Crypto.Alchemy.Interpreter.Print
 import Crypto.Alchemy.Interpreter.PT2CT
+import Crypto.Alchemy.Language.Lambda
+import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Lol
+import Crypto.Lol.Cyclotomic.Tensor         (TElt)
 import Crypto.Lol.Types
+import Crypto.Lol.Types.ZPP
 
 import Data.Time.Clock
 import System.IO
@@ -27,14 +36,6 @@ import Text.Printf
 
 -- a concrete Z_{2^e} data type
 type Z2E e = ZqBasic ('PP '(Prime2, e)) Int64
-
--- EAC: these instances need a home
-deriving instance (Additive a) => Additive.C (Identity a)
-deriving instance (Ring a) => Ring.C (Identity a)
-
--- EAC: This is a convenient function, but it needs a home.
-argToReader :: (MonadReader v mon) => (v -> a -> mon b) -> a -> mon b
-argToReader f a = flip f a =<< ask
 
 -- shorthand for Z_q type
 type Zq q = ZqBasic q Int64
@@ -55,14 +56,52 @@ type H3' = H3
 type H4' = H4
 type H5' = H5
 
-type PTRings = '[H0,H1,H2,H3,H4,H5]
+type M'Map = '[ '(H0,H0')
+              , '(H1,H1')
+              , '(H2,H2')
+              , '(H3,H3')
+              , '(H4,H4')
+              , '(H5,H5')
+              ]
 
-type CTRings = '[ '(H0,H0'), '(H1,H1'), '(H2,H2'), '(H3,H3'), '(H4,H4'), '(H5,H5') ]
-
-
-type PT2CT' m'map zqs gad a 
+type PT2CT' m'map zqs gad a
   = PT2CT m'map zqs gad Int64 P
     (StateT Keys (StateT Hints (ReaderT Double IO))) () a
+
+-- | Linear function mapping the decoding basis (relative to the
+-- largest common subring) to (the same number of) CRT slots.
+decToCRT :: forall r s t zp e . -- r first for convenient type apps
+  (e ~ FGCD r s, e `Divides` r, e `Divides` s,
+   CElt t zp, ZPP zp, TElt t (ZpOf zp))
+  => Linear t zp e r s
+decToCRT =
+  let crts = proxy crtSet (Proxy::Proxy e)
+      phir = proxy totientFact (Proxy::Proxy r)
+      phie = proxy totientFact (Proxy::Proxy e)
+      dim = phir `div` phie
+      -- only take as many crts as we need, otherwise linearDec fails
+  in linearDec $ take dim crts
+
+-- | Tunnel H0 -> H1
+tunnel1 :: _ => expr env (_ -> PNoiseCyc p t H1 zp)
+tunnel1 = linearCyc_ (decToCRT @H0)
+
+-- | Tunnel H0 -> H1 -> H2
+tunnel2 :: _ => expr env (_ -> PNoiseCyc p t H2 zp)
+tunnel2 = linearCyc_ (decToCRT @H1) .: tunnel1
+
+-- | Tunnel H0 -> H1 -> H2 -> H3
+tunnel3 :: _ => expr env (_ -> PNoiseCyc p t H3 zp)
+tunnel3 = linearCyc_ (decToCRT @H2) .: tunnel2
+
+-- | Tunnel H0 -> H1 -> H2 -> H3 -> H4
+tunnel4 :: _ => expr env (_ -> PNoiseCyc p t H4 zp)
+tunnel4 = linearCyc_ (decToCRT @H3) .: tunnel3
+
+-- | Tunnel H0 -> H1 -> H2 -> H3 -> H4 -> H5
+tunnel5 :: _ => expr env (_ -> PNoiseCyc p t H5 zp)
+tunnel5 = linearCyc_ (decToCRT @H4) .: tunnel4
+
 
 -- timing functionality
 time :: (NFData a, MonadIO m) => String -> a -> m a

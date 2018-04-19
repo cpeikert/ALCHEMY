@@ -29,7 +29,6 @@ library
                    Crypto.Alchemy.Interpreter.KeysHints
                    Crypto.Alchemy.Interpreter.Params
                    Crypto.Alchemy.Interpreter.PT2CT
-                   Crypto.Alchemy.Interpreter.PT2CT.Noise
                    Crypto.Alchemy.Interpreter.Print
                    Crypto.Alchemy.Interpreter.Size
                    Crypto.Alchemy.Language.Arithmetic
@@ -42,6 +41,8 @@ library
                    Crypto.Alchemy.Language.SHE
                    Crypto.Alchemy.Language.String
                    Crypto.Alchemy.MonadAccumulator
+
+  other-modules:   Crypto.Alchemy.Interpreter.PT2CT.Noise
 
   build-depends: base >= 4.7 && < 5
                , constraints

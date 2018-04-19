@@ -1,91 +1,67 @@
-{-# LANGUAGE ConstraintKinds            #-}
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE PartialTypeSignatures      #-}
-{-# LANGUAGE PolyKinds                  #-}
-{-# LANGUAGE RebindableSyntax           #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE TemplateHaskell            #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE ConstraintKinds       #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE PolyKinds             #-}
+{-# LANGUAGE RebindableSyntax      #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module Tunnel where
 
-import Algebra.Additive as Additive (C(..))
-import qualified Algebra.Ring as Ring (C(..))
 import Control.Monad.Identity
 import Control.Monad.IO.Class
-import Control.Monad.Reader
-import Control.Monad.Random
 import Control.Monad.Writer
-import Data.Type.Natural
+
+import Crypto.Alchemy
+
+import Crypto.Lol                       hiding (Pos (..))
+import Crypto.Lol.Cyclotomic.Tensor.CPP
 
 import Common
-import LinearDec2CRT
-import Crypto.Alchemy.MonadAccumulator
---import Crypto.Alchemy.Interpreter.DedupRescale
-import Crypto.Alchemy.Interpreter.Depth
-import Crypto.Alchemy.Interpreter.Dup
-import Crypto.Alchemy.Interpreter.ErrorRateWriter
-import Crypto.Alchemy.Interpreter.Eval
-import Crypto.Alchemy.Interpreter.KeysHints
-import Crypto.Alchemy.Interpreter.Params
-import Crypto.Alchemy.Interpreter.Print
-import Crypto.Alchemy.Interpreter.PT2CT
-import Crypto.Alchemy.Interpreter.PT2CT.Noise
-import Crypto.Alchemy.Interpreter.Size
-
-import Crypto.Lol hiding (Pos(..))
-import Crypto.Lol.Cyclotomic.Tensor.CPP
-import Crypto.Lol.Types
 
 type Gad = BaseBGad 2
-type Zqs = '[ Zq $(mkTLNatNat 537264001),
-              Zq $(mkTLNatNat 539360641),
-              Zq $(mkTLNatNat 539884801),
-              Zq $(mkTLNatNat 540933121),
-              Zq $(mkTLNatNat 541457281) ] -- good moduli, ~ 30 bits
+
+type Zqs = '[ Zq $(mkTLNatNat 537264001)
+            , Zq $(mkTLNatNat 539360641)
+            , Zq $(mkTLNatNat 539884801)
+            , Zq $(mkTLNatNat 540933121)
+            , Zq $(mkTLNatNat 541457281)
+            ] -- good moduli, ~ 30 bits
+
+-- specialize one of the tunnels, making it polymorphic in only the expr
+tunnel :: _ => expr env (_ -> PNoiseCyc PNZ CT H3 (Zq PP8))
+tunnel = tunnel3
 
 main :: IO ()
 main = do
-  let (exp1a, exp2a) = dup $ linear2 @CT @H0 @H1 @H2 @(Zq PP8) @Identity Proxy
 
-  -- example with rescale de-duplication when tunneling
-  -- print the unapplied PT function
-  putStrLn $ pprint exp1a
-  putStrLn $ show $ eval exp2a 2
+  -- pretty-print the PT function
+  putStrLn $ pprint tunnel
 
+  -- evaluate the PT function on an input
+  print $ eval tunnel 2
 
-  let ptexpr = linear2 @CT @H0 @H1 @H2 @(Zq PP8) @(PNoiseTag PNZ) Proxy :: PT2CT' RngList Zqs Gad _
-  --let ptexpr = linear5 @CT @'[H0,H1,H2,H3,H4,H5] @(Zq PP8) @(PNoiseTag PNZ) Proxy
-  putStrLn $ "PT expression params:\n" ++ (params ptexpr $ linear2 @_ @_ @H1 Proxy)
+  let ptexpr = tunnel :: PT2CT' M'Map Zqs Gad _
+  putStrLn $ "PT expression params:\n" ++ (params ptexpr tunnel)
 
-  pt1 <- getRandom
+  evalKeysHints 3.0 $ do
+    -- compile PT->CT once; interpret the result multiple ways with dup
+    tunnelCT <- pt2ct @M'Map @Zqs @Gad @Int64 tunnel
+    let (tunnelCT1,tmp) = dup tunnelCT
+        (tunnelCT2,tunnelCT3) = dup tmp
 
-  -- compile the up-applied function to CT, then print it out
-  evalKeysHints 8.0 $ do
-    y <- argToReader (pt2ct
-         @RngList
-         @Zqs
-         @Gad
-         @Int64)
-         (linear2 @CT @H0 @H1 @H2 @(Zq PP8) @(PNoiseTag PNZ) Proxy)
-         --(tunn5 @CT @'[H0,H1,H2,H3,H4,H5] @(Zq PP8) @(PNoiseTag PNZ) Proxy)
-    -- compile once, interpret with multiple ctexprs!!
-    let (z1,z2) = dup y
-        (w1,w2) = dup z1
-    liftIO $ putStrLn $ pprint w1
-    liftIO $ putStrLn $ params w1 w2
-    arg1 <- argToReader encrypt pt1
+    liftIO $ putStrLn $ pprint tunnelCT2
+    liftIO $ putStrLn $ params tunnelCT2 tunnelCT3
 
-    z2' <- readerToAccumulator $ writeErrorRates @Int64 @() z2
-    let (_,errors) = runWriter $ eval z2' $ return arg1
-    liftIO $ print $ "Error rates: " ++ show errors
-    --liftIO $ putStrLn $ pprint $ dedupRescale z2
+    ct1 <- encrypt 2
 
-type RngList = '[ '(H0,H0'), '(H1,H1'), '(H2,H2')] -- , '(H3,H3'), '(H4,H4'), '(H5,H5') ]
+    tunnelCT1' <- readerToAccumulator $ writeErrorRates @Int64 tunnelCT1
+    let (_,errors) = runWriter $ eval tunnelCT1' >>= ($ ct1)
+    liftIO $ print $ "Error rates: "
+    liftIO $ mapM_ print errors

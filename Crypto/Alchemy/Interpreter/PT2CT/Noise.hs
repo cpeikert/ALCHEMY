@@ -20,14 +20,8 @@
 
 {-# OPTIONS_GHC -fno-warn-unused-binds  #-}
 
--- should be a hidden/internal module
-module Crypto.Alchemy.Interpreter.PT2CT.Noise
-( PNoise(..), Units(..), PNoiseCyc(..)
-, PNZ, (:+)
-, pNoiseUnit
-, ZqPairsWithUnits, TotalUnits
-, TLNatNat, mkTLNatNat, mkTypeNat)
-where
+-- internal module, so just export everything
+module Crypto.Alchemy.Interpreter.PT2CT.Noise where
 
 import           Algebra.Additive             as Additive (C)
 import           Algebra.Ring                 as Ring (C)
