@@ -45,7 +45,7 @@ type family PreLinearChainM expr m (rngs :: [Factored]) where
   PreLinearChainM expr m '[x] = m
   PreLinearChainM expr m (r ': rngs) = PreLinearChainM expr (PreLinearCyc expr m) rngs
 
--- | Context for a chaini of tunnels using the decToCRT linear function.
+-- | Context for a chain of tunnels using the decToCRT linear function.
 type LinearChainCtx expr m t z2k (rngs :: [Factored]) = LinearChainCtx' expr m t z2k (Reverse rngs)
 
 -- | Helper family for LinearChainCtx. Takes rings in *reverse* order so that
