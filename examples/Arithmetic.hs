@@ -115,7 +115,7 @@ main = do
     liftIO $ putStrLn $ "CT expression params:\n" ++ params w1 w2
     --liftIO $ putStrLn $ "CT expression size: " ++ (show $ size w2)
 
-    z2' <- readerToAccumulator $ writeErrorRates @Int64 @() z2
+    z2' <- readerToAccumulator $ writeErrorRates @Int64 z2
     let (result,errors) = runWriter $ eval z2' >>= ($ arg1) >>= ($ arg2)
     liftIO $ putStrLn "Error rates: "
     liftIO $ mapM_ print errors

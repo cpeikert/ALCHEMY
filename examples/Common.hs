@@ -25,7 +25,7 @@ import Data.Time.Clock
 import System.IO
 import Text.Printf
 
--- a concrete Z_2^e data type
+-- a concrete Z_{2^e} data type
 type Z2E e = ZqBasic ('PP '(Prime2, e)) Int64
 
 -- EAC: these instances need a home
@@ -36,15 +36,18 @@ deriving instance (Ring a) => Ring.C (Identity a)
 argToReader :: (MonadReader v mon) => (v -> a -> mon b) -> a -> mon b
 argToReader f a = flip f a =<< ask
 
-
+-- shorthand for Z_q type
 type Zq q = ZqBasic q Int64
 
+-- plaintext ring indices
 type H0 = F128
 type H1 = F64 * F7
 type H2 = F32 * F7 * F13
 type H3 = F8 * F5 * F7 * F13
 type H4 = F4 * F3 * F5 * F7 * F13
 type H5 = F9 * F5 * F7 * F13
+
+-- corresponding ciphertext ring indices
 type H0' = H0 * F7 * F13
 type H1' = H1 * F13
 type H2' = H2
@@ -52,12 +55,14 @@ type H3' = H3
 type H4' = H4
 type H5' = H5
 
-type PTRngs = '[H0,H1,H2,H3,H4,H5]
+type PTRings = '[H0,H1,H2,H3,H4,H5]
 
-type CTRngs = '[ '(H0,H0'), '(H1,H1'), '(H2,H2'), '(H3,H3'), '(H4,H4'), '(H5,H5') ]
+type CTRings = '[ '(H0,H0'), '(H1,H1'), '(H2,H2'), '(H3,H3'), '(H4,H4'), '(H5,H5') ]
 
 
-type PT2CT' m'map zqs gad a = PT2CT m'map zqs gad Int64 P (StateT Keys (StateT Hints (ReaderT Double IO))) () a
+type PT2CT' m'map zqs gad a 
+  = PT2CT m'map zqs gad Int64 P
+    (StateT Keys (StateT Hints (ReaderT Double IO))) () a
 
 -- timing functionality
 time :: (NFData a, MonadIO m) => String -> a -> m a

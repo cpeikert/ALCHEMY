@@ -58,7 +58,7 @@ type ErrorRateLog = [(String,Double)]
 
 -- | Transform an expression into (a monadic) one that logs error
 -- rates, where the needed keys are obtained from the monad.
-writeErrorRates :: forall z e expr k w a .
+writeErrorRates :: forall z k w expr e a .
   (MonadWriter ErrorRateLog w, MonadReader Keys k)
   => ErrorRateWriter expr z k w e a -> k (expr (KleislifyEnv w e) (w (Kleislify w a)))
 writeErrorRates = unERW

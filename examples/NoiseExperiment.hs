@@ -84,7 +84,7 @@ main = do
     ptin <- liftIO $ getRandom
     arg1 <- argToReader encrypt ptin
 
-    f <- readerToAccumulator $ writeErrorRates @Int64 @() r2
+    f <- readerToAccumulator $ writeErrorRates @Int64 r2
     let (_,errors) = runWriter $ eval f (return arg1)
     liftIO $ print errors
 
@@ -120,7 +120,7 @@ main = do
     ptin <- liftIO $ getRandom
     arg1 <- argToReader encrypt ptin
 
-    f <- readerToAccumulator $ writeErrorRates @Int64 @() r3
+    f <- readerToAccumulator $ writeErrorRates @Int64 r3
     let (_,errors) = runWriter $ eval f (return arg1)
 
     liftIO $ print errors
