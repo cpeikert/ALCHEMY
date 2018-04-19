@@ -27,6 +27,14 @@ import Common
 
 type Gad = BaseBGad 2
 
+type M'Map = '[ '(H0,H0')
+              , '(H1,H1')
+              , '(H2,H2')
+              , '(H3,H3')
+              , '(H4,H4')
+              , '(H5,H5')
+              ]
+
 type Zqs = '[ Zq $(mkTLNatNat 537264001)
             , Zq $(mkTLNatNat 539360641)
             , Zq $(mkTLNatNat 539884801)

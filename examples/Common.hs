@@ -56,14 +56,6 @@ type H3' = H3
 type H4' = H4
 type H5' = H5
 
-type M'Map = '[ '(H0,H0')
-              , '(H1,H1')
-              , '(H2,H2')
-              , '(H3,H3')
-              , '(H4,H4')
-              , '(H5,H5')
-              ]
-
 type PT2CT' m'map zqs gad a
   = PT2CT m'map zqs gad Int64 P
     (StateT Keys (StateT Hints (ReaderT Double IO))) () a
