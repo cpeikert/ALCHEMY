@@ -10,6 +10,7 @@
 {-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
+{-# LANGUAGE TemplateHaskell              #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
@@ -40,17 +41,19 @@ type Z2E e = ZqBasic ('PP '(Prime2, e)) Int64
 -- shorthand for Z_q type
 type Zq q = ZqBasic q Int64
 
+$(mapM fDec [2912, 3640, 5460, 4095, 11648, 5824])
+
 -- plaintext ring indices
 type H0 = F128
-type H1 = F64 * F7
-type H2 = F32 * F7 * F13
-type H3 = F8 * F5 * F7 * F13
-type H4 = F4 * F3 * F5 * F7 * F13
-type H5 = F9 * F5 * F7 * F13
+type H1 = F448 -- F64 * F7
+type H2 = F2912 -- F32 * F7 * F13
+type H3 = F3640 -- F8 * F5 * F7 * F13
+type H4 = F5460 -- F4 * F3 * F5 * F7 * F13
+type H5 = F4095 -- F9 * F5 * F7 * F13
 
 -- corresponding ciphertext ring indices
-type H0' = H0 * F7 * F13
-type H1' = H1 * F13
+type H0' = F11648 -- H0 * F7 * F13
+type H1' = F5824 -- H1 * F13
 type H2' = H2
 type H3' = H3
 type H4' = H4
