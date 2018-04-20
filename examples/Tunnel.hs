@@ -19,8 +19,7 @@ import Control.Monad.IO.Class
 import Control.Monad.Writer
 
 import Crypto.Alchemy
-
-import Crypto.Lol                       hiding (Pos (..))
+import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor.CPP
 
 import Common
@@ -55,8 +54,8 @@ main = do
   -- evaluate the PT function on an input
   print $ eval tunnel 2
 
-  let ptexpr = tunnel :: PT2CT' M'Map Zqs Gad _
-  putStrLn $ "PT expression params:\n" ++ (params ptexpr tunnel)
+  putStrLn $ "PT expression params:\n" ++ 
+    (params (tunnel :: PT2CT' M'Map Zqs Gad _) tunnel)
 
   evalKeysHints 3.0 $ do
     -- compile PT->CT once; interpret the result multiple ways with dup
@@ -64,12 +63,14 @@ main = do
     let (tunnelCT1,tmp) = dup tunnelCT
         (tunnelCT2,tunnelCT3) = dup tmp
 
-    liftIO $ putStrLn $ pprint tunnelCT2
-    liftIO $ putStrLn $ params tunnelCT2 tunnelCT3
+    -- pretty-print and params/size the compiled expression
+    putStrLnIO $ pprint tunnelCT2
+    putStrLnIO $ params tunnelCT2 tunnelCT3
 
     ct1 <- encrypt 2
 
+    -- evaluate with error rates
     tunnelCT1' <- readerToAccumulator $ writeErrorRates @Int64 tunnelCT1
-    let (_,errors) = runWriter $ eval tunnelCT1' >>= ($ ct1)
-    liftIO $ print $ "Error rates: "
+    let (_, errors) = runWriter $ eval tunnelCT1' >>= ($ ct1)
+    putStrLnIO $ "Error rates: "
     liftIO $ mapM_ print errors

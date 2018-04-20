@@ -25,6 +25,8 @@ module Crypto.Alchemy.Interpreter.PT2CT.Noise where
 
 import           Algebra.Additive             as Additive (C)
 import           Algebra.Ring                 as Ring (C)
+import           Algebra.ZeroTestable         as ZeroTestable (C)
+import           Control.Monad.Random
 import           Data.Functor.Trans.Tagged
 import           Data.Singletons.Prelude      hiding ((:+), (:<))
 import           Data.Singletons.Prelude.List (Sum)
@@ -62,10 +64,12 @@ type family UnitsToNat (u :: Units) where
 -- | A cyclotomic ring element tagged by @pNoise =~ -log(noise rate)@.
 newtype PNoiseCyc (p :: PNoise) t m r = PNC { unPNC :: Cyc t m r }
 
-deriving instance (Eq         (Cyc t m r)) => Eq         (PNoiseCyc p t m r)
-deriving instance (Show       (Cyc t m r)) => Show       (PNoiseCyc p t m r)
-deriving instance (Additive.C (Cyc t m r)) => Additive.C (PNoiseCyc p t m r)
-deriving instance (Ring.C     (Cyc t m r)) => Ring.C     (PNoiseCyc p t m r)
+deriving instance (Eq             (Cyc t m r)) => Eq         (PNoiseCyc p t m r)
+deriving instance (Show           (Cyc t m r)) => Show       (PNoiseCyc p t m r)
+deriving instance (Random         (Cyc t m r)) => Random     (PNoiseCyc p t m r)
+deriving instance (Additive.C     (Cyc t m r)) => Additive.C (PNoiseCyc p t m r)
+deriving instance (Ring.C         (Cyc t m r)) => Ring.C     (PNoiseCyc p t m r)
+deriving instance (ZeroTestable.C (Cyc t m r)) => ZeroTestable.C (PNoiseCyc p t m r)
 
 -- CJP: why should this be defined here?
 type family Modulus zq :: k

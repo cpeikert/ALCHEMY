@@ -60,6 +60,9 @@ type PT2CT' m'map zqs gad a
   = PT2CT m'map zqs gad Int64 P
     (StateT Keys (StateT Hints (ReaderT Double IO))) () a
 
+putStrLnIO :: MonadIO m => String -> m ()
+putStrLnIO = liftIO . putStrLn
+
 -- | Linear function mapping the decoding basis (relative to the
 -- largest common subring) to (the same number of) CRT slots.
 decToCRT :: forall r s t zp e . -- r first for convenient type apps
