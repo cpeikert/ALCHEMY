@@ -31,7 +31,6 @@ instance (MonadAccumulator w m) => MonadAccumulator w (StateT w' m) where
   accumulate = lift . accumulate
 
 -- EAC: (Monad m) *should* be implied by (MonadState w m), but GHC can't figure that out...
--- EAC: See Environment.hs for a way to avoid overlapping instances (just remove the pragma and the instance above this comment)
 
 instance {-# OVERLAPPING #-} (Monoid w, Monad m) =>
   MonadAccumulator w (StateT w m) where
