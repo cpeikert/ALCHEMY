@@ -69,8 +69,13 @@ then_ = lam $ \x -> lam $ \y -> bind_ $: var x $: (const_ $: var y)
 
 infixl 1 >>:
 (>>:) :: (Monad_ expr, Monad m) =>
-          expr e (m a) -> expr e (m b) -> expr e (m b)
+         expr e (m a) -> expr e (m b) -> expr e (m b)
 x >>: y = then_ $: x $: y
+
+infixl 1 >=>:
+(>=>:) :: (Monad_ expr, Monad m) => 
+          expr e (a -> m b) -> expr e (b -> m c) -> expr e (a -> m c)
+f >=>: g = lam $ \x -> var f $: var x >>=: var g
 
 return_ :: (Monad_ expr, Monad m) => expr e (a -> m a)
 return_ = pure_
