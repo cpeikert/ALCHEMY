@@ -1,39 +1,26 @@
-{-# LANGUAGE ConstraintKinds       #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE KindSignatures        #-}
 {-# LANGUAGE PartialTypeSignatures #-}
-{-# LANGUAGE RebindableSyntax      #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE UndecidableInstances  #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module HomomRLWR where
 
-import Crypto.Lol
-import Crypto.Lol.Cyclotomic.Tensor.CPP
-import Crypto.Lol.Types
-
-import Common
-import RescaleTree
-
-import Crypto.Alchemy
-import Crypto.Alchemy.Language.RescaleTree
-
-import Control.Monad.Identity
 import Control.Monad.Random
-import Control.Monad.Reader
-import Control.Monad.State
 import Control.Monad.Writer
 import Data.Type.Natural hiding (Nat(S))
 
+import Crypto.Lol
+import Crypto.Lol.Cyclotomic.Tensor.CPP
+import Crypto.Lol.Types
+import Crypto.Alchemy
+import Crypto.Alchemy.Language.RescaleTree
+
+import Common
 
 type M'Map = '[ '(H0,H0')
               , '(H1,H1')

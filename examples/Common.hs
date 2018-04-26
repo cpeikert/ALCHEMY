@@ -1,31 +1,26 @@
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE PartialTypeSignatures      #-}
-{-# LANGUAGE PolyKinds                  #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeOperators              #-}
-{-# LANGUAGE TemplateHaskell              #-}
+{-# LANGUAGE ExplicitForAll        #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE NoImplicitPrelude     #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE PolyKinds             #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE TemplateHaskell       #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module Common where
 
 import Control.DeepSeq
-import Control.Monad.Identity
-import Control.Monad.Reader
-import Control.Monad.State
+import Control.Monad.IO.Class
 
-import Crypto.Alchemy.Interpreter.KeysHints
-import Crypto.Alchemy.Interpreter.Print
 import Crypto.Alchemy.Interpreter.PT2CT
 import Crypto.Alchemy.Language.Lambda
 import Crypto.Alchemy.Language.LinearCyc
+
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor         (TElt)
 import Crypto.Lol.Types
