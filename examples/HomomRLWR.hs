@@ -22,24 +22,9 @@ import Crypto.Lol.Cyclotomic.Tensor.CPP
 import Crypto.Lol.Types
 
 import Common
-import LinearDec2CRT
 import RescaleTree
 
-import Crypto.Alchemy.MonadAccumulator
---import Crypto.Alchemy.Interpreter.DedupRescale
-import Crypto.Alchemy.Interpreter.Depth
-import Crypto.Alchemy.Interpreter.Dup
-import Crypto.Alchemy.Interpreter.ErrorRateWriter
-import Crypto.Alchemy.Interpreter.Eval
-import Crypto.Alchemy.Interpreter.KeysHints
-import Crypto.Alchemy.Interpreter.Params
-import Crypto.Alchemy.Interpreter.Print
-import Crypto.Alchemy.Interpreter.PT2CT
-import Crypto.Alchemy.Interpreter.PT2CT.Noise
-import Crypto.Alchemy.Interpreter.Size
-import Crypto.Alchemy.Language.Arithmetic
-import Crypto.Alchemy.Language.Lambda
-import Crypto.Alchemy.Language.LinearCyc
+import Crypto.Alchemy
 import Crypto.Alchemy.Language.RescaleTree
 
 import Control.Monad.Identity
@@ -50,6 +35,13 @@ import Control.Monad.Writer
 import Data.Type.Natural hiding (Nat(S))
 
 
+type M'Map = '[ '(H0,H0')
+              , '(H1,H1')
+              , '(H2,H2')
+              , '(H3,H3')
+              , '(H4,H4')
+              , '(H5,H5')
+              ]
 
 type K = P3
 type Gad = TrivGad
@@ -62,93 +54,98 @@ type Zq4 = Zq $(mkTLNatNat 7338241)
 type Zq5 = Zq $(mkTLNatNat 1522160641) -- fit 5 hops: > (last mul)
 type Zq6 = Zq $(mkTLNatNat 1529498881) -- extra for KS: big
 --type Zq7 = Zq $(mkTLNatNat 12579841)
-type ZqList = '[Zq1,Zq2,Zq3,Zq4,Zq5] -- ,Zq6] --,Zq7]
+type ZqList = '[Zq1,Zq2,Zq3,Zq4,Zq5,Zq6] --,Zq7]
 
-type RescaleZqs = '[Zq1,Zq2,Zq3,Zq4] -- ,Zq5]
+type RescaleZqs = '[Zq1,Zq2,Zq3,Zq4,Zq5]
+
+tunnel :: _ => expr env (_ -> PNoiseCyc ('PN N0) CT H5 (Z2E K))
+tunnel = tunnel5
 
 main :: IO ()
 main = do
 
-  putStrLn "RescaleTree:"
-  let (ex01,ex02) = dup $ untag $ rescaleTreePow2_ @(PNoiseTag ('PN N0) (Cyc CT H5 (ZqBasic PP2 Int64))) @K
+
+ putStrLn "RescaleTree:"
+  let (ex01,ex02) = dup $ untag $ rescaleTreePow2_ @(PNoiseCyc ('PN N0) CT H5 (ZqBasic PP2 Int64)) @K
   putStrLn $ "PT RescaleTree: " ++ pprint ex01
   putStrLn $ "PT RescaleTree size: " ++ show (size ex02)
 
+
   -- EAC: can remove type sig and use ptexpr as the argument to pt2ct below (which infers the signature),
   -- but this requires compiling PT2CT which takes a long time.
-  let (ptrescale :: PT2CT' RescaleM'Map RescaleZqs Gad _, paramsexpr1) = dup $ untag $ rescaleTreePow2_ @(PNoiseTag ('PN N0) (Cyc CT H5 (ZqBasic PP2 Int64))) @K
+  let (ptrescale :: PT2CT' RescaleM'Map RescaleZqs Gad _, paramsexpr1) = dup $ untag $ rescaleTreePow2_ @(PNoiseCyc ('PN N0) CT H5 (ZqBasic PP2 Int64)) @K
   putStrLn $ "PT expression params:\n" ++ params ptrescale paramsexpr1
 
   putStrLn "Tunnel:"
   -- EAC: 'Z noise is important here so that we can print the composition of P expr
-  let (ex11,ex12) = dup $ linear5 @CT @PTRings @(Z2E K) @(PNoiseTag ('PN N0)) Proxy
+  let (ex11,ex12) = dup $ tunnel 
   putStrLn $ "PT Tunnel: " ++ pprint ex11
   putStrLn $ "PT Tunnel size: " ++ show (size ex12)
 
   -- EAC: This needs to have a non-zero output pNoise level!!
   -- EAC: can remove type sig and use ptexpr as the argument to pt2ct below (which infers the signature),
   -- but this requires compiling PT2CT which takes a long time.
-  let (pttunnel :: PT2CT' CTRings ZqList Gad _, paramsexpr2) = dup $ linear5 @CT @PTRings @(Z2E K) @(PNoiseTag ('PN N6)) Proxy
+  let (pttunnel :: PT2CT' M'Map ZqList Gad _, paramsexpr2) = dup $ tunnel
   putStrLn $ "PT expression params:\n" ++ params pttunnel paramsexpr2
 
   putStrLn $ "PT Composition: " ++ pprint (ex01 .: ex11)
   putStrLn $ "PT Composition size:" ++ show (size (ex02 .: ex12))
-{-
+
   -- compile the un-applied function to CT, then print it out
   evalKeysHints 8.0 $ do
 
     roundTree <- timeIO "Compiling rounding tree..." $
-                   argToReader (pt2ct
+                   pt2ct
                     @RescaleM'Map
                     @RescaleZqs
                     @Gad
-                    @Int64)
-                    (untag $ rescaleTreePow2_ @(PNoiseTag ('PN N0) (Cyc CT H5 (ZqBasic PP2 Int64))) @K)
+                    @Int64
+                    (untag $ rescaleTreePow2_ @(PNoiseCyc ('PN N10) CT H5 (ZqBasic PP2 Int64)) @K)
 
     tunn <- timeIO "Compiling tunnel sequence..." $
-               argToReader (pt2ct
-                  @CTRings
+               pt2ct
+                  @M'Map
                   @ZqList
                   @Gad
-                  @Int64)
-                  (linear5 @CT @PTRings @(Z2E K) @(PNoiseTag ('PN N11)) Proxy)
+                  @Int64
+                  tunnel
 
-    let (r1,r)  = dup roundTree
-        (r2,r') = dup r
-        (r3,r'') = dup r'
-        (r4,r5) = dup r''
-        (s1,s)  = dup tunn
-        (s2,s') = dup s
-        (s3,s'') = dup s'
-        (s4,s5) = dup s''
+    putStrLnIO $ show $ size (roundTree .: tunn)
+    {-let (r1,r)  = dup roundTree-}
+        {-(r2, r3) = dup r-}
+        {-(s1,s)  = dup tunn-}
+        {-(s2, s3) = dup s-}
+        {-(s2,s') = dup s-}
+        {-(s3,s'') = dup s'-}
+        {-(s4,s5) = dup s''-}
 
-    liftIO $ putStrLn "CT Tunneling:"
-    liftIO $ putStrLn $ pprint s1
-    liftIO $ putStrLn $ params s1 s2
-    liftIO $ putStrLn $ "Size: " ++ (show $ size s5)
 
-    liftIO $ putStrLn "CT Rounding Tree:"
-    liftIO $ putStrLn $ pprint r1
-    liftIO $ putStrLn $ params r1 r2
-    liftIO $ putStrLn $ "Size: " ++ (show $ size r5)
+    {-putStrLnIO "CT Tunneling:"-}
+    {-putStrLnIO $ pprint tunn-}
+    {-putStrLnIO $ params s1 s2-}
+    {-putStrLnIO $ "Size: " ++ (show $ size s3)-}
 
-    liftIO $ putStrLn "CT Composition:"
-    liftIO $ putStrLn $ pprint (r1 .: s1)
-    liftIO $ putStrLn $ "Size: " ++ (show $ size (r5 .: s5))
+    {-putStrLnIO "CT Rounding Tree:"-}
+    {-putStrLnIO $ pprint r1-}
+    {-putStrLnIO $ params r1 r2-}
+    {-putStrLnIO $ "Size: " ++ (show $ size r3)-}
 
-    ptin <- liftIO $ getRandom
-    arg1 <- argToReader encrypt ptin
+    {-liftIO $ putStrLn "CT Composition:"-}
+    {-liftIO $ putStrLn $ pprint (r1 .: s1)-}
+    {-liftIO $ putStrLn $ "Size: " ++ (show $ size (r3 .: s3))-}
 
-    timeIO "Evaluating with error rates..." $ do
-      f <- readerToAccumulator $ writeErrorRates @Int64 r3
-      g <- readerToAccumulator $ writeErrorRates @Int64 s3
-      let (_,errors) = runWriter $ eval (f .: g) (return arg1)
-      liftIO $ print errors
+    {-arg1 <- getRandom >>= encrypt-}
 
-    _ <- time "Evaluating without error rates..." $ eval (r4 .: s4) arg1
+    {-timeIO "Evaluating with error rates..." $ do-}
+      {-{-f <- readerToAccumulator $ writeErrorRates @Int64 r3-}-}
+      {-g <- readerToAccumulator $ writeErrorRates @Int64 s3-}
+      {-let (_,errors) = runWriter $ eval g >>= ($ arg1)-}
+      {-liftIO $ print errors-}
 
-    liftIO $ putStrLn "Done."
--}
+    {-_ <- time "Evaluating without error rates..." $ eval (r4 .: s4) arg1-}
+
+    {-liftIO $ putStrLn "Done."-}
+
 
 {-
 
