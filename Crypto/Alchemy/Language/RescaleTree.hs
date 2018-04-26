@@ -56,7 +56,7 @@ type family PreRescaleTreePow2 expr k r2 where
 -- mod-@2^{k+1}@ CRT slots hold \( \Z_{2^{k+1}} \) values (otherwise,
 -- the behavior is undefined).
 
-rescaleTreePow2_ :: forall r2 k expr e . (RescaleTreePow2Ctx expr k r2)
+rescaleTreePow2_ :: forall k r2 expr e . (RescaleTreePow2Ctx expr k r2)
   => Tagged k (expr e (PreRescaleTreePow2 expr k r2 -> r2))
 rescaleTreePow2_ = case (sing :: SPos k) of
   SO     -> tag $ lamDB v0

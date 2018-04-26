@@ -32,8 +32,11 @@ import Data.Type.Natural
 
 newtype Params (expr :: * -> * -> *) e a = P String
 
-params :: expr () a -> Params expr () a -> String
-params _ (P str) = str
+params :: Params expr () a -> String
+params (P str) = removeBlankLines str
+  where removeBlankLines = foldr dedupLn ""
+        dedupLn '\n' xs | null xs || head xs == '\n' = xs
+        dedupLn x xs = x:xs
 
 instance Lambda (Params expr) where
   lamDB (P f) = P f

@@ -41,8 +41,10 @@ type Zqs = '[ Zq $(mkTLNatNat 537264001)
             , Zq $(mkTLNatNat 541457281)
             ] -- good moduli, ~ 30 bits
 
+type PT = PNoiseCyc PNZ CT H3 (Zq PP8)
+
 -- specialize one of the tunnels, making it polymorphic in only the expr
-tunnel :: _ => expr env (_ -> PNoiseCyc PNZ CT H3 (Zq PP8))
+tunnel :: _ => expr env (_ -> PT)
 tunnel = tunnel3
 
 main :: IO ()
@@ -54,8 +56,8 @@ main = do
   -- evaluate the PT function on an input
   print $ eval tunnel 2
 
-  putStrLn $ "PT expression params:\n" ++ 
-    (params (tunnel :: PT2CT' M'Map Zqs Gad _) tunnel)
+  putStrLn "PT expression params:"
+  putStrLn $ params @(PT2CT M'Map Zqs _ _ _ _) tunnel
 
   evalKeysHints 3.0 $ do
     -- compile PT->CT once; interpret the result multiple ways with dup
@@ -65,7 +67,8 @@ main = do
 
     -- pretty-print and params/size the compiled expression
     putStrLnIO $ pprint tunnelCT2
-    putStrLnIO $ params tunnelCT2 tunnelCT3
+    putStrLnIO "CT expression params:"
+    putStrLnIO $ params tunnelCT3
 
     ct1 <- encrypt 2
 

@@ -13,10 +13,10 @@
 
 module Arithmetic where
 
-import Control.Applicative
-import Control.Monad.Random
-import Control.Monad.Writer
 import Data.Maybe
+import Control.Monad.Writer
+import Control.Monad.Random
+import Data.Functor ((<$>))
 
 import Crypto.Alchemy
 import Crypto.Lol
@@ -35,7 +35,6 @@ type M'Map = '[ '(F4, F512) ]
 type Zqs = '[ Zq $(mkTLNatNat 268440577)
             , Zq $(mkTLNatNat 8392193)
             , Zq $(mkTLNatNat 1073750017)
-            -- ,1073753089)
             ]
 
 main :: IO ()
@@ -50,14 +49,14 @@ main = do
   let ptresult = eval addMul pt1 pt2
   putStrLn $ "PT evaluation result: " ++ show ptresult
 
-  putStrLn $ "PT expression params:\n" ++
-    params (addMul :: PT2CT' M'Map Zqs TrivGad _) addMul
+  putStrLn $ "PT expression params:\n" ++ params @(PT2CT M'Map Zqs _ _ _ _) addMul
 
   evalKeysHints (3.0 :: Double) $ do
     -- compile PT->CT once; interpret multiple times using dup
     ct <- pt2ct @M'Map @Zqs @TrivGad @Int64 addMul
-    let (ct1,tmp) = dup ct
-        (ct2,ct3) = dup tmp
+    let (ct1,tmp)  = dup ct
+        (ct2,tmp') = dup tmp
+        (ct3,ct4)  = dup tmp'
 
     -- encrypt the arguments
     arg1 <- encrypt $ unPNC pt1
@@ -65,8 +64,8 @@ main = do
 
     -- pretty-print and params/size the compiled expression
     putStrLnIO $ "CT expression: " ++ pprint ct2
-    putStrLnIO $ "CT expression params:\n" ++ params ct2 ct3
-    --putStrLnIO $ "CT expression size: " ++ (show $ size ct3)
+    putStrLnIO $ "CT expression params:\n" ++ params ct3
+    putStrLnIO $ "CT expression size: " ++ (show $ size ct4)
 
     -- evaluate with error rates
     ct1' <- readerToAccumulator $ writeErrorRates @Int64 ct1

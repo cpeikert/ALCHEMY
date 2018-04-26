@@ -59,12 +59,11 @@ type H3' = H3
 type H4' = H4
 type H5' = H5
 
-type PT2CT' m'map zqs gad a
-  = PT2CT m'map zqs gad Int64 P
-    (StateT Keys (StateT Hints (ReaderT Double IO))) () a
-
 putStrLnIO :: MonadIO m => String -> m ()
 putStrLnIO = liftIO . putStrLn
+
+printIO :: (MonadIO m, Show a) => a -> m ()
+printIO = liftIO . print
 
 -- | Linear function mapping the decoding basis (relative to the
 -- largest common subring) to (the same number of) CRT slots.
