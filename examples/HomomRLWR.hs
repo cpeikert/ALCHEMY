@@ -72,7 +72,7 @@ main = do
     putStrLnIO "CT expression params:"
     putStrLnIO $ params h3
 
-    arg1 <- getRandom >>= encrypt
+    arg1 <- encrypt =<< getRandom
 
     timeIO "Evaluating with error rates..." $ do
       f <- readerToAccumulator $ writeErrorRates @Int64 h4
