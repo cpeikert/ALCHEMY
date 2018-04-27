@@ -12,7 +12,6 @@ module HomomRLWR where
 
 import Control.Monad.Random
 import Control.Monad.Writer
-import Data.Type.Natural hiding (Nat(S))
 
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor.CPP
