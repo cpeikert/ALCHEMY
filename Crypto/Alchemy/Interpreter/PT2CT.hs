@@ -70,9 +70,7 @@ newtype PT2CT
 -- variance over \( R^\vee \) is \( r / \sqrt{\varphi(m')} \).)
 pt2ct :: forall m'map zqs gad z a ctex e mon .
       -- this forall is for use with TypeApplications at the top level
-  (MonadAccumulator Keys mon, MonadAccumulator Hints mon,
-   MonadReader Double mon) =>
-  PT2CT m'map zqs gad z ctex mon e a
+  (KeysAccumulatorCtx Double mon) => PT2CT m'map zqs gad z ctex mon e a
   -- | plaintext expression
   -> mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a))
  -- | (monadic) ctex expression
@@ -81,9 +79,8 @@ pt2ct = unPC
 -- | Encrypt a plaintext (using the given scaled variance) under an
 -- appropriate key (from the monad), generating one if necessary.
 encrypt :: forall mon t m m' zp zq z .
-  (MonadRandom mon, MonadAccumulator Keys mon, MonadReader Double mon,
    -- CJP: DON'T LOVE THIS CHOICE OF z HERE; IT'S ARBITRARY
-   EncryptCtx t m m' z zp zq, z ~ LiftOf zp, GenSKCtx t m' z Double,
+   (KeysAccumulatorCtx Double mon, EncryptCtx t m m' z zp zq, z ~ LiftOf zp, GenSKCtx t m' z Double,
    Typeable t, Typeable m', Typeable z)
   => Cyc t m zp                  -- | plaintext
   -> mon (CT m zp (Cyc t m' zq)) -- | (monadic) ciphertext
@@ -162,8 +159,7 @@ type PT2CTMulCtx'' p zqs gad hintzq ctex t z mon m' ctin hintct =
    KSHintCtx gad t m' z hintzq,
    GenSKCtx t m' z Double,
    Typeable (Cyc t m' z), Typeable (KSQuadCircHint gad (Cyc t m' hintzq)),
-   MonadRandom mon, MonadReader Double mon,
-   MonadAccumulator Keys mon, MonadAccumulator Hints mon)
+   KeysAccumulatorCtx Double mon, MonadAccumulator Hints mon)
 
 instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
   => Mul (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t m zp) where
@@ -202,8 +198,7 @@ type PT2CTLinearCtx ctex mon m'map zqs p t e r s r' s' z zp zq zqin gad =
   PT2CTLinearCtx' ctex mon m'map zqs p t e r s r' s' z zp zq zqin (PNoise2KSZq gad zqs p) gad
 
 type PT2CTLinearCtx' ctex mon m'map zqs p t e r s r' s' z zp zq zqin hintzq gad =
-  (SHE ctex, Lambda ctex, Fact s',
-   MonadAccumulator Keys mon, MonadRandom mon, MonadReader Double mon,
+  (SHE ctex, Lambda ctex, Fact s', KeysAccumulatorCtx Double mon,
    -- output ciphertext type
    CT s zp (Cyc t s' zq)   ~ Cyc2CT m'map zqs (PNoiseCyc p t s zp),
    -- input ciphertext type
