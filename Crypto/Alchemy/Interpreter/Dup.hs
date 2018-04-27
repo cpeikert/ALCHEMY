@@ -32,6 +32,9 @@ instance (Add ex1 a, Add ex2 a) => Add (Dup ex1 ex2) a where
   add_ = Dup add_ add_
   neg_ = Dup neg_ neg_
 
+instance (BasicMul ex1 a, BasicMul ex2 a) => BasicMul (Dup ex1 ex2) a where
+  basicMul_ = Dup basicMul_ basicMul_
+
 instance (Mul ex1 a, Mul ex2 a, PreMul ex1 a ~ PreMul ex2 a) =>
   Mul (Dup ex1 ex2) a where
 

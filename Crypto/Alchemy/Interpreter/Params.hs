@@ -61,6 +61,12 @@ instance (SingI (p :: Nat)) => Add (Params expr) (PNoiseCyc ('PN p) t m r) where
 instance (SingI (p :: Nat)) => AddLit (Params expr) (PNoiseCyc ('PN p) t m r) where
   addLit_ _ = showPNoise @p "addLit"
 
+instance (ShowType zq) => BasicMul (Params expr) (CT m zp (Cyc t m' zq)) where
+  basicMul_ = showZq @zq "basicMul"
+
+instance (SingI (p :: Nat)) => BasicMul (Params expr) (PNoiseCyc ('PN p) t m r) where
+  basicMul_ = showPNoise @p "basicMul"
+
 instance (ShowType zq) => Mul (Params expr) (CT m zp (Cyc t m' zq)) where
   type PreMul (Params expr) (CT m zp (Cyc t m' zq)) = (CT m zp (Cyc t m' zq))
   mul_ = showZq @zq "mul"
@@ -69,6 +75,7 @@ instance (SingI (p :: Nat)) => Mul (Params expr) (PNoiseCyc ('PN p) t m r) where
   type PreMul (Params expr) (PNoiseCyc ('PN p) t m r) = 
     PreMul expr (PNoiseCyc ('PN p) t m r)
   mul_ = showPNoise @p "mul"
+
 
 instance (SingI (p :: Nat)) => Div2 (Params expr) (PNoiseCyc ('PN p) t m r) where
   type PreDiv2 (Params expr) (PNoiseCyc ('PN p) t m r) =

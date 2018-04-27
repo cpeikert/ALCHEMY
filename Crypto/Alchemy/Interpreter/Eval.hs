@@ -62,9 +62,12 @@ instance Additive.C a => Add E a where
 instance Additive.C a => AddLit E a where
   addLit_ x = pureE (x +)
 
-instance Ring.C a => Mul E a where
+instance Ring.C a => BasicMul E a where
+  basicMul_ = pureE (*)
+
+instance BasicMul E a => Mul E a where
   type PreMul E a = a
-  mul_ = pureE (*)
+  mul_ = basicMul_
 
 instance Ring.C a => MulLit E a where
   mulLit_ x = pureE (x *)

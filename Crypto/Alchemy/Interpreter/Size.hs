@@ -32,6 +32,9 @@ instance Add S a where
 instance AddLit S a where
   addLit_ _ = S 1
 
+instance BasicMul S a where
+  basicMul_ = S 1
+
 instance Mul S a where
   type PreMul S a = a
   mul_ = S 1

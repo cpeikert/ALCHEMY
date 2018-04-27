@@ -155,7 +155,7 @@ type PT2CTMulCtx' m zp p zqs gad hintzq ctex t z mon m' =
     (CT m zp (Cyc t m' hintzq))
 
 type PT2CTMulCtx'' p zqs gad hintzq ctex t z mon m' ctin hintct =
-  (Lambda ctex, Mul ctex ctin, PreMul ctex ctin ~ ctin, SHE ctex,
+  (Lambda ctex, BasicMul ctex ctin, SHE ctex,
    ModSwitchCtx ctex ctin hintzq,              -- zqin -> hint zq
    ModSwitchCtx ctex hintct (PNoise2Zq zqs p), -- hint zq -> zq (final modulus)
    KeySwitchQuadCtx ctex hintct gad,
@@ -182,7 +182,7 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
     lamM $ \x -> lamM $ \y -> do
         hint :: KSQuadCircHint gad (Cyc t m' hintzq) <-
           getQuadCircHint (Proxy::Proxy z)
-        let prod = (var x *: y :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin))))
+        let prod = (var x **: y :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin))))
          in return $ modSwitch_ $: (keySwitchQuad_ hint $: (modSwitch_ $: prod))
 
 instance (SHE ctex, Applicative mon,

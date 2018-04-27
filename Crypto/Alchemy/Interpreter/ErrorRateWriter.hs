@@ -111,6 +111,13 @@ instance (WriteErrorCtx expr z k w ct t m m' zp zq, Add expr ct) =>
   add_ = ERW $ liftWriteError2 (Proxy::Proxy z) "add_" add_
   neg_ = ERW $ liftWriteError (Proxy::Proxy z) "neg_" neg_
 
+instance (WriteErrorCtx expr z k w ct t m m' zp zq, BasicMul expr ct,
+          -- needed because PreMul could take some crazy form
+          Kleislify w (PreMul expr ct) ~ ct)
+         => BasicMul (ErrorRateWriter expr z k w) (CT m zp (Cyc t m' zq)) where
+
+  basicMul_ = ERW $ liftWriteError2 (Proxy::Proxy z) "basicMul_" basicMul_
+
 instance (WriteErrorCtx expr z k w ct t m m' zp zq, Mul expr ct,
           -- needed because PreMul could take some crazy form
           Kleislify w (PreMul expr ct) ~ PreMul expr ct)

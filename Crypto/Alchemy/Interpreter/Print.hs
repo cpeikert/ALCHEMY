@@ -65,6 +65,9 @@ instance Mul P a where
   type PreMul P a = a
   mul_ = pureP "mul"
 
+instance BasicMul P a where
+  basicMul_ = pureP "basicMul"
+
 instance Show a => MulLit P a where
   mulLit_ a = pureP $ "mulLit (" ++ show a ++ ")"
 

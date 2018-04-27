@@ -46,38 +46,13 @@ homomRLWR =  (untag $ rescaleTreePow2_ @K) .: tunnel5
 
 main :: IO ()
 main = do
-  putStrLn "PT HomomRLWR:" 
-  putStrLn $ pprint homomRLWR
-
-  putStrLn "PT HomomRLWR size:" 
-  print $ size homomRLWR
-
-  putStrLn "PT expression params:"
-  putStrLn $ params @(PT2CT M'Map Zqs _ _ _ _) homomRLWR
-
-  evalKeysHints 3.0 $ do
+  evalKeysHints 8.0 $ do
     h <- pt2ct @M'Map @Zqs @Gad @Int64 homomRLWR
-    let (h1,t1) = dup h
-        (h2,t2) = dup t1
-        (h3,t3) = dup t2
-        (h4,h5) = dup t3
-        
-    putStrLnIO "CT HomomRLWR:" 
-    putStrLnIO $ pprint h1
-
-    putStrLnIO "CT HomomRLWR size:"
-    printIO $ size h2
-
-    putStrLnIO "CT expression params:"
-    putStrLnIO $ params h3
-
     arg1 <- encrypt =<< getRandom
 
     timeIO "Evaluating with error rates..." $ do
-      f <- readerToAccumulator $ writeErrorRates @Int64 h4
-      let (_,errors) = runWriter $ eval f >>= ($ arg1)
-      printIO errors
-
-    timeIO "Evaluating without error rates..." $ printIO $ eval h5 arg1
-
-  putStrLn "Done"
+      f <- readerToAccumulator $ writeErrorRates @Int64 h
+      let (result,errors) = runWriter $ eval f >>= ($ arg1)
+      printIO result
+      putStrLnIO "Errors: "
+      liftIO $ mapM_ print errors

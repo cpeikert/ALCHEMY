@@ -32,6 +32,15 @@ infixl 6 >+:
 (>+:) :: (AddLit expr a, Lambda expr) => a -> expr e a -> expr e a
 a >+: b = addLit_ a $: b
 
+-- | Basic Multiplication. Input type must be identical to output type.
+class BasicMul expr a where
+  basicMul_ :: expr e (a -> a -> a)
+
+infixl 7 **:
+(**:) :: (BasicMul expr a, Lambda expr) => expr e a -> expr e a -> expr e a
+a **: b = basicMul_ $: a $: b
+
+
 -- | Multiplication. (Note that the input type @b@ may differ from the
 -- output type @a@.)
 
