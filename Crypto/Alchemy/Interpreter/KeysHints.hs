@@ -9,7 +9,7 @@
 
 -- | Functions for looking up/generating keys and key-switch hints.
 module Crypto.Alchemy.Interpreter.KeysHints
-( Keys, Hints, KeysHints, KeysNoiseCtx, lookupKey -- not lookupHint, which is too general
+( Keys, Hints, KeysHintsT, KeysAccumulatorCtx, lookupKey -- not lookupHint, which is too general
 , getKey, getQuadCircHint, getTunnelHint
 , runKeysHints, evalKeysHints
 )
@@ -20,6 +20,8 @@ import Control.Monad.Reader
 import Control.Monad.State
 
 import Algebra.Algebraic
+import qualified Algebra.ToRational as ToRational
+import qualified Algebra.Algebraic as Algebraic
 import Data.Dynamic
 import Data.Functor
 import Data.Maybe   (mapMaybe)
@@ -39,17 +41,17 @@ newtype Keys = Keys { unKeys :: [Dynamic] } deriving (Monoid, Show)
 newtype Hints = Hints { unHints :: [Dynamic] } deriving (Monoid, Show)
 
 -- | Type synonym for a standard Keys/Hints accumulator
-type KeysHints v m a = StateT Keys (StateT Hints (ReaderT v m)) a
+type KeysHintsT v m a = StateT Keys (StateT Hints (ReaderT v m)) a
 
-type KeysNoiseCtx v mon = (Algebraic v, MonadReader v mon, MonadRandom mon, MonadAccumulator Keys mon)
+type KeysAccumulatorCtx v mon = (Algebraic.C v, MonadReader v mon, MonadRandom mon, MonadAccumulator Keys mon)
 
 -- | Convenience function.
-runKeysHints :: (Functor m) => v -> KeysHints v m a -> m (a, Keys, Hints)
+runKeysHints :: (Functor m) => v -> KeysHintsT v m a -> m (a, Keys, Hints)
 runKeysHints v = ((\((a,b),c) -> (a,b,c)) <$>) .
   flip runReaderT v . runAccumulatorT . runAccumulatorT
 
 -- | Output the output of the computation, discarding the accumulated result.
-evalKeysHints :: (Functor m) => v -> KeysHints v m a -> m a
+evalKeysHints :: (Functor m) => v -> KeysHintsT v m a -> m a
 evalKeysHints v = ((\(a,_,_) -> a) <$>) . runKeysHints v
 
 lookupDyn :: (Typeable a) => [Dynamic] -> Maybe a
@@ -91,8 +93,7 @@ svar pm' r = r / (sqrt $ fromIntegral $ proxy totientFact pm')
 
 -- | Lookup a key, generating one if it doesn't exist, and return it.
 getKey :: forall z t m' mon v. -- z first for type applications
-  (Algebraic v, MonadReader v mon, MonadAccumulator Keys mon,
-   MonadRandom mon, GenSKCtx t m' z v, Typeable (Cyc t m' z))
+  (KeysAccumulatorCtx v mon, GenSKCtx t m' z v, Typeable (Cyc t m' z))
   => mon (SK (Cyc t m' z))
 getKey = readerToAccumulator lookupKey >>= \case
   (Just t) -> return t
@@ -104,7 +105,7 @@ getKey = readerToAccumulator lookupKey >>= \case
 -- return it.
 getQuadCircHint :: forall v mon t z gad m' zq' .
   (-- constraints for getKey
-   KeysNoiseCtx v mon, MonadAccumulator Hints mon, GenSKCtx t m' z v, Typeable (Cyc t m' z),
+   KeysAccumulatorCtx v mon, MonadAccumulator Hints mon, GenSKCtx t m' z v, Typeable (Cyc t m' z),
    -- constraints for lookup
    Typeable (KSQuadCircHint gad (Cyc t m' zq')),
    -- constraints for ksQuadCircHint
@@ -122,7 +123,7 @@ getQuadCircHint _ = readerToAccumulator lookupHint >>= \case
 -- EAC: https://ghc.haskell.org/trac/ghc/ticket/13490
 -- | Generate a hint for tunneling. The result is /not/ memoized.
 getTunnelHint :: forall gad zq mon t e r s e' r' s' z zp v.
-  (KeysNoiseCtx v mon, GenSKCtx t r' z v, Typeable (Cyc t r' z),
+  (KeysAccumulatorCtx v mon, GenSKCtx t r' z v, Typeable (Cyc t r' z),
    GenSKCtx t s' z v, Typeable (Cyc t s' z),
    TunnelHintCtx t e r s e' r' s' z zp zq gad)
   => Proxy z -> Linear t zp e r s
