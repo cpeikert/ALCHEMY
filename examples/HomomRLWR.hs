@@ -56,7 +56,7 @@ main = do
   putStrLn "PT expression params:"
   putStrLn $ params @(PT2CT M'Map Zqs _ _ _ _) homomRLWR
 
-  evalKeysHints 8.0 $ do
+  evalKeysHints 3.0 $ do
     h <- pt2ct @M'Map @Zqs @Gad @Int64 homomRLWR
     let (h1,t1) = dup h
         (h2,t2) = dup t1
