@@ -1,14 +1,14 @@
-{-# LANGUAGE ConstraintKinds            #-}
-{-# LANGUAGE DataKinds                  #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE PartialTypeSignatures      #-}
-{-# LANGUAGE RebindableSyntax           #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE ConstraintKinds       #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleInstances     #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE RebindableSyntax      #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
@@ -68,8 +68,8 @@ rescaleTreePow2_' = tag $ lamDB $
   let v'    = v0 *: (one >+: v0)
       kval  = proxy value (Proxy::Proxy k) :: Int
       pDiv4 = 2^(kval-1)
-   in (lamDB $ treeMul (Proxy::Proxy k) $
-     map ((div2_ $:) . (>+: v0)) $ take pDiv4 $ [fromInteger $ z * (-z+1) | z <- [1..]]) $: v'
+   in lamDB (treeMul (Proxy::Proxy k) $
+     map ((div2_ $:) . (>+: v0)) $ take pDiv4 [fromInteger $ z * (-z+1) | z <- [1..]]) $: v'
 
 class TreeMul expr (k :: Pos) r2 where
   treeMul :: Proxy k
