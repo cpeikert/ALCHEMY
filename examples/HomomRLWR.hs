@@ -5,13 +5,17 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE NoImplicitPrelude #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 module HomomRLWR where
 
+import Data.Maybe (fromJust)
+import Data.Functor ((<$>))
 import Control.Monad.Random
-import Control.Monad.Writer
 
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor.CPP
@@ -41,43 +45,24 @@ type K = P3
 type Gad = TrivGad
 type PT = PNoiseCyc PNZ CT H5 (ZqBasic PP2 Int64)
 
-homomRLWR :: _ => expr env (_ -> PT)
-homomRLWR =  (untag $ rescaleTreePow2_ @K) .: tunnel5
+ringRound :: _ => expr env (_ -> PT)
+ringRound =  (untag $ rescaleTreePow2_ @K) .: tunnel5
+
+homomRLWR f = do
+  s <- getRandom
+  (f', keys, _) <- runKeysHints 5.0 $
+    liftM2 (.) (eval <$> pt2ct @M'Map @Zqs @Gad @Int64 f) $
+               (flip $ eval . mulPublic_) <$> encrypt s
+  return (f', s, keys)
+
 
 main :: IO ()
 main = do
-  putStrLn "PT HomomRLWR:" 
-  putStrLn $ pprint homomRLWR
+  return ()
+  (f, s, keys) <- homomRLWR ringRound
+  a <- getRandom
 
-  putStrLn "PT HomomRLWR size:" 
-  print $ size homomRLWR
+  let decResult = fromJust $ decrypt (f a) $ keys
+  let ptResult = unPNC $ eval ringRound (PNC $ s * a)
 
-  putStrLn "PT expression params:"
-  putStrLn $ params @(PT2CT M'Map Zqs _ _ _ _) homomRLWR
-
-  evalKeysHints 3.0 $ do
-    h <- pt2ct @M'Map @Zqs @Gad @Int64 homomRLWR
-    let (h1,t1) = dup h
-        (h2,t2) = dup t1
-        (h3,t3) = dup t2
-        (h4,h5) = dup t3
-        
-    putStrLnIO "CT HomomRLWR:" 
-    putStrLnIO $ pprint h1
-
-    putStrLnIO "CT HomomRLWR size:"
-    printIO $ size h2
-
-    putStrLnIO "CT expression params:"
-    putStrLnIO $ params h3
-
-    arg1 <- encrypt =<< getRandom
-
-    timeIO "Evaluating with error rates..." $ do
-      f <- readerToAccumulator $ writeErrorRates @Int64 h4
-      let (_,errors) = runWriter $ eval f >>= ($ arg1)
-      printIO errors
-
-    timeIO "Evaluating without error rates..." $ printIO $ eval h5 arg1
-
-  putStrLn "Done"
+  putStrLn $ if decResult == ptResult then "PASS" else "FAIL"
