@@ -48,10 +48,10 @@ type PT = PNoiseCyc PNZ CT H5 (ZqBasic PP2 Int64)
 ringRound :: _ => expr env (_ -> PT)
 ringRound =  (untag $ rescaleTreePow2_ @K) .: tunnel5
 
-homomRLWR f = do
+homomRLWR = do
   s <- getRandom
   (f', keys, _) <- runKeysHints 5.0 $
-    liftM2 (.) (eval <$> pt2ct @M'Map @Zqs @Gad @Int64 f) $
+    liftM2 (.) (eval <$> pt2ct @M'Map @Zqs @Gad @Int64 ringRound) $
                (flip $ eval . mulPublic_) <$> encrypt s
   return (f', s, keys)
 
@@ -59,7 +59,7 @@ homomRLWR f = do
 main :: IO ()
 main = do
   return ()
-  (f, s, keys) <- homomRLWR ringRound
+  (f, s, keys) <- homomRLWR
   a <- getRandom
 
   let decResult = fromJust $ decrypt (f a) $ keys
