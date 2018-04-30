@@ -43,17 +43,19 @@ type Zqs = '[ Zq $(mkTLNatNat 1520064001) -- last mul: > 2^30.5
 
 type K = P3
 type Gad = TrivGad
-type PT = PNoiseCyc PNZ CT H5 (ZqBasic PP2 Int64)
+type PT = PNoiseCyc PNZ CT H5 (Zq PP2)
 
 ringRound :: _ => expr env (_ -> PT)
 ringRound =  (untag $ rescaleTreePow2_ @K) .: tunnel5
 
+homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound
+
 homomRLWR = do
   s <- getRandom
-  (f', keys, _) <- runKeysHints 5.0 $
-    liftM2 (.) (eval <$> pt2ct @M'Map @Zqs @Gad @Int64 ringRound) $
+  (f, keys, _) <- runKeysHints 5.0 $
+    liftM2 (.) (eval <$> homomRingRound) $
                (flip $ eval . mulPublic_) <$> encrypt s
-  return (f', s, keys)
+  return (f, s, keys)
 
 
 main :: IO ()
@@ -63,6 +65,6 @@ main = do
   a <- getRandom
 
   let decResult = fromJust $ decrypt (f a) $ keys
-  let ptResult = unPNC $ eval ringRound (PNC $ s * a)
+      ptResult  = unPNC $ eval ringRound (PNC $ s * a)
 
   putStrLn $ if decResult == ptResult then "PASS" else "FAIL"
