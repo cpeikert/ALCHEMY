@@ -1,27 +1,27 @@
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE PartialTypeSignatures #-}
-{-# LANGUAGE TemplateHaskell       #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE DataKinds                 #-}
+{-# LANGUAGE FlexibleContexts          #-}
+{-# LANGUAGE NoImplicitPrelude         #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+{-# LANGUAGE PartialTypeSignatures     #-}
+{-# LANGUAGE TemplateHaskell           #-}
+{-# LANGUAGE TypeApplications          #-}
+{-# LANGUAGE TypeFamilies              #-}
+{-# LANGUAGE TypeOperators             #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 module HomomRLWR where
 
-import Data.Maybe (fromJust)
-import Data.Functor ((<$>))
 import Control.Monad.Random
+import Data.Functor         ((<$>))
+import Data.Maybe           (fromJust)
 
+import Crypto.Alchemy
+import Crypto.Alchemy.Language.RescaleTree
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor.CPP
 import Crypto.Lol.Types
-import Crypto.Alchemy
-import Crypto.Alchemy.Language.RescaleTree
 
 import Common
 
