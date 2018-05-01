@@ -178,8 +178,8 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
     lamM $ \x -> lamM $ \y -> do
         hint :: KSQuadCircHint gad (Cyc t m' hintzq) <-
           getQuadCircHint (Proxy::Proxy z)
-        let prod = (var x *: y :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin))))
-         in return $ modSwitch_ $: (keySwitchQuad_ hint $: (modSwitch_ $: prod))
+        let prod = var x *: y :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin)))
+         in return $ modSwitch_ .: keySwitchQuad_ hint .: modSwitch_ $: prod
 
 instance (SHE ctex, Applicative mon,
           LSHE.ModSwitchPTCtx ctex
@@ -229,10 +229,10 @@ instance LinearCyc (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) w
 
   linearCyc_ f = PC $ lamM $ \x -> do
     hint <- getTunnelHint @gad @(PNoise2KSZq gad zqs p) (Proxy::Proxy z) f
-    return $ modSwitch_ $:     -- then scale back to the target modulus zq
-              (tunnel_ hint $: -- linear w/ the hint
-                (modSwitch_ $: -- scale (up) to the hint modulus zq'
-                  (var (x :: ctex _ (Cyc2CT m'map zqs (PNoiseCyc pin t r zp))))))
+    return $ modSwitch_ .:     -- then scale back to the target modulus zq
+              tunnel_ hint .: -- linear w/ the hint
+                modSwitch_ $: -- scale (up) to the hint modulus zq'
+                  var x
 
 ----- Type families -----
 
