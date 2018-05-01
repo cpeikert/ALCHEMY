@@ -60,7 +60,6 @@ homomRLWR = do
 
 main :: IO ()
 main = do
-  return ()
   (f, s, keys) <- homomRLWR
   a <- getRandom
 
