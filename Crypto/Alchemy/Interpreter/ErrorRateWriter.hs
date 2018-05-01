@@ -45,6 +45,8 @@ newtype ErrorRateWriter
 -- Convert object-language arrows into Kleisli arrows
 type family Kleislify w a = r | r -> a where
   Kleislify w (a -> b) = Kleislify w a -> w (Kleislify w b)
+  Kleislify w (a, b)   = (Kleislify w a, Kleislify w b)
+  Kleislify w [a]      = [Kleislify w a]
   Kleislify _ a        = a
 
 -- | Kleislify every element in the environment. This must be separate from 
@@ -62,6 +64,13 @@ writeErrorRates :: forall z k w expr e a .
   (MonadWriter ErrorRateLog w, MonadReader Keys k)
   => ErrorRateWriter expr z k w e a -> k (expr (KleislifyEnv w e) (w (Kleislify w a)))
 writeErrorRates = unERW
+
+-- | Lift an object-lang arrow into a Kleisli arrow
+liftK_ :: (Applicative_ expr, Applicative m) => expr e ((a -> b) -> a -> m b)
+liftK_ = lam $ (.:) pure_
+
+liftK2_ :: (Applicative_ expr, Applicative m) => expr e ((a -> b -> c) -> a -> m (b -> m c))
+liftK2_ = lam $ (.:) (pure_ .: liftK_)
 
 -- | Perform the action, then perform the action given by the result,
 -- and return the (first) result.
@@ -94,7 +103,7 @@ liftWriteError _ str f_ = do
   key :: Maybe (SK (Cyc t m' z)) <- lookupKey
   return $ return_ $: 
     case key of 
-      Just sk -> lam $ \x -> after_ $: tellError str sk $: (return_ $: (var f_ $: var x))
+      Just sk -> (after_ $: tellError str sk) .: (liftK_ $: f_)
       Nothing -> return_ .: f_
               
 liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
@@ -142,12 +151,25 @@ instance (WriteErrorCtx expr z k w ct t m m' zp zq,
 
 instance (Monad_ expr, Monad w, Applicative k)
   => Lambda (ErrorRateWriter expr z k w) where
-  lamDB f  = ERW $ fmap ((return_ $:) . (.: return_) . lamDB) (unERW f)
+  lamDB f  = ERW $ ((return_ $:) . (.: return_) . lamDB) <$> (unERW f)
   f $: x   = ERW $ ((>>=:) <$> (unERW f)) <*> ((bind_ $:) <$> (unERW x))
   v0       = ERW $ pure v0
   weaken a = ERW $ weaken <$> (unERW a)
 
 {------ TRIVIAL WRAPPER INSTANCES ------}
+
+instance (Pair expr, Applicative_ expr, Applicative k, Applicative w)
+  => Pair (ErrorRateWriter expr z k w) where
+    pair_ = ERW . pure $ pure_ .: liftK2_ $: pair_
+
+instance (List expr, Applicative_ expr, Applicative k, Applicative w)
+  => List (ErrorRateWriter expr z k w) where
+    cons_ = ERW . pure $ pure_ .: liftK2_ $: cons_
+    nil_  = ERW . pure $ pure_ $: nil_
+
+instance (LS.String expr, Applicative_ expr, Applicative k, Applicative w)
+  => LS.String (ErrorRateWriter expr z k w) where
+    string_ s = ERW . pure $ pure_ $: LS.string_ s
 
 instance (SHE expr, Applicative_ expr, Applicative k, Applicative w) =>
   SHE (ErrorRateWriter expr z k w) where
