@@ -132,4 +132,4 @@ instance LinearCyc P (Linear t) (PNoiseCyc p t) where
 
 instance ErrorRate P where
   type ErrorRateCtx P ct z = ()
-  errorRate_ _ = pureP "errorRate"
+  errorRate_ _ = pureP "errorRate <KEY>"
