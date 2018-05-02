@@ -68,12 +68,9 @@ newtype PT2CT
 -- representing a Gaussian parameter \( r \) of the decoding-basis
 -- coefficients for generated keys and errors.  (I.e., the scaled
 -- variance over \( R^\vee \) is \( r / \sqrt{\varphi(m')} \).)
-pt2ct :: forall m'map zqs gad z a ctex e mon .
-      -- this forall is for use with TypeApplications at the top level
-  (KeysAccumulatorCtx Double mon) => PT2CT m'map zqs gad z ctex mon e a
-  -- | plaintext expression
-  -> mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a))
- -- | (monadic) ctex expression
+pt2ct :: forall m'map zqs gad z a ctex e mon .            -- this forall is for use with TypeApplications
+  PT2CT m'map zqs gad z ctex mon e a                      -- | plaintext expression
+  -> mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a)) -- | (monadic) ctex expression
 pt2ct = unPC
 
 -- | Encrypt a plaintext (using the given scaled variance) under an
@@ -169,8 +166,7 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
 
   mul_ :: forall m' env pin hintzq .
     (pin ~ Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise))),
-     hintzq ~ PNoise2KSZq gad zqs p,
-     m' ~ Lookup m m'map,
+     hintzq ~ PNoise2KSZq gad zqs p, m' ~ Lookup m m'map,
      PT2CTMulCtx m'map p zqs m zp gad ctex t z mon) =>
     PT2CT m'map zqs gad z ctex mon env
     (PNoiseCyc pin t m zp -> PNoiseCyc pin t m zp -> PNoiseCyc p t m zp)
@@ -229,7 +225,7 @@ instance LinearCyc (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) w
 
   linearCyc_ f = PC $ lamM $ \x -> do
     hint <- getTunnelHint @gad @(PNoise2KSZq gad zqs p) (Proxy::Proxy z) f
-    return $ modSwitch_ .:     -- then scale back to the target modulus zq
+    return $ modSwitch_ .:    -- then scale back to the target modulus zq
               tunnel_ hint .: -- linear w/ the hint
                 modSwitch_ $: -- scale (up) to the hint modulus zq'
                   var x

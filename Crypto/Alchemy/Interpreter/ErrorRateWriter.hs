@@ -9,7 +9,7 @@
 {-# LANGUAGE UndecidableInstances       #-}
 
 module Crypto.Alchemy.Interpreter.ErrorRateWriter
-( ErrorRateWriter, writeErrorRates, Kleislify, ErrorRateLog )
+( ErrorRateWriter, writeErrorRates, Kleislify, KleislifyEnv, ErrorRateLog )
 where
 
 import Control.Applicative
@@ -61,8 +61,7 @@ type ErrorRateLog = [(String,Double)]
 -- | Transform an expression into (a monadic) one that logs error
 -- rates, where the needed keys are obtained from the monad.
 writeErrorRates :: forall z k w expr e a .
-  (MonadWriter ErrorRateLog w, MonadReader Keys k)
-  => ErrorRateWriter expr z k w e a -> k (expr (KleislifyEnv w e) (w (Kleislify w a)))
+  ErrorRateWriter expr z k w e a -> k (expr (KleislifyEnv w e) (w (Kleislify w a)))
 writeErrorRates = unERW
 
 -- | Lift an object-lang arrow into a Kleisli arrow
