@@ -7,6 +7,7 @@
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 module Crypto.Alchemy.Interpreter.DedupRescale
 ( DedupRescale, dedupRescale)
@@ -43,7 +44,7 @@ dr = dedupRescale
 -- if we simplify this to \y -> y + ((rescaleUp y)*(rescaleUp y)),
 -- we rescaleUp twice (but remove the duplicate)
 
-instance (Lambda expr) => Lambda (DedupRescale expr) where
+instance Lambda_ expr => Lambda_ (DedupRescale expr) where
   lamDB (Rescaled b a) = Rescaled (lamDB b) (lamDB a)
   lamDB (Unscaled   a) = Unscaled           (lamDB a)
 
@@ -64,49 +65,49 @@ instance (Lambda expr) => Lambda (DedupRescale expr) where
     case (eqT :: Maybe (b :~: b')) of
       Just Refl -> Unscaled prev
 
-instance (List expr) => List (DedupRescale expr) where
+instance List_ expr => List_ (DedupRescale expr) where
   nil_  = Unscaled nil_
   cons_ = Unscaled cons_
 
-instance (Add expr a) => Add (DedupRescale expr) a where
+instance Add_ expr a => Add_ (DedupRescale expr) a where
   add_ = Unscaled add_
   neg_ = Unscaled neg_
 
-instance (AddLit expr a) => AddLit (DedupRescale expr) a where
+instance AddLit_ expr a => AddLit_ (DedupRescale expr) a where
   addLit_ x = Unscaled $ addLit_ x
 
-instance (MulLit expr a) => MulLit (DedupRescale expr) a where
+instance MulLit_ expr a => MulLit_ (DedupRescale expr) a where
   mulLit_ x = Unscaled $ mulLit_ x
 
-instance (Mul expr a) => Mul (DedupRescale expr) a where
-  type PreMul (DedupRescale expr) a = PreMul expr a
+instance Mul_ expr a => Mul_ (DedupRescale expr) a where
+  type PreMul_ (DedupRescale expr) a = PreMul_ expr a
   mul_ = Unscaled mul_
 
-instance (SHE expr, Lambda expr) => SHE (DedupRescale expr) where
+instance (SHE_ expr, Lambda_ expr) => SHE_ (DedupRescale expr) where
 
-  type ModSwitchPTCtx (DedupRescale expr) ct zp' =
-    (ModSwitchPTCtx expr ct zp')
-  type ModSwitchCtx (DedupRescale expr) (CT m zp (Cyc t m' zq)) zq' =
+  type ModSwitchPTCtx_ (DedupRescale expr) ct zp' =
+    (ModSwitchPTCtx_ expr ct zp')
+  type ModSwitchCtx_ (DedupRescale expr) (CT m zp (Cyc t m' zq)) zq' =
     (Typeable (CT m zp (Cyc t m' zq)),
      Typeable (CT m zp (Cyc t m' zq')),
-     ModSwitchCtx expr (CT m zp (Cyc t m' zq)) zq')
-  type AddPublicCtx (DedupRescale expr) ct = (AddPublicCtx expr ct)
-  type MulPublicCtx (DedupRescale expr) ct = (MulPublicCtx expr ct)
-  type KeySwitchQuadCtx (DedupRescale expr) ct gad =
-    (KeySwitchQuadCtx expr ct gad)
-  type TunnelCtx    (DedupRescale expr) t e r s e' r' s' zp zq gad =
-    (TunnelCtx expr t e r s e' r' s' zp zq gad)
+     ModSwitchCtx_ expr (CT m zp (Cyc t m' zq)) zq')
+  type AddPublicCtx_ (DedupRescale expr) ct = (AddPublicCtx_ expr ct)
+  type MulPublicCtx_ (DedupRescale expr) ct = (MulPublicCtx_ expr ct)
+  type KeySwitchQuadCtx_ (DedupRescale expr) ct gad =
+    (KeySwitchQuadCtx_ expr ct gad)
+  type TunnelCtx_    (DedupRescale expr) t e r s e' r' s' zp zq gad =
+    (TunnelCtx_ expr t e r s e' r' s' zp zq gad)
 
   modSwitchPT_ = Unscaled modSwitchPT_
 
   modSwitch_ :: forall ct zq' m zp t m' zq e .
-    (ModSwitchCtx (DedupRescale expr) ct zq', ct ~ CT m zp (Cyc t m' zq))
+    (ModSwitchCtx_ (DedupRescale expr) ct zq', ct ~ CT m zp (Cyc t m' zq))
     => (DedupRescale expr) e (ct -> CT m zp (Cyc t m' zq'))
 
   modSwitch_ =
     -- check if this rescale is a no-op
     case (eqT :: Maybe (ct :~: CT m zp (Cyc t m' zq'))) of
-      Just Refl -> Unscaled $ lam id -- skip it, w/identity function
+      Just Refl -> Unscaled id_ -- skip it, w/identity function
       Nothing   -> Rescaled undefined modSwitch_
 
   addPublic_     p = Unscaled $ addPublic_ p
@@ -114,20 +115,20 @@ instance (SHE expr, Lambda expr) => SHE (DedupRescale expr) where
   keySwitchQuad_ h = Unscaled $ keySwitchQuad_ h
   tunnel_        h = Unscaled $ tunnel_ h
 
-instance (Functor_ expr) => Functor_ (DedupRescale expr) where
+instance Functor_ expr f => Functor_ (DedupRescale expr) f where
   fmap_ = Unscaled fmap_
 
-instance (Applicative_ expr) => Applicative_ (DedupRescale expr) where
+instance Applicative_ expr f => Applicative_ (DedupRescale expr) f where
   pure_ = Unscaled pure_
   ap_   = Unscaled ap_
 
-instance (Monad_ expr) => Monad_ (DedupRescale expr) where
+instance Monad_ expr m => Monad_ (DedupRescale expr) m where
   bind_ = Unscaled bind_
 
-instance (MonadReader_ expr) => MonadReader_ (DedupRescale expr) where
+instance MonadReader_ expr r m => MonadReader_ (DedupRescale expr) r m where
   ask_   = Unscaled ask_
   local_ = Unscaled local_
 
-instance (MonadWriter_ expr) => MonadWriter_ (DedupRescale expr) where
+instance MonadWriter_ expr w m => MonadWriter_ (DedupRescale expr) w m where
   tell_   = Unscaled tell_
   listen_ = Unscaled listen_

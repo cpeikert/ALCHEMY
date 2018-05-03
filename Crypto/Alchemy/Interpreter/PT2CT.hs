@@ -44,7 +44,7 @@ import Crypto.Alchemy.Interpreter.PT2CT.Noise
 import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
 import Crypto.Alchemy.Language.List
-import Crypto.Alchemy.Language.SHE            as LSHE
+import Crypto.Alchemy.Language.SHE
 import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.MonadAccumulator
 
@@ -98,34 +98,34 @@ decrypt x = do
   sk :: Maybe (SK (Cyc t m' z)) <- lookupKey
   return $ flip SHE.decrypt x <$> sk
 
-instance (Lambda ctex, Applicative mon)
-  => Lambda (PT2CT m'map zqs gad z ctex mon) where
+instance (Lambda_ ctex, Applicative mon)
+  => Lambda_ (PT2CT m'map zqs gad z ctex mon) where
 
   lamDB (PC f) = PC $ lamDB <$> f
   (PC f) $: (PC a) = PC $ ($:) <$> f <*> a
   v0 = PC $ pure v0
   weaken (PC a) = PC $ weaken <$> a
 
-instance (List ctex, Applicative mon)
-  => List (PT2CT m'map zqs gad z ctex mon) where
+instance (List_ ctex, Applicative mon)
+  => List_ (PT2CT m'map zqs gad z ctex mon) where
   nil_  = PC $ pure nil_
   cons_ = PC $ pure cons_
 
-instance (Add ctex (Cyc2CT m'map zqs a), Applicative mon)
-  => Add (PT2CT m'map zqs gad z ctex mon) a where
+instance (Add_ ctex (Cyc2CT m'map zqs a), Applicative mon)
+  => Add_ (PT2CT m'map zqs gad z ctex mon) a where
 
   add_ = PC $ pure add_
   neg_ = PC $ pure neg_
 
-instance (SHE ctex, Applicative mon,
-          AddPublicCtx ctex (Cyc2CT m'map zqs (PNoiseCyc h t m zp))) =>
-  AddLit (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc h t m zp) where
+instance (SHE_ ctex, Applicative mon,
+          AddPublicCtx_ ctex (Cyc2CT m'map zqs (PNoiseCyc h t m zp))) =>
+  AddLit_ (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc h t m zp) where
 
   addLit_ (PNC a) = PC $ pure $ addPublic_ a
 
-instance (SHE ctex, Applicative mon,
-          MulPublicCtx ctex (Cyc2CT m'map zqs (PNoiseCyc h t m zp))) =>
-  MulLit (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc h t m zp) where
+instance (SHE_ ctex, Applicative mon,
+          MulPublicCtx_ ctex (Cyc2CT m'map zqs (PNoiseCyc h t m zp))) =>
+  MulLit_ (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc h t m zp) where
 
   mulLit_ (PNC a) = PC $ pure $ mulPublic_ a
 
@@ -149,19 +149,19 @@ type PT2CTMulCtx' m zp p zqs gad hintzq ctex t z mon m' =
     (CT m zp (Cyc t m' hintzq))
 
 type PT2CTMulCtx'' p zqs gad hintzq ctex t z mon m' ctin hintct =
-  (Lambda ctex, Mul ctex ctin, PreMul ctex ctin ~ ctin, SHE ctex,
-   ModSwitchCtx ctex ctin hintzq,              -- zqin -> hint zq
-   ModSwitchCtx ctex hintct (PNoise2Zq zqs p), -- hint zq -> zq (final modulus)
-   KeySwitchQuadCtx ctex hintct gad,
+  (Lambda_ ctex, Mul_ ctex ctin, PreMul_ ctex ctin ~ ctin, SHE_ ctex,
+   ModSwitchCtx_ ctex ctin hintzq,              -- zqin -> hint zq
+   ModSwitchCtx_ ctex hintct (PNoise2Zq zqs p), -- hint zq -> zq (final modulus)
+   KeySwitchQuadCtx_ ctex hintct gad,
    KSHintCtx gad t m' z hintzq,
    GenSKCtx t m' z Double,
    Typeable (Cyc t m' z), Typeable (KSQuadCircHint gad (Cyc t m' hintzq)),
    KeysAccumulatorCtx Double mon, MonadAccumulator Hints mon)
 
 instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
-  => Mul (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t m zp) where
+  => Mul_ (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t m zp) where
 
-  type PreMul (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t m zp) =
+  type PreMul_ (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t m zp) =
     PNoiseCyc (Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))) t m zp
 
   mul_ :: forall m' env pin hintzq .
@@ -177,14 +177,13 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex t z mon)
         let prod = var x *: y :: ctex _ (CT m zp (Cyc t m' (PNoise2Zq zqs pin)))
          in return $ modSwitch_ .: keySwitchQuad_ hint .: modSwitch_ $: prod
 
-instance (SHE ctex, Applicative mon,
-          LSHE.ModSwitchPTCtx ctex
+instance (SHE_ ctex, Applicative mon, ModSwitchPTCtx_ ctex
            (CT m (ZqBasic ('PP '(Prime2, 'Lol.S e)) i) (Cyc t (Lookup m m'map) (PNoise2Zq zqs p)))
            (ZqBasic ('PP '(Prime2, e)) i)) =>
-  Div2 (PT2CT m'map zqs gad z ctex mon)
+  Div2_ (PT2CT m'map zqs gad z ctex mon)
   (PNoiseCyc p t m (ZqBasic ('PP '(Prime2, e)) i)) where
 
-  type PreDiv2 (PT2CT m'map zqs gad z ctex mon)
+  type PreDiv2_ (PT2CT m'map zqs gad z ctex mon)
        (PNoiseCyc p t m (ZqBasic ('PP '(Prime2, e)) i)) =
     PNoiseCyc p t m (ZqBasic ('PP '(Prime2, 'Lol.S e)) i)
 
@@ -194,24 +193,24 @@ type PT2CTLinearCtx ctex mon m'map zqs p t e r s r' s' z zp zq zqin gad =
   PT2CTLinearCtx' ctex mon m'map zqs p t e r s r' s' z zp zq zqin (PNoise2KSZq gad zqs p) gad
 
 type PT2CTLinearCtx' ctex mon m'map zqs p t e r s r' s' z zp zq zqin hintzq gad =
-  (SHE ctex, Lambda ctex, Fact s', KeysAccumulatorCtx Double mon,
+  (SHE_ ctex, Lambda_ ctex, Fact s', KeysAccumulatorCtx Double mon,
    -- output ciphertext type
    CT s zp (Cyc t s' zq)   ~ Cyc2CT m'map zqs (PNoiseCyc p t s zp),
    -- input ciphertext type
    CT r zp (Cyc t r' zqin) ~ Cyc2CT m'map zqs (PNoiseCyc (p :+ TunnPNoise) t r zp),
-   TunnelCtx ctex t e r s (e * (r' / r)) r' s'   zp hintzq gad,
+   TunnelCtx_ ctex t e r s (e * (r' / r)) r' s'   zp hintzq gad,
    TunnelHintCtx  t e r s (e * (r' / r)) r' s' z zp hintzq gad,
    GenSKCtx t r' z Double, GenSKCtx t s' z Double,
-   ModSwitchCtx ctex (CT r zp (Cyc t r' zqin)) hintzq,
-   ModSwitchCtx ctex (CT s zp (Cyc t s' hintzq))  zq,
+   ModSwitchCtx_ ctex (CT r zp (Cyc t r' zqin)) hintzq,
+   ModSwitchCtx_ ctex (CT s zp (Cyc t s' hintzq))  zq,
    Typeable t, Typeable r', Typeable s', Typeable z)
 
-instance LinearCyc (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) where
+instance LinearCyc_ (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) where
 
-  type PreLinearCyc (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t) =
+  type PreLinearCyc_ (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t) =
     PNoiseCyc (p :+ TunnPNoise) t
 
-  type LinearCycCtx (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) e r s zp =
+  type LinearCycCtx_ (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) e r s zp =
     (PT2CTLinearCtx ctex mon m'map zqs p t e r s (Lookup r m'map) (Lookup s m'map)
       z zp (PNoise2Zq zqs p) (PNoise2Zq zqs (p :+ TunnPNoise)) gad)
 

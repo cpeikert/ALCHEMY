@@ -1,5 +1,5 @@
 
 module Crypto.Alchemy.Language.String where
 
-class String expr where
-  string_ :: Prelude.String -> expr e Prelude.String
+class String_ expr where
+  string_ :: String -> expr e String

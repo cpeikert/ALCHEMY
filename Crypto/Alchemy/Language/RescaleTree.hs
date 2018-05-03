@@ -17,7 +17,7 @@
 -}
 
 module Crypto.Alchemy.Language.RescaleTree
-( rescaleTreePow2_, RescaleTreePow2Ctx, PreRescaleTreePow2 )
+( rescaleTreePow2_, RescaleTreePow2Ctx_, PreRescaleTreePow2_ )
 where
 
 import Data.Constraint
@@ -32,23 +32,23 @@ import Crypto.Lol
 import Crypto.Lol.Reflects
 import Data.Singletons
 
-type RescaleTreePow2Ctx expr k r2 =
-  (Lambda expr, PosC k, RescaleTreePow2Ctx' expr k r2)
+type RescaleTreePow2Ctx_ expr k r2 =
+  (Lambda_ expr, PosC k, RescaleTreePow2Ctx_' expr k r2)
 
-type family RescaleTreePow2Ctx' expr k r2 :: Constraint where
-  RescaleTreePow2Ctx' expr 'O      r2 = ()
-  RescaleTreePow2Ctx' expr ('S k') r2 =
-    (PosC k', TreeMul expr k' r2, Div2 expr (PreRescaleTreePow2 expr k' r2),
-     RescaleTreePow2Ctx'' expr (PreDiv2 expr (PreRescaleTreePow2 expr k' r2)))
+type family RescaleTreePow2Ctx_' expr k r2 :: Constraint where
+  RescaleTreePow2Ctx_' expr 'O      r2 = ()
+  RescaleTreePow2Ctx_' expr ('S k') r2 =
+    (PosC k', TreeMul_ expr k' r2, Div2_ expr (PreRescaleTreePow2_ expr k' r2),
+     RescaleTreePow2Ctx_'' expr (PreDiv2_ expr (PreRescaleTreePow2_ expr k' r2)))
 
-type RescaleTreePow2Ctx'' expr r2k1 =
-  (AddLit expr r2k1, AddLit expr (PreMul expr r2k1), Mul expr r2k1,
-   Ring r2k1, Ring (PreMul expr r2k1))
+type RescaleTreePow2Ctx_'' expr r2k1 =
+  (AddLit_ expr r2k1, AddLit_ expr (PreMul_ expr r2k1), Mul_ expr r2k1,
+   Ring r2k1, Ring (PreMul_ expr r2k1))
 
-type family PreRescaleTreePow2 expr k r2 where
-  PreRescaleTreePow2 expr 'O     r2 = r2
-  PreRescaleTreePow2 expr ('S k) r2 =
-    PreMul expr (PreDiv2 expr (PreRescaleTreePow2 expr k r2))
+type family PreRescaleTreePow2_ expr k r2 where
+  PreRescaleTreePow2_ expr 'O     r2 = r2
+  PreRescaleTreePow2_ expr ('S k) r2 =
+    PreMul_ expr (PreDiv2_ expr (PreRescaleTreePow2_ expr k r2))
 
 -- | For \( k \geq 1 \), the "rescaling tree" that rounds a
 -- mod-@2^{k+1}@ value to a mod-@2@ value, over the same ring.  This
@@ -56,35 +56,35 @@ type family PreRescaleTreePow2 expr k r2 where
 -- mod-@2^{k+1}@ CRT slots hold \( \Z_{2^{k+1}} \) values (otherwise,
 -- the behavior is undefined).
 
-rescaleTreePow2_ :: forall k r2 expr e . (RescaleTreePow2Ctx expr k r2)
-  => Tagged k (expr e (PreRescaleTreePow2 expr k r2 -> r2))
+rescaleTreePow2_ :: forall k r2 expr e . (RescaleTreePow2Ctx_ expr k r2)
+  => Tagged k (expr e (PreRescaleTreePow2_ expr k r2 -> r2))
 rescaleTreePow2_ = case (sing :: SPos k) of
                      SO     -> tag $ lam id
                      (SS _) -> rescaleTreePow2_'
 
-rescaleTreePow2_' :: forall k r2 expr e . (RescaleTreePow2Ctx expr ('S k) r2)
-  => Tagged ('S k) (expr e (PreRescaleTreePow2 expr ('S k) r2 -> r2))
+rescaleTreePow2_' :: forall k r2 expr e . (RescaleTreePow2Ctx_ expr ('S k) r2)
+  => Tagged ('S k) (expr e (PreRescaleTreePow2_ expr ('S k) r2 -> r2))
 rescaleTreePow2_' = tag $ lam $
   \x -> let_ (var x *: (one >+: var x)) $
-    \y -> treeMul (Proxy::Proxy k) $ map ((div2_ $:) . (>+: var y)) zs
+    \y -> treeMul_ (Proxy::Proxy k) $ map ((div2_ $:) . (>+: var y)) zs
   where zs   = [fromInteger $ z * (-z + 1) | z <- [1..2^(kval - 1)]]
         kval = proxy value (Proxy::Proxy k) :: Int
 
-class TreeMul expr (k :: Pos) r2 where
-  treeMul :: Proxy k
-          -> [expr env (PreRescaleTreePow2 expr k r2)]
-          -> expr env r2
+class TreeMul_ expr (k :: Pos) r2 where
+  treeMul_ :: Proxy k
+           -> [expr env (PreRescaleTreePow2_ expr k r2)]
+           -> expr env r2
 
-instance TreeMul expr 'O r2 where
-  treeMul _ [x] = x
-  treeMul _ _   = error "Internal error in TreeMul base case."
+instance TreeMul_ expr 'O r2 where
+  treeMul_ _ [x] = x
+  treeMul_ _ _   = error "Internal error in TreeMul_ base case."
 
-instance (TreeMul expr k r2, Lambda expr,
-          Div2 expr (PreRescaleTreePow2 expr k r2),
-          Mul expr (PreDiv2 expr (PreRescaleTreePow2 expr k r2)))
-  => TreeMul expr ('S k) r2 where
+instance (TreeMul_ expr k r2, Lambda_ expr,
+          Div2_ expr (PreRescaleTreePow2_ expr k r2),
+          Mul_ expr (PreDiv2_ expr (PreRescaleTreePow2_ expr k r2)))
+  => TreeMul_ expr ('S k) r2 where
 
-  treeMul _ = treeMul (Proxy::Proxy k) .
+  treeMul_ _ = treeMul_ (Proxy::Proxy k) .
     map ((div2_ $:) . uncurry (*:)) . pairs
 
 pairs :: [a] -> [(a,a)]
