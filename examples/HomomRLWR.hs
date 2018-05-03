@@ -14,14 +14,14 @@
 module HomomRLWR where
 
 import Control.Monad.Random
-import Data.Functor         ((<$>))
-import Data.Maybe           (fromJust)
+import Data.Functor                         ((<$>))
+import Data.Maybe                           (fromJust)
 
 import Crypto.Alchemy
 import Crypto.Alchemy.Language.RescaleTree
+import Crypto.Lol.Applications.SymmSHE       (mulPublic)
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor.CPP
-import Crypto.Lol.Types
 
 import Common
 
@@ -46,7 +46,7 @@ type Gad = TrivGad
 type PT = PNoiseCyc PNZ CT H5 (Zq PP2)
 
 ringRound :: _ => expr env (_ -> PT)
-ringRound =  (untag $ rescaleTreePow2_ @K) .: tunnel5
+ringRound =  untag (rescaleTreePow2_ @K) .: tunnel5
 
 homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound
 
@@ -54,7 +54,7 @@ homomRLWR = do
   s <- getRandom
   (f, keys, _) <- runKeysHints 5.0 $
     liftM2 (.) (eval <$> homomRingRound) $
-               (flip $ eval . mulPublic_) <$> encrypt s
+               flip mulPublic <$> encrypt s
   return (f, s, keys)
 
 
@@ -63,7 +63,7 @@ main = do
   (f, s, keys) <- homomRLWR
   a <- getRandom
 
-  let decResult = fromJust $ decrypt (f a) $ keys
+  let decResult = fromJust $ decrypt (f a) keys
       ptResult  = unPNC $ eval ringRound (PNC $ s * a)
 
   putStrLn $ if decResult == ptResult then "PASS" else "FAIL"
