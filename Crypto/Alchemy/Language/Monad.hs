@@ -1,6 +1,6 @@
-{-# LANGUAGE MultiParamTypeClasses  #-}
-{-# LANGUAGE FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances      #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
 
 module Crypto.Alchemy.Language.Monad where
 
@@ -31,11 +31,12 @@ class Functor_ expr f => Applicative_ expr f where
 -- | Convenient metalanguage version of 'ap_'.
 infixl 4 <*:>
 (<*:>) :: (Applicative_ expr f , Lambda_ expr) =>
-  expr e (f (a -> b)) -> expr e (f a) -> expr e (f b)
+          expr e (f (a -> b)) -> expr e (f a) -> expr e (f b)
 f <*:> a = ap_ $: f $: a
 
 -- | Object-language analogue of 'liftA' (synonym for 'fmap_').
-liftA_ :: (Applicative_ expr f, Lambda_ expr) => expr e ((a -> b) -> f a -> f b)
+liftA_ :: (Applicative_ expr f, Lambda_ expr) =>
+          expr e ((a -> b) -> f a -> f b)
 liftA_ = fmap_
 
 -- | Object-language analogue of 'liftA2' (synonym for 'fmap_').
@@ -47,7 +48,7 @@ liftA2_ = lam $ \f -> lam $ \x -> ap_ $: (liftA_ $: var f $: var x)
 
 liftA3_ :: (Applicative_ expr f, Lambda_ expr) =>
            expr e ((a -> b -> c -> d) -> f a -> f b -> f c -> f d)
-liftA3_ = lam $ \f -> lam $ \x -> lam $ \y -> ap_ $: (liftA2_ $: var f $: var x $: var y) 
+liftA3_ = lam $ \f -> lam $ \x -> lam $ \y -> ap_ $: (liftA2_ $: var f $: var x $: var y)
 
 
 -- | Add monads to the object language. Instances should obey the monad laws.
@@ -71,7 +72,7 @@ infixl 1 >>:
 x >>: y = then_ $: x $: y
 
 infixl 1 >=>:
-(>=>:) :: (Monad_ expr m, Lambda_ expr) => 
+(>=>:) :: (Monad_ expr m, Lambda_ expr) =>
           expr e (a -> m b) -> expr e (b -> m c) -> expr e (a -> m c)
 f >=>: g = lam $ \x -> var f $: var x >>=: var g
 
@@ -114,11 +115,11 @@ instance Lambda_ expr => Functor_ expr ((->) a) where
 
 instance Lambda_ expr => Applicative_ expr ((->) a) where
   pure_ = const_
-  ap_ = lam $ \f -> lam $ \g -> 
+  ap_ = lam $ \f -> lam $ \g ->
     lam $ \x -> var f $: var x $: (var g $: var x)
 
 instance Lambda_ expr => Monad_ expr ((->) a) where
-  bind_ = lam $ \f -> lam $ \g -> 
+  bind_ = lam $ \f -> lam $ \g ->
     lam $ \x -> var g $: (var f $: var x) $: var x
 
 instance Lambda_ expr => MonadReader_ expr r ((->) r) where
