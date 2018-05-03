@@ -8,7 +8,7 @@ import Crypto.Alchemy.Language.Lambda
 -- | Addition.
 
 class Add_ expr a where
-  -- | Add_ition.
+  -- | Addition.
   add_ :: expr e (a -> a -> a)
   -- | Negation.
   neg_ :: expr e (a -> a)
