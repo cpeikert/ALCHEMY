@@ -91,6 +91,7 @@ executable alchemy-homomrlwr
     base >= 4.9 && < 4.10,
     lol,
     lol-cpp,
+    lol-apps,
     mtl,
     numeric-prelude,
     singletons,
