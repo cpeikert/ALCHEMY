@@ -61,7 +61,7 @@ main = do
     -- pretty-print and params/size the compiled expression
     putStrLnIO $ "CT expression: " ++ pprint ct2
     putStrLnIO $ "CT expression params:\n" ++ params ct3
-    putStrLnIO $ "CT expression size: " ++ (show $ size ct4)
+    putStrLnIO $ "CT expression size: " ++ show (size ct4)
 
     -- evaluate with error rates
     ct1' <- readerToAccumulator $ writeErrorRates @Int64 ct1

@@ -73,7 +73,7 @@ tellError_ :: forall w expr m zp t m' zq z e .
    Lambda_ expr, List_ expr, ErrorRate_ expr, String_ expr,
    Pair_ expr, ErrorRateCtx_ expr (CT m zp (Cyc t m' zq)) z) =>
    String -> SK (Cyc t m' z) -> expr e (CT m zp (Cyc t m' zq) -> w ())
-tellError_ str sk = lam $ \x -> tell_ $: (cons_ $: (pair_ $: (string_ $ str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: x)) $: nil_)
+tellError_ str sk = lam $ \x -> tell_ $: (cons_ $: (pair_ $: string_ (str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: x)) $: nil_)
 
 type WriteErrorCtx expr z k w ct t m m' zp zq =
   (MonadWriter_ expr ErrorRateLog w, MonadReader Keys k, Typeable (SK (Cyc t m' z)), 
@@ -144,9 +144,9 @@ instance (WriteErrorCtx expr z k w ct t m m' zp zq,
 instance (Lambda_ expr, Monad_ expr w, Applicative k)
   => Lambda_ (ERW expr z k w) where
   lamDB f  = ERW $ (pure_ $:) . lamDB <$> unERW f
-  f $: x   = ERW $ ((>>=:) <$> (unERW f)) <*> ((bind_ $:) <$> (unERW x))
+  f $: x   = ERW $ ((>>=:) <$> unERW f) <*> ((bind_ $:) <$> unERW x)
   v0       = pureERW v0
-  weaken a = ERW $ weaken <$> (unERW a)
+  weaken a = ERW $ weaken <$> unERW a
 
 {------ TRIVIAL WRAPPER INSTANCES ------}
 
@@ -163,7 +163,7 @@ instance (Pair_ expr, Applicative_ expr w, Lambda_ expr, Applicative k)
 instance (List_ expr, Applicative_ expr w, Lambda_ expr, Applicative k)
   => List_ (ERW expr z k w) where
     cons_ = pureERW $ liftK2_ $: cons_
-    nil_  = pureERW $ nil_
+    nil_  = pureERW nil_
 
 instance (String_ expr, Applicative_ expr w, Lambda_ expr, Applicative k)
   => String_ (ERW expr z k w) where
@@ -191,8 +191,8 @@ instance (SHE_ expr, Applicative_ expr w, Lambda_ expr, Applicative k) =>
       (TunnelCtx_ expr t e r s e' r' s' zp zq gad,
        WriteErrorCtx expr z k w (CT s zp (Cyc t s' zq)) t s s' zp zq)
 
-  modSwitchPT_   = ERW $ liftWriteError (Proxy::Proxy z) "modSwitchPT_" $ modSwitchPT_
-  modSwitch_     = ERW $ liftWriteError (Proxy::Proxy z) "modSwitch_" $ modSwitch_
+  modSwitchPT_   = ERW $ liftWriteError (Proxy::Proxy z) "modSwitchPT_" modSwitchPT_
+  modSwitch_     = ERW $ liftWriteError (Proxy::Proxy z) "modSwitch_" modSwitch_
   addPublic_     = ERW . liftWriteError (Proxy::Proxy z) "addPublic_" . addPublic_
   mulPublic_     = ERW . liftWriteError (Proxy::Proxy z) "mulPublic_" . mulPublic_
   keySwitchQuad_ = ERW . liftWriteError (Proxy::Proxy z) "keySwitchQuad_" . keySwitchQuad_
@@ -202,4 +202,4 @@ instance (ErrorRate_ expr, Applicative k, Applicative_ expr w, Lambda_ expr) =>
   ErrorRate_ (ERW expr z k w) where
 
   type ErrorRateCtx_ (ERW expr z' k w) ct z = ErrorRateCtx_ expr ct z
-  errorRate_  sk = pureERW $ liftK_ $: (errorRate_ sk) 
+  errorRate_  sk = pureERW $ liftK_ $: errorRate_ sk

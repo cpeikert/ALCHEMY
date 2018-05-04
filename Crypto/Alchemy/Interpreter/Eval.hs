@@ -160,7 +160,7 @@ instance ErrorRate_ E where
     fromIntegral . maximum . fmap abs . errorTermUnrestricted sk
 
 instance String_ E where
-  string_ str = pureE str
+  string_ = pureE
 
 instance Pair_ E where
   pair_ = pureE (,)

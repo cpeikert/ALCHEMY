@@ -30,14 +30,14 @@ lam :: Lambda_ expr
 lam body = lamDB $ body v0
 
 lamM :: (Functor f, Lambda_ expr)
-  => (forall x. expr (e, x) a -> f (expr (e, x) b))
+  => (forall x. expr (e,x) a -> f (expr (e,x) b))
   -> f (expr e (a -> b))
 lamM body = lamDB <$> body v0
 
 -- | Let-sharing.
 let_ :: Lambda_ expr
   => expr e a
-  -> (forall x. expr (e,x) a -> expr (e, x) b)
+  -> (forall x. expr (e,x) a -> expr (e,x) b)
   -> expr e b
 let_ a f = lam f $: a
 
