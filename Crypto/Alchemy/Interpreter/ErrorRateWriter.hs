@@ -142,7 +142,7 @@ instance (WriteErrorCtx expr z k w ct t m m' zp zq,
 
 instance (Lambda_ expr, Monad_ expr w, Applicative k)
   => Lambda_ (ErrorRateWriter expr z k w) where
-  lamDB f  = ERW $ ((pure_ $:) . lamDB) <$> unERW f
+  lamDB f  = ERW $ (pure_ $:) . lamDB <$> unERW f
   f $: x   = ERW $ ((>>=:) <$> (unERW f)) <*> ((bind_ $:) <$> (unERW x))
   v0       = ERW $ pure $ pure_ $: v0
   weaken a = ERW $ weaken <$> (unERW a)
