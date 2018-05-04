@@ -72,5 +72,5 @@ main = do
     -- evaluate with error rates
     tunnelCT1' <- readerToAccumulator $ writeErrorRates @Int64 tunnelCT1
     let (_, errors) = runWriter $ eval tunnelCT1' >>= ($ ct1)
-    putStrLnIO $ "Error rates: "
+    putStrLnIO "Error rates: "
     liftIO $ mapM_ print errors

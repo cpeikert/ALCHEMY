@@ -94,17 +94,17 @@ reader_ = lam $ \f -> var f <$:> ask_
 -- | Add writer monads to the object language
 
 -- TODO: Add a Monoid_ expr w constraint once we have the necessary machinery
-class (Monad_ expr m, Pair_ expr) => MonadWriter_ expr w m | expr m -> w where
+class Monad_ expr m => MonadWriter_ expr w m | expr m -> w where
   -- | Object-language analogue of 'tell'.
   tell_   :: expr e (w -> m ())
 
   -- | Object-language analogue of 'listen'.
   listen_ :: expr e (m a -> m (a,w))
 
-  -- | Object-language analogue of 'pass_'
+  -- | Object-language analogue of 'pass'
   pass_ :: expr e (m (a, w -> w) -> m a)
 
-writer_ :: (Lambda_ expr, MonadWriter_ expr w m) => expr e ((a, w) -> m a)
+writer_ :: (Lambda_ expr, Pair_ expr, MonadWriter_ expr w m) => expr e ((a, w) -> m a)
 writer_ = lam $ \p -> (const_ $: (fst_ $: var p)) <$:> (tell_ $: (snd_ $: var p))
 
 -- | Instances that can't be put in other files because we import them

@@ -26,7 +26,7 @@ import Data.Maybe   (mapMaybe)
 import Data.Monoid
 
 import Crypto.Alchemy.MonadAccumulator
-import Crypto.Lol                      hiding (lift)
+import Crypto.Lol
 import Crypto.Lol.Applications.SymmSHE
 
 
@@ -87,7 +87,7 @@ f >=< a = do
 
 -- | Return \( r / \varphi(m') \).
 svar :: (Fact m', Algebraic v) => Proxy m' -> v -> v
-svar pm' r = r / (sqrt $ fromIntegral $ proxy totientFact pm')
+svar pm' r = r / sqrt (fromIntegral $ proxy totientFact pm')
 
 -- | Lookup a key, generating one if it doesn't exist, and return it.
 getKey :: forall z t m' mon v. -- z first for type applications

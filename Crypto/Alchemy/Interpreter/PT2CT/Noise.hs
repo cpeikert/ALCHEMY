@@ -21,7 +21,11 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds  #-}
 
 -- internal module, so just export everything
-module Crypto.Alchemy.Interpreter.PT2CT.Noise where
+module Crypto.Alchemy.Interpreter.PT2CT.Noise
+( PNoise(..), PNZ, PNoiseCyc(..), Units(..)
+, UnitsToNat, ZqPairsWithUnits, TotalUnits, pNoiseUnit
+, TLNatNat, mkTLNatNat, mkTypeNat, (:+)
+) where
 
 import           Algebra.Additive             as Additive (C)
 import           Algebra.Ring                 as Ring (C)
@@ -119,7 +123,7 @@ singletons [d|
 -- converts a TypeNatural to a TypeLit for better type errors
 type family NatToLit x where
   NatToLit 'Z = 0
-  NatToLit ('S n) = 1 + (NatToLit n)
+  NatToLit ('S n) = 1 + NatToLit n
 
 -- | For a list of moduli @zqs@, nested pairs representing moduli that
 -- have a total of at least @h@ units.
@@ -128,7 +132,7 @@ type ZqPairsWithUnits zqs (h :: Units) = List2Pairs (ZqsWithUnits zqs h)
 -- | For a list of moduli @zqs@, a list representing moduli that have
 -- a total of at least @h@ units.
 type ZqsWithUnits zqs (h :: Units) =
-  ZqsWithUnits' ((UnitsToNat h) :<= (Sum (MapNatOf (MapModulus zqs)))) h zqs
+  ZqsWithUnits' (UnitsToNat h :<= Sum (MapNatOf (MapModulus zqs))) h zqs
 
 -- | The total noise units among the first of the moduli having at
 -- least @h@ units.
@@ -153,7 +157,7 @@ pNoiseUnit = 6.1
 mkTypeNat :: Int -> TypeQ
 mkTypeNat x | x < 0 = error $ "mkTypeNat: negative argument " ++ show x
 mkTypeNat 0 = conT 'Z
-mkTypeNat x = conT 'S `appT` (mkTypeNat $ x-1)
+mkTypeNat x = conT 'S `appT` mkTypeNat (x - 1)
 
 mkTypeLit :: Integer -> TypeQ
 mkTypeLit = litT . numTyLit

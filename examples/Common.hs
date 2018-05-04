@@ -17,9 +17,7 @@ module Common where
 import Control.DeepSeq
 import Control.Monad.IO.Class
 
-import Crypto.Alchemy.Interpreter.PT2CT
-import Crypto.Alchemy.Language.Lambda
-import Crypto.Alchemy.Language.LinearCyc
+import Crypto.Alchemy
 
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor         (TElt)

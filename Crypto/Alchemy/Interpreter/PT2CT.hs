@@ -131,7 +131,6 @@ instance (SHE_ ctex, Applicative mon,
 
 type PNoise2KSZq gad zqs p = ZqPairsWithUnits zqs (KSPNoise2Units (KSPNoise gad zqs p))
 
-
 -- | pNoise of a key-switch hint for a particular gadget, given the
 -- pNoise of the input ciphertext.
 type family KSPNoise gad (zqs :: [*]) (p :: PNoise) :: PNoise

@@ -1,4 +1,3 @@
-
 module Crypto.Alchemy.Language.String where
 
 class String_ expr where
