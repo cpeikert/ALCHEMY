@@ -63,10 +63,10 @@ liftK_ = lam $ (.:) pure_
 liftK2_ :: (Lambda_ expr, Applicative_ expr m) => expr e ((a -> b -> c) -> a -> m (b -> m c))
 liftK2_ = lam $ (.:) (pure_ .: liftK_)
 
--- | Perform the action, then perform the action given by the result,
--- and return the (first) result.
-after_ :: (Lambda_ expr, Monad_ expr m) => expr e ((a -> m ()) -> m a -> m a)
-after_ = (flip_ $: bind_) .: (flip_ $: (liftA2_ $: then_) $: return_)
+-- | Perform the action on the given value, then return the original value.
+after_ :: (Lambda_ expr, Monad_ expr m) => expr e ((a -> m b) -> a -> m a)
+after_ = lam $ \f -> lam $ \a ->
+  (var f $: var a) >>=: (const_ $: (return_ $: var a))
 
 tellError_ :: forall w expr m zp t m' zq z e .
   (MonadWriter_ expr ErrorRateLog w, Show (ArgType zq),
@@ -94,7 +94,7 @@ liftWriteError _ str f_ = do
   key :: Maybe (SK (Cyc t m' z)) <- lookupKey
   return $ return_ $: 
     case key of 
-      Just sk -> (after_ $: tellError_ str sk) .: (liftK_ $: f_)
+      Just sk -> (after_ $: tellError_ str sk) .: f_
       Nothing -> return_ .: f_
               
 liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
