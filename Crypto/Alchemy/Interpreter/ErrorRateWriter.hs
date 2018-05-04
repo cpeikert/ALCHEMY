@@ -9,7 +9,7 @@
 {-# LANGUAGE UndecidableInstances       #-}
 
 module Crypto.Alchemy.Interpreter.ErrorRateWriter
-( ErrorRateWriter, writeErrorRates, Kleislify, KleislifyEnv, ErrorRateLog )
+( ErrorRateWriter, writeErrorRates, Kleislify, ErrorRateLog )
 where
 
 import Control.Applicative
@@ -39,7 +39,7 @@ newtype ErrorRateWriter
   w                             -- | (writer) monad for logging error rates
   e                             -- | environment
   a                             -- | represented type
-  = ERW { unERW :: k (expr (KleislifyEnv w e) (w (Kleislify w a))) }
+  = ERW { unERW :: k (expr (Kleislify w e) (w (Kleislify w a))) }
 
 -- Convert object-language arrows into Kleisli arrows
 type family Kleislify w a = r | r -> a where
@@ -48,19 +48,12 @@ type family Kleislify w a = r | r -> a where
   Kleislify w [a]      = [Kleislify w a]
   Kleislify _ a        = a
 
--- | Kleislify every element in the environment. This must be separate
--- from the @Kleislify@ family since we do not want to modify pairs in
--- the object language.
-type family KleislifyEnv w e = r | r -> e where
-  KleislifyEnv w (e, a) = (KleislifyEnv w e, w (Kleislify w a))
-  KleislifyEnv _ ()     = ()
-
 type ErrorRateLog = [(String,Double)]
 
 -- | Transform an expression into (a monadic) one that logs error
 -- rates, where the needed keys are obtained from the monad.
 writeErrorRates :: forall z k w expr e a .
-  ErrorRateWriter expr z k w e a -> k (expr (KleislifyEnv w e) (w (Kleislify w a)))
+  ErrorRateWriter expr z k w e a -> k (expr (Kleislify w e) (w (Kleislify w a)))
 writeErrorRates = unERW
 
 -- | Lift an object-lang arrow into a Kleisli arrow
@@ -149,15 +142,15 @@ instance (WriteErrorCtx expr z k w ct t m m' zp zq,
 
 instance (Lambda_ expr, Monad_ expr w, Applicative k)
   => Lambda_ (ErrorRateWriter expr z k w) where
-  lamDB f  = ERW $ ((return_ $:) . (.: return_) . lamDB) <$> (unERW f)
+  lamDB f  = ERW $ ((pure_ $:) . lamDB) <$> unERW f
   f $: x   = ERW $ ((>>=:) <$> (unERW f)) <*> ((bind_ $:) <$> (unERW x))
-  v0       = ERW $ pure v0
+  v0       = ERW $ pure $ pure_ $: v0
   weaken a = ERW $ weaken <$> (unERW a)
 
 {------ TRIVIAL WRAPPER INSTANCES ------}
 
 pureERW :: (Applicative_ expr w, Lambda_ expr, Applicative k)
-  => expr (KleislifyEnv w e) (Kleislify w a) -> ErrorRateWriter expr z k w e a
+  => expr (Kleislify w e) (Kleislify w a) -> ErrorRateWriter expr z k w e a
 pureERW f = ERW . pure $ pure_ $: f
 
 instance (Pair_ expr, Applicative_ expr w, Lambda_ expr, Applicative k)
