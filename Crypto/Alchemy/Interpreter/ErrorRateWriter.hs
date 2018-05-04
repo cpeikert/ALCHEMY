@@ -66,7 +66,7 @@ liftK2_ = lam $ (.:) (pure_ .: liftK_)
 -- | Perform the action, then perform the action given by the result,
 -- and return the (first) result.
 after_ :: (Lambda_ expr, Monad_ expr m) => expr e ((a -> m b) -> m a -> m a)
-after_ = (flip_ $: bind_) .: (flip_ $: (liftA2_ $: then_) $: return_)
+after_ = (flip_ $: bind_) .: (liftA2_ $: fmap_ $: const_)
 
 tellError_ :: forall w expr m zp t m' zq z e .
   (MonadWriter_ expr ErrorRateLog w, Show (ArgType zq),
