@@ -19,7 +19,7 @@ import Data.Maybe                           (fromJust)
 
 import Crypto.Alchemy
 import Crypto.Alchemy.Language.RescaleTree
-import Crypto.Lol.Applications.SymmSHE       (mulPublic)
+import Crypto.Lol.Applications.SymmSHE      (mulPublic)
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor.CPP
 
