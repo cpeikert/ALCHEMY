@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 -- | Computes the size of an AST for the expression.
 
@@ -15,6 +16,7 @@ import Crypto.Alchemy.Language.Lambda
 import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.Monad
+import Crypto.Alchemy.Language.Pair
 import Crypto.Alchemy.Language.SHE
 
 import           Crypto.Lol                      (Cyc, Linear, Prime2,
@@ -23,20 +25,23 @@ import qualified Crypto.Lol                      as L
 import           Crypto.Lol.Applications.SymmSHE (CT)
 import           Crypto.Lol.Types
 
+import Control.Monad.Reader                       (MonadReader)
+import Control.Monad.Writer                       (MonadWriter)
+
 newtype S e a = S { size :: Int }
 
-instance Add S a where
+instance Add_ S a where
   add_ = S 1
   neg_ = S 1
 
-instance AddLit S a where
+instance AddLit_ S a where
   addLit_ _ = S 1
 
-instance Mul S a where
-  type PreMul S a = a
+instance Mul_ S a where
+  type PreMul_ S a = a
   mul_ = S 1
 
-instance MulLit S a where
+instance MulLit_ S a where
   mulLit_ _ = S 1
 
 -- EAC: ideas
@@ -47,56 +52,62 @@ instance MulLit S a where
 --    Of course this can be done already using dup. And, if we made (all) of the
 --    interpreters recursive, then we'd need a dummy interpreter for the bottom of the stack.
 
-instance Div2 S (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) where
-  type PreDiv2 S (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) =
+instance Div2_ S (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) where
+  type PreDiv2_ S (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) =
     Cyc t m (ZqBasic ('PP '(Prime2, 'L.S k)) i)
   div2_ = S 1
 
-instance Div2 S (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) where
-  type PreDiv2 S (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) =
+instance Div2_ S (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) where
+  type PreDiv2_ S (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) =
     PNoiseCyc h t m (ZqBasic ('PP '(Prime2, 'L.S k)) i)
   div2_ = S 1
 
-instance Div2 S (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
-  type PreDiv2 S (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) =
+instance Div2_ S (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
+  type PreDiv2_ S (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) =
     CT m (ZqBasic ('PP '(Prime2, 'L.S k)) i) (Cyc t m' zq)
   div2_ = S 1
 
-instance Lambda S where
+instance Lambda_ S where
   lamDB (S i) = S $ i+1
   (S f) $: (S a) = S $ f + a
   v0 = S 1
   weaken (S i) = S i
 
-instance List S where
+instance List_ S where
   nil_ = S 1
   cons_ = S 1
 
-instance Functor_ S where
+instance Pair_ S where
+  pair_ = S 1
+  fst_ = S 1
+  snd_ = S 1
+
+instance Functor_ S f where
   fmap_ = S 1
 
-instance Applicative_ S where
+instance Applicative_ S f where
   pure_ = S 1
   ap_ = S 1
 
-instance Monad_ S where
+instance Monad_ S f where
   bind_ = S 1
 
-instance MonadReader_ S where
+instance MonadReader r m => MonadReader_ S r m where
   ask_ = S 1
   local_ = S 1
 
-instance MonadWriter_ S where
+instance MonadWriter w m => MonadWriter_ S w m where
   tell_ = S 1
   listen_ = S 1
+  pass_ = S 1
 
-instance SHE S where
-  type ModSwitchPTCtx   S ct zp' = ()
-  type ModSwitchCtx     S ct zq' = ()
-  type AddPublicCtx     S ct     = ()
-  type MulPublicCtx     S ct     = ()
-  type KeySwitchQuadCtx S ct gad = ()
-  type TunnelCtx S t e r s e' r' s' zp zq gad = ()
+instance SHE_ S where
+  type ModSwitchPTCtx_   S ct zp' = ()
+  type ModSwitchCtx_     S ct zq' = ()
+  type AddPublicCtx_     S ct     = ()
+  type MulPublicCtx_     S ct     = ()
+  type KeySwitchQuadCtx_ S ct gad = ()
+  type TunnelCtx_ S t e r s e' r' s' zp zq gad = ()
 
   modSwitchPT_     = S 1
   modSwitch_       = S 1
@@ -105,14 +116,14 @@ instance SHE S where
   keySwitchQuad_ _ = S 1
   tunnel_ _        = S 1
 
-instance LinearCyc S (Linear t) (Cyc t) where
-  type PreLinearCyc S (Cyc t) = (Cyc t)
-  type LinearCycCtx S (Linear t) (Cyc t) e r s zp = ()
+instance LinearCyc_ S (Linear t) (Cyc t) where
+  type PreLinearCyc_ S (Cyc t) = (Cyc t)
+  type LinearCycCtx_ S (Linear t) (Cyc t) e r s zp = ()
 
   linearCyc_ _ = S 1
 
-instance LinearCyc S (Linear t) (PNoiseCyc p t) where
-  type PreLinearCyc S (PNoiseCyc p t) = (PNoiseCyc p t)
-  type LinearCycCtx S (Linear t) (PNoiseCyc p t) e r s zp = ()
+instance LinearCyc_ S (Linear t) (PNoiseCyc p t) where
+  type PreLinearCyc_ S (PNoiseCyc p t) = (PNoiseCyc p t)
+  type LinearCycCtx_ S (Linear t) (PNoiseCyc p t) e r s zp = ()
 
   linearCyc_ _ = S 1

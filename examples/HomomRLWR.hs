@@ -63,7 +63,9 @@ main = do
   (f, s, keys) <- homomRLWR
   a <- getRandom
 
-  let decResult = fromJust $ decrypt (f a) keys
+  encResult <- time "Computing encrypted result: " $ f a
+
+  let decResult = fromJust $ decrypt encResult keys
       ptResult  = unPNC $ eval ringRound (PNC $ s * a)
 
   putStrLn $ if decResult == ptResult then "PASS" else "FAIL"

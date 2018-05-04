@@ -14,23 +14,23 @@ import GHC.Exts                       (Constraint)
 -- | Symantics for evaluating a linear function on cyclotomics.
 
 -- TODO: once Lol upgrade is in place, remove lin and use Linear explicitly?
-class LinearCyc expr lin cyc | cyc -> lin where
+class LinearCyc_ expr lin cyc | cyc -> lin where
 
   -- | Constraints needed to linear
-  type LinearCycCtx expr lin cyc
+  type LinearCycCtx_ expr lin cyc
        (e :: Factored) (r :: Factored) (s :: Factored) zp :: Constraint
 
   -- | 'Cyc' wrapper for the input to linearCyc_
-  type PreLinearCyc expr cyc :: Factored -> * -> *
+  type PreLinearCyc_ expr cyc :: Factored -> * -> *
 
   -- | An object-language expression representing the given linear function.
-  linearCyc_ :: (LinearCycCtx expr lin cyc e r s zp)
+  linearCyc_ :: (LinearCycCtx_ expr lin cyc e r s zp)
     => lin zp e r s             -- TODO: put zp last to match Lol upgrade
-    -> expr env (PreLinearCyc expr cyc r zp -> cyc s zp)
+    -> expr env (PreLinearCyc_ expr cyc r zp -> cyc s zp)
 
-linearCyc :: (LinearCyc expr lin cyc, LinearCycCtx expr lin cyc e r s zp,
-              Lambda expr)
+linearCyc :: (LinearCyc_ expr lin cyc, LinearCycCtx_ expr lin cyc e r s zp,
+              Lambda_ expr)
   => lin zp e r s               -- TODO: put zp last to match Lol upgrade
-  -> expr env (PreLinearCyc expr cyc r zp)
+  -> expr env (PreLinearCyc_ expr cyc r zp)
   -> expr env (cyc s zp)
 linearCyc f a = linearCyc_ f $: a
