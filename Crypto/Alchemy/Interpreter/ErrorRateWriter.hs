@@ -48,8 +48,9 @@ type family Kleislify w a = r | r -> a where
   Kleislify w [a]      = [Kleislify w a]
   Kleislify _ a        = a
 
--- | Kleislify every element in the environment. This must be separate from 
--- the @Kleisli@ family since we do not want to modify pairs in the object language.
+-- | Kleislify every element in the environment. This must be separate
+-- from the @Kleislify@ family since we do not want to modify pairs in
+-- the object language.
 type family KleislifyEnv w e = r | r -> e where
   KleislifyEnv w (e, a) = (KleislifyEnv w e, w (Kleislify w a))
   KleislifyEnv _ ()     = ()
