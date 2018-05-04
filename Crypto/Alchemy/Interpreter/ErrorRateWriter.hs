@@ -65,8 +65,7 @@ liftK2_ = lam $ (.:) (pure_ .: liftK_)
 
 -- | Perform the action on the given value, then return the original value.
 after_ :: (Lambda_ expr, Monad_ expr m) => expr e ((a -> m b) -> a -> m a)
-after_ = lam $ \f -> lam $ \a ->
-  (var f $: var a) >>=: (const_ $: (return_ $: var a))
+after_ = liftA2_ $: fmap_ $: const_
 
 tellError_ :: forall w expr m zp t m' zq z e .
   (MonadWriter_ expr ErrorRateLog w, Show (ArgType zq),

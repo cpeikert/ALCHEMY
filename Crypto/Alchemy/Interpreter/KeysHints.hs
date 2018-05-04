@@ -80,10 +80,7 @@ appendHint a = append $ Hints [toDyn a]
 -- | Perform the action, then perform the action given by the result,
 -- and return the (first) result.
 (>=<) :: (Monad m) => (a -> m ()) -> m a -> m a
-f >=< a = do
-  a' <- a
-  f a'
-  return a'
+(>=<) = (=<<) . liftM2 fmap const
 
 -- | Return \( r / \varphi(m') \).
 svar :: (Fact m', Algebraic v) => Proxy m' -> v -> v
