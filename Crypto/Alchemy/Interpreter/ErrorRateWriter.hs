@@ -68,12 +68,12 @@ liftK2_ = lam $ (.:) (pure_ .: liftK_)
 after_ :: (Lambda_ expr, Monad_ expr m) => expr e ((a -> m ()) -> m a -> m a)
 after_ = (flip_ $: bind_) .: (flip_ $: (liftA2_ $: then_) $: return_)
 
-tellError :: forall w expr m zp t m' zq z e .
+tellError_ :: forall w expr m zp t m' zq z e .
   (MonadWriter_ expr ErrorRateLog w, Show (ArgType zq),
    Lambda_ expr, List_ expr, ErrorRate_ expr, String_ expr,
    Pair_ expr, ErrorRateCtx_ expr (CT m zp (Cyc t m' zq)) z) =>
    String -> SK (Cyc t m' z) -> expr e (CT m zp (Cyc t m' zq) -> w ())
-tellError str sk = lam $ \x -> tell_ $: (cons_ $: (pair_ $: (string_ $ str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: x)) $: nil_)
+tellError_ str sk = lam $ \x -> tell_ $: (cons_ $: (pair_ $: (string_ $ str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: x)) $: nil_)
 
 type WriteErrorCtx expr z k w ct t m m' zp zq =
   (MonadWriter_ expr ErrorRateLog w, MonadReader Keys k, Typeable (SK (Cyc t m' z)), 
@@ -94,7 +94,7 @@ liftWriteError _ str f_ = do
   key :: Maybe (SK (Cyc t m' z)) <- lookupKey
   return $ return_ $: 
     case key of 
-      Just sk -> (after_ $: tellError str sk) .: (liftK_ $: f_)
+      Just sk -> (after_ $: tellError_ str sk) .: (liftK_ $: f_)
       Nothing -> return_ .: f_
               
 liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
