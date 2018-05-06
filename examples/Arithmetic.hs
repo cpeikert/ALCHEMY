@@ -24,7 +24,7 @@ type PT = PNoiseCyc PNZ CT F4 (Zq 7)
 
 -- polymorphic over expr alone
 addMul :: _ => expr env (_ -> _ -> PT)
-addMul = lam $ \x -> lam $ \y -> var y *: (var y +: var x)
+addMul = lam2 $ \x y -> (var x +: var y) *: var y
 
 type M'Map = '[ '(F4, F512) ]
 
