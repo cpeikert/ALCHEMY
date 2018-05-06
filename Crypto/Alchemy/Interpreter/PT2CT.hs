@@ -196,7 +196,7 @@ type PT2CTLinearCtx' ctex mon m'map zqs p t e r s r' s' z zp zq zqin hintzq gad 
    -- output ciphertext type
    CT s zp (Cyc t s' zq)   ~ Cyc2CT m'map zqs (PNoiseCyc p t s zp),
    -- input ciphertext type
-   CT r zp (Cyc t r' zqin) ~ Cyc2CT m'map zqs (PNoiseCyc (p :+ TunnPNoise) t r zp),
+   CT r zp (Cyc t r' zqin) ~ Cyc2CT m'map zqs (PNoiseCyc (p :+ TunnelPNoise) t r zp),
    TunnelCtx_ ctex t e r s (e * (r' / r)) r' s'   zp hintzq gad,
    TunnelHintCtx  t e r s (e * (r' / r)) r' s' z zp hintzq gad,
    GenSKCtx t r' z Double, GenSKCtx t s' z Double,
@@ -207,15 +207,15 @@ type PT2CTLinearCtx' ctex mon m'map zqs p t e r s r' s' z zp zq zqin hintzq gad 
 instance LinearCyc_ (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) where
 
   type PreLinearCyc_ (PT2CT m'map zqs gad z ctex mon) (PNoiseCyc p t) =
-    PNoiseCyc (p :+ TunnPNoise) t
+    PNoiseCyc (p :+ TunnelPNoise) t
 
   type LinearCycCtx_ (PT2CT m'map zqs gad z ctex mon) (Linear t) (PNoiseCyc p t) e r s zp =
     (PT2CTLinearCtx ctex mon m'map zqs p t e r s (Lookup r m'map) (Lookup s m'map)
-      z zp (PNoise2Zq zqs p) (PNoise2Zq zqs (p :+ TunnPNoise)) gad)
+      z zp (PNoise2Zq zqs p) (PNoise2Zq zqs (p :+ TunnelPNoise)) gad)
 
   linearCyc_ :: forall t zp e r s env expr r' s' zq pin .
     (expr ~ PT2CT m'map zqs gad z ctex mon, s' ~ Lookup s m'map,
-     pin ~ (p :+ TunnPNoise),
+     pin ~ (p :+ TunnelPNoise),
      Cyc2CT m'map zqs (PNoiseCyc p t r zp) ~ CT r zp (Cyc t r' zq),
      PT2CTLinearCtx ctex mon m'map zqs p t e r s (Lookup r m'map)
       (Lookup s m'map) z zp (PNoise2Zq zqs p) (PNoise2Zq zqs pin) gad)
@@ -293,4 +293,4 @@ type MulPNoise = $(mkTypeNat $ ceiling $ 18 / pNoiseUnit)
 type MinUnits = $(mkTypeNat $ ceiling $ 12 / pNoiseUnit)
 
 -- | Amount by which pNoise decreases from a ring tun
-type TunnPNoise = $(mkTypeNat $ ceiling $ 6 / pNoiseUnit)
+type TunnelPNoise = $(mkTypeNat $ ceiling $ 6 / pNoiseUnit)
