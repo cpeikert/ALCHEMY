@@ -46,7 +46,7 @@ type Gad = TrivGad
 type PT = PNoiseCyc PNZ CT H5 (Zq PP2)
 
 ringRound :: _ => expr env (_ -> PT)
-ringRound =  untag (rescaleTreePow2_ @K) .: tunnel5
+ringRound =  untag (rescaleTreePow2_ @K) .: switch5
 
 homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound
 

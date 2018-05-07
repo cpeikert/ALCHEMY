@@ -72,25 +72,25 @@ decToCRT =
       -- only take as many crts as we need, otherwise linearDec fails
   in linearDec $ take dim crts
 
--- | Tunnel H0 -> H1
-tunnel1 :: _ => expr env (_ -> PNoiseCyc p t H1 zp)
-tunnel1 = linearCyc_ (decToCRT @H0)
+-- | Switch H0 -> H1
+switch1 :: _ => expr env (_ -> PNoiseCyc p t H1 zp)
+switch1 = linearCyc_ (decToCRT @H0)
 
--- | Tunnel H0 -> H1 -> H2
-tunnel2 :: _ => expr env (_ -> PNoiseCyc p t H2 zp)
-tunnel2 = linearCyc_ (decToCRT @H1) .: tunnel1
+-- | Switch H0 -> H1 -> H2
+switch2 :: _ => expr env (_ -> PNoiseCyc p t H2 zp)
+switch2 = linearCyc_ (decToCRT @H1) .: switch1
 
--- | Tunnel H0 -> H1 -> H2 -> H3
-tunnel3 :: _ => expr env (_ -> PNoiseCyc p t H3 zp)
-tunnel3 = linearCyc_ (decToCRT @H2) .: tunnel2
+-- | Switch H0 -> H1 -> H2 -> H3
+switch3 :: _ => expr env (_ -> PNoiseCyc p t H3 zp)
+switch3 = linearCyc_ (decToCRT @H2) .: switch2
 
--- | Tunnel H0 -> H1 -> H2 -> H3 -> H4
-tunnel4 :: _ => expr env (_ -> PNoiseCyc p t H4 zp)
-tunnel4 = linearCyc_ (decToCRT @H3) .: tunnel3
+-- | Switch H0 -> H1 -> H2 -> H3 -> H4
+switch4 :: _ => expr env (_ -> PNoiseCyc p t H4 zp)
+switch4 = linearCyc_ (decToCRT @H3) .: switch3
 
--- | Tunnel H0 -> H1 -> H2 -> H3 -> H4 -> H5
-tunnel5 :: _ => expr env (_ -> PNoiseCyc p t H5 zp)
-tunnel5 = linearCyc_ (decToCRT @H4) .: tunnel4
+-- | Switch H0 -> H1 -> H2 -> H3 -> H4 -> H5
+switch5 :: _ => expr env (_ -> PNoiseCyc p t H5 zp)
+switch5 = linearCyc_ (decToCRT @H4) .: switch4
 
 
 -- timing functionality
