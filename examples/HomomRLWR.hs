@@ -34,14 +34,14 @@ type M'Map = '[ '(H0,H0')
               ]
 
 type Zqs = '[ Zq $(mkTLNatNat 1520064001) -- last mul: > 2^30.5
-            , Zq $(mkTLNatNat 3144961)    -- 3 rounding muls: > 2^19
-            , Zq $(mkTLNatNat 5241601)
-            , Zq $(mkTLNatNat 7338241)
+            , Zq $(mkTLNatNat 649958401)  -- 3 rounding muls: > 2^19 (larger than they 
+            , Zq $(mkTLNatNat 707091841)  -- strictly need to be to account for 
+            , Zq $(mkTLNatNat 742210561)  -- the mulPublic)
             , Zq $(mkTLNatNat 1522160641) -- fit 5 hops: > (last mul)
             , Zq $(mkTLNatNat 1529498881) -- extra for KS: big
             ]
 
-type K = P3
+type K = P5
 type Gad = TrivGad
 type PT = PNoiseCyc PNZ CT H5 (Zq PP2)
 
@@ -52,7 +52,7 @@ homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound
 
 homomRLWR = do
   s <- getRandom
-  (f, keys, _) <- runKeysHints 5.0 $
+  (f, keys, _) <- runKeysHints 8.0 $
     liftM2 (.) (eval <$> homomRingRound) $
                flip mulPublic <$> encrypt s
   return (f, s, keys)
@@ -60,12 +60,11 @@ homomRLWR = do
 
 main :: IO ()
 main = do
-  (f, s, keys) <- homomRLWR
-  a <- getRandom
+  (f, s, keys) <- timeIO "Generating function... " homomRLWR
 
-  encResult <- time "Computing encrypted result: " $ f a
+  a <- getRandom
+  ptResult  <- time "Computing plaintext result... " $ unPNC $ eval ringRound (PNC $ s * a)
+  encResult <- time "Computing encrypted result... " $ f a
 
   let decResult = fromJust $ decrypt encResult keys
-      ptResult  = unPNC $ eval ringRound (PNC $ s * a)
-
   putStrLn $ if decResult == ptResult then "PASS" else "FAIL"

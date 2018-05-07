@@ -29,6 +29,11 @@ lam :: Lambda_ expr
   -> expr e (a -> b)
 lam body = lamDB $ body v0
 
+lam2 :: Lambda_ expr
+  => (forall x y. expr ((e,x),y) a -> expr ((e,x),y) b -> expr ((e,x),y) c)
+  -> expr e (a -> b -> c)
+lam2 body = lamDB $ lamDB $ body (weaken v0) v0
+
 lamM :: (Functor f, Lambda_ expr)
   => (forall x. expr (e,x) a -> f (expr (e,x) b))
   -> f (expr e (a -> b))
