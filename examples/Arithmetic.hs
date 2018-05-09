@@ -28,9 +28,9 @@ addMul = lam2 $ \x y -> (var x +: var y) *: var y
 
 type M'Map = '[ '(F4, F512) ]
 
-type Zqs = '[ Zq $(mkTLNatNat 268440577)
-            , Zq $(mkTLNatNat 8392193)
-            , Zq $(mkTLNatNat 1073750017)
+type Zqs = '[ Zq $(mkModulus 268440577)
+            , Zq $(mkModulus 8392193)
+            , Zq $(mkModulus 1073750017)
             ]
 
 main :: IO ()

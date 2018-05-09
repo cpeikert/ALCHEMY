@@ -21,7 +21,7 @@ module Crypto.Alchemy.Interpreter.PT2CT
 ( PT2CT
 , pt2ct, encrypt, decrypt
 -- * re-exports
-, PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkTLNatNat
+, PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkModulus
 ) where
 
 import Control.Applicative

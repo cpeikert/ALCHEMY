@@ -24,7 +24,7 @@
 module Crypto.Alchemy.Interpreter.PT2CT.Noise
 ( PNoise(..), PNZ, PNoiseCyc(..), Units(..)
 , UnitsToNat, ZqPairsWithUnits, TotalUnits, pNoiseUnit
-, TLNatNat, mkTLNatNat, mkTypeNat, (:+)
+, TLNatNat, mkModulus, mkTypeNat, (:+)
 ) where
 
 import           Algebra.Additive             as Additive (C)
@@ -164,8 +164,8 @@ mkTypeLit = litT . numTyLit
 
 -- | TH splice for a 'TLNatNat' of the given integer with the number
 -- of noise units it can hold.
-mkTLNatNat :: Integer -> TypeQ
-mkTLNatNat q =
+mkModulus :: Integer -> TypeQ
+mkModulus q =
   let units = floor $ logBase 2 (fromInteger q) / pNoiseUnit
   in conT 'NN `appT` mkTypeLit q `appT` mkTypeNat units
 

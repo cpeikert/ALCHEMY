@@ -34,12 +34,12 @@ type M'Map = '[ '(H0,H0')
               , '(H5,H5')
               ]
 
-type Zqs = '[ Zq $(mkTLNatNat 1543651201) -- last mul: > 2^30.5
-            , Zq $(mkTLNatNat 689270401)  -- 3 rounding muls: > 2^29 (larger than they 
-            , Zq $(mkTLNatNat 718099201)  -- strictly need to be to account for 
-            , Zq $(mkTLNatNat 720720001)  -- the mulPublic)
-            , Zq $(mkTLNatNat 1556755201) -- fit 5 hops: > (last mul)
-            , Zq $(mkTLNatNat 1567238401) -- extra for KS: big
+type Zqs = '[ Zq $(mkModulus 1543651201) -- last mul: > 2^30.5
+            , Zq $(mkModulus 689270401)  -- 3 rounding muls: > 2^29 (larger than they 
+            , Zq $(mkModulus 718099201)  -- strictly need to be to account for 
+            , Zq $(mkModulus 720720001)  -- the mulPublic)
+            , Zq $(mkModulus 1556755201) -- fit 5 hops: > (last mul)
+            , Zq $(mkModulus 1567238401) -- extra for KS: big
             ]
 
 type K = P5
