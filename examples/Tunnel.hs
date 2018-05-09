@@ -32,10 +32,10 @@ type M'Map = '[ '(H0,H0')
               ]
 
 type Zqs = '[ Zq $(mkTLNatNat 537264001)
-            , Zq $(mkTLNatNat 539360641)
             , Zq $(mkTLNatNat 539884801)
-            , Zq $(mkTLNatNat 540933121)
-            , Zq $(mkTLNatNat 541457281)
+            , Zq $(mkTLNatNat 555609601)
+            , Zq $(mkTLNatNat 560851201)
+            , Zq $(mkTLNatNat 566092801)
             ] -- good moduli, ~ 30 bits
 
 type PT = PNoiseCyc PNZ CT H3 (Zq PP8)

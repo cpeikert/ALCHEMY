@@ -22,6 +22,7 @@ import Crypto.Alchemy.Language.RescaleTree
 import Crypto.Lol.Applications.SymmSHE      (mulPublic)
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor.CPP
+import Control.Monad.Writer
 
 import Common
 
@@ -33,12 +34,12 @@ type M'Map = '[ '(H0,H0')
               , '(H5,H5')
               ]
 
-type Zqs = '[ Zq $(mkTLNatNat 1520064001) -- last mul: > 2^30.5
-            , Zq $(mkTLNatNat 649958401)  -- 3 rounding muls: > 2^19 (larger than they 
-            , Zq $(mkTLNatNat 707091841)  -- strictly need to be to account for 
-            , Zq $(mkTLNatNat 742210561)  -- the mulPublic)
-            , Zq $(mkTLNatNat 1522160641) -- fit 5 hops: > (last mul)
-            , Zq $(mkTLNatNat 1529498881) -- extra for KS: big
+type Zqs = '[ Zq $(mkTLNatNat 1543651201) -- last mul: > 2^30.5
+            , Zq $(mkTLNatNat 689270401)  -- 3 rounding muls: > 2^29 (larger than they 
+            , Zq $(mkTLNatNat 718099201)  -- strictly need to be to account for 
+            , Zq $(mkTLNatNat 720720001)  -- the mulPublic)
+            , Zq $(mkTLNatNat 1556755201) -- fit 5 hops: > (last mul)
+            , Zq $(mkTLNatNat 1567238401) -- extra for KS: big
             ]
 
 type K = P5
@@ -52,7 +53,7 @@ homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound
 
 homomRLWR = do
   s <- getRandom
-  (f, keys, _) <- runKeysHints 8.0 $
+  (f, keys, _) <- runKeysHints 5.0 $
     liftM2 (.) (eval <$> homomRingRound) $
                flip mulPublic <$> encrypt s
   return (f, s, keys)

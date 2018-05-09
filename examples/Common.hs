@@ -34,7 +34,8 @@ type Z2E e = ZqBasic ('PP '(Prime2, e)) Int64
 -- shorthand for Z_q type
 type Zq q = ZqBasic q Int64
 
-$(mapM fDec [2912, 3640, 5460, 4095, 11648, 5824])
+-- Template Haskell is quicker than using the FMul type familiy
+$(mapM fDec [2912, 3640, 5460, 4095, 11648, 29120, 43680, 54600, 27300, 20475])
 
 -- plaintext ring indices
 type H0 = F128
@@ -45,12 +46,13 @@ type H4 = F5460 -- F4 * F3 * F5 * F7 * F13
 type H5 = F4095 -- F9 * F5 * F7 * F13
 
 -- corresponding ciphertext ring indices
-type H0' = F11648 -- H0 * F7 * F13
-type H1' = F5824 -- H1 * F13
-type H2' = H2
-type H3' = H3
-type H4' = H4
-type H5' = H5
+type H0' = F11648 -- H0 * F13 * F7
+type H1' = F29120 -- H1 * F13 * F5
+type H2' = F43680 -- H2 * F5 * F3
+type H3' = F54600 -- H3 * F5 * F3
+type H4' = F27300 -- H4 * F5
+type H5' = F20475 -- H5 * F5
+
 
 putStrLnIO :: MonadIO m => String -> m ()
 putStrLnIO = liftIO . putStrLn
