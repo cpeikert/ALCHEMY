@@ -66,6 +66,7 @@ extra-deps:
 - ghc-typelits-presburger-0.1.1.0
 - equational-reasoning-0.4.1.1
 - monomorphic-0.0.3.3
+- type-list-0.5.0.0
 #
 - nist-beacon-0.2.0.0
 

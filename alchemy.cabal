@@ -57,6 +57,7 @@ library
                , tagged-transformer
                , template-haskell
                , type-natural
+               , type-list
 
 executable alchemy-arithmetic
   hs-source-dirs: examples
