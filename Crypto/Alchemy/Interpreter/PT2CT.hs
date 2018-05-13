@@ -27,6 +27,7 @@ module Crypto.Alchemy.Interpreter.PT2CT
 import Control.Applicative
 import Control.Monad.Random
 import Control.Monad.Reader
+import Data.Type.List       (Union, Insert)
 import Data.Dynamic
 import Data.Type.Natural    hiding ((:+))
 import GHC.TypeLits         hiding (type (*), Nat)
@@ -69,9 +70,10 @@ newtype PT2CT
 -- coefficients for generated keys and errors.  (I.e., the scaled
 -- variance over \( R^\vee \) is \( r / \sqrt{\varphi(m')} \).)
 pt2ct :: forall m'map zqs gad z a ctex e mon .            -- this forall is for use with TypeApplications
-  PT2CT m'map zqs gad z mon ctex e a                      -- | plaintext expression
+  (GenKeys (AccumKeyTypes (Cyc2CT m'map zqs a)) z, KeysAccumulatorCtx Double mon)
+  => PT2CT m'map zqs gad z mon ctex e a                   -- | plaintext expression
   -> mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a)) -- | (monadic) ctex expression
-pt2ct = unPC
+pt2ct = (genKeys (Proxy::Proxy (AccumKeyTypes (Cyc2CT m'map zqs a))) (Proxy::Proxy z) >>) . unPC
 
 -- | Encrypt a plaintext (using the given scaled variance) under an
 -- appropriate key (from the monad), generating one if necessary.
@@ -213,7 +215,7 @@ instance LinearCyc_ (PT2CT m'map zqs gad z mon ctex) (Linear t) (PNoiseCyc p t) 
     (PT2CTLinearCtx ctex mon m'map zqs p t e r s (Lookup r m'map) (Lookup s m'map)
       z zp (PNoise2Zq zqs p) (PNoise2Zq zqs (p :+ TunnelPNoise)) gad)
 
-  linearCyc_ :: forall t zp e r s env expr r' s' zq pin .
+  linearCyc_ :: forall zp e r s env expr r' s' zq pin .
     (expr ~ PT2CT m'map zqs gad z mon ctex, s' ~ Lookup s m'map,
      pin ~ (p :+ TunnelPNoise),
      Cyc2CT m'map zqs (PNoiseCyc p t r zp) ~ CT r zp (Cyc t r' zq),
@@ -294,3 +296,24 @@ type MinUnits = $(mkTypeNat $ ceiling $ 12 / pNoiseUnit)
 
 -- | Amount by which pNoise decreases from a ring tun
 type TunnelPNoise = $(mkTypeNat $ ceiling $ 6 / pNoiseUnit)
+
+------ MACHINERY FOR FORCING KEY GENERATION ------
+
+type AccumKeyTypes a = AccumKeyTypesRec a '[]
+
+type family AccumKeyTypesRec a l where
+  AccumKeyTypesRec (a -> b) l = Union (AccumKeyTypesRec a l) (AccumKeyTypes b)
+  AccumKeyTypesRec (a,b)    l = Union (AccumKeyTypesRec a l) (AccumKeyTypes b)
+  AccumKeyTypesRec [a] l = AccumKeyTypesRec a l
+  AccumKeyTypesRec (CT _ _ (Cyc t m' _)) l = Insert '(t, m') l
+  AccumKeyTypesRec _ l = l -- We could type error here, but not sure there is reason to
+
+class GenKeys (tms :: [(Factored -> * -> *, Factored)]) z where
+  genKeys :: KeysAccumulatorCtx Double m => Proxy tms -> Proxy z -> m ()
+
+instance (Typeable (Cyc t m' z), GenSKCtx t m' z Double, GenKeys tms z)
+  => GenKeys ('(t,m') ': tms) z where
+  genKeys _ z = getKey @z @t @m' >> genKeys (Proxy::Proxy tms) z
+
+instance GenKeys '[] z where
+  genKeys _ _ = return ()
