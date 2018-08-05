@@ -40,9 +40,10 @@ import           GHC.TypeLits                 hiding (Nat)
 import qualified GHC.TypeLits                 as TL (Nat)
 import           Language.Haskell.TH
 
-import Crypto.Lol                      (Cyc)
+import Crypto.Lol (Factored)
 import Crypto.Lol.Reflects
 import Crypto.Lol.Types.Unsafe.ZqBasic
+import Crypto.Lol.Cyclotomic.Language
 
 -- | A type representing @pNoise =~ -log(noise rate)@ of a ciphertext.
 -- We use the promoted type @'PN@ of kind @PNoise@ to distinguish this value
@@ -66,14 +67,53 @@ type family UnitsToNat (u :: Units) where
   UnitsToNat ('Units h) = h
 
 -- | A cyclotomic ring element tagged by @pNoise =~ -log(noise rate)@.
-newtype PNoiseCyc (p :: PNoise) t m r = PNC { unPNC :: Cyc t m r }
+newtype PNoiseCyc (p :: PNoise) c (m :: Factored) r = PNC { unPNC :: c m r }
 
-deriving instance (Eq             (Cyc t m r)) => Eq         (PNoiseCyc p t m r)
-deriving instance (Show           (Cyc t m r)) => Show       (PNoiseCyc p t m r)
-deriving instance (Random         (Cyc t m r)) => Random     (PNoiseCyc p t m r)
-deriving instance (Additive.C     (Cyc t m r)) => Additive.C (PNoiseCyc p t m r)
-deriving instance (Ring.C         (Cyc t m r)) => Ring.C     (PNoiseCyc p t m r)
-deriving instance (ZeroTestable.C (Cyc t m r)) => ZeroTestable.C (PNoiseCyc p t m r)
+deriving instance (Eq             (c m r)) => Eq         (PNoiseCyc p c m r)
+deriving instance (Show           (c m r)) => Show       (PNoiseCyc p c m r)
+deriving instance (Random         (c m r)) => Random     (PNoiseCyc p c m r)
+deriving instance (Additive.C     (c m r)) => Additive.C (PNoiseCyc p c m r)
+deriving instance (Ring.C         (c m r)) => Ring.C     (PNoiseCyc p c m r)
+deriving instance (ZeroTestable.C (c m r)) => ZeroTestable.C (PNoiseCyc p c m r)
+
+-- Crypto.Lol.Cyclotomic.Language instances. Cannot derive these since 'c' is not the last type parameter
+instance Cyclotomic c r => Cyclotomic (PNoiseCyc p c) r where
+  scalarCyc = PNC . scalarCyc
+  mulG = PNC . mulG . unPNC
+  divG = fmap PNC . divG . unPNC
+  adviseCRT = PNC . adviseCRT . unPNC
+  advisePow = PNC . advisePow . unPNC
+  adviseDec = PNC . adviseDec . unPNC
+
+instance GSqNorm c r => GSqNorm (PNoiseCyc p c) r where
+  gSqNorm = gSqNorm . unPNC
+
+instance GaussianCyc c q => GaussianCyc (PNoiseCyc p c) q where
+  tweakedGaussian = fmap PNC . tweakedGaussian
+
+instance RoundedGaussianCyc c z => RoundedGaussianCyc (PNoiseCyc p c) z where
+  roundedGaussian = fmap PNC . roundedGaussian
+
+instance CosetGaussianCyc c zp => CosetGaussianCyc (PNoiseCyc p c) zp where
+  cosetGaussian = (fmap PNC .) . (. unPNC) . cosetGaussian
+
+instance ExtensionCyc c r => ExtensionCyc (PNoiseCyc p c) r where
+  embed = PNC . embed . unPNC
+  twace = PNC . twace . unPNC
+  powBasis = fmap (map PNC) powBasis
+  coeffsCyc = (map PNC .) . (. unPNC) . coeffsCyc
+
+instance CRTSetCyc c r => CRTSetCyc (PNoiseCyc p c) r where
+  crtSet = fmap (map PNC) crtSet
+
+instance ReduceCyc c a b => ReduceCyc (PNoiseCyc p c) a b where
+  reduceCyc = PNC . reduceCyc . unPNC
+
+instance LiftCyc c r => LiftCyc (PNoiseCyc p c) r where
+  liftCyc = (PNC .) . (. unPNC) . liftCyc
+
+instance RescaleCyc c a b => RescaleCyc (PNoiseCyc p c) a b where
+  rescaleCyc = (PNC .) . (. unPNC) . rescaleCyc
 
 -- CJP: why should this be defined here?
 type family Modulus zq :: k

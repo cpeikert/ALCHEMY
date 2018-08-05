@@ -10,7 +10,6 @@ module Crypto.Alchemy.Interpreter.Print
 )
 where
 
-import Crypto.Alchemy.Interpreter.PT2CT.Noise
 import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
 import Crypto.Alchemy.Language.LinearCyc
@@ -20,8 +19,7 @@ import Crypto.Alchemy.Language.Pair
 import Crypto.Alchemy.Language.SHE
 import Crypto.Alchemy.Language.String
 
-import Crypto.Lol                      (Cyc, Linear, Pos (..), Prime2,
-                                        PrimePower (..))
+import Crypto.Lol                      (Pos (..), Prime2, PrimePower (..))
 import Crypto.Lol.Applications.SymmSHE (CT)
 import Crypto.Lol.Types
 
@@ -74,19 +72,14 @@ instance Mul_ P a where
 instance Show a => MulLit_ P a where
   mulLit_ a = pureP $ "mulLit (" ++ show a ++ ")"
 
-instance Div2_ P (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) where
-  type PreDiv2_ P (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) =
-    Cyc t m (ZqBasic ('PP '(Prime2, 'S k)) i)
+instance Div2_ P (c m (ZqBasic ('PP '(Prime2, k)) i)) where
+  type PreDiv2_ P (c m (ZqBasic ('PP '(Prime2, k)) i)) =
+    c m (ZqBasic ('PP '(Prime2, 'S k)) i)
   div2_ = pureP "div2"
 
-instance Div2_ P (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) where
-  type PreDiv2_ P (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) =
-    PNoiseCyc h t m (ZqBasic ('PP '(Prime2, 'S k)) i)
-  div2_ = pureP "div2"
-
-instance Div2_ P (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
-  type PreDiv2_ P (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) =
-    CT m (ZqBasic ('PP '(Prime2, 'S k)) i) (Cyc t m' zq)
+instance Div2_ P (CT m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) where
+  type PreDiv2_ P (CT m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) =
+    CT m (ZqBasic ('PP '(Prime2, 'S k)) i) (c m' zq)
 
   div2_ = pureP "div2"
 
@@ -113,8 +106,8 @@ instance SHE_ P where
 
   type ModSwitchPTCtx_   P a zp' = ()
   type ModSwitchCtx_     P a zq' = ()
-  type AddPublicCtx_     P (CT m zp (Cyc t m' zq)) = (Show (Cyc t m zp))
-  type MulPublicCtx_     P (CT m zp (Cyc t m' zq)) = (Show (Cyc t m zp))
+  type AddPublicCtx_     P (CT m zp (c m' zq)) = (Show (c m zp))
+  type MulPublicCtx_     P (CT m zp (c m' zq)) = (Show (c m zp))
   type KeySwitchQuadCtx_ P a gad = ()
   type TunnelCtx_        P t e r s e' r' s' zp zq gad = ()
 
@@ -125,15 +118,9 @@ instance SHE_ P where
   keySwitchQuad_ _ = pureP   "keySwitchQuad <HINT>"
   tunnel_        _ = pureP   "tunnel <HINT>"
 
-instance LinearCyc_ P (Linear t) (Cyc t) where
-  type PreLinearCyc_ P (Cyc t) = Cyc t
-  type LinearCycCtx_ P (Linear t) (Cyc t) e r s zp = ()
-
-  linearCyc_ _ = pureP "linearCyc <FUNC>"
-
-instance LinearCyc_ P (Linear t) (PNoiseCyc p t) where
-  type PreLinearCyc_ P (PNoiseCyc p t) = PNoiseCyc p t
-  type LinearCycCtx_ P (Linear t) (PNoiseCyc p t) e r s zp = ()
+instance LinearCyc_ P c where
+  type PreLinearCyc_ P c = c
+  type LinearCycCtx_ P c e r s zp = ()
 
   linearCyc_ _ = pureP "linearCyc <FUNC>"
 

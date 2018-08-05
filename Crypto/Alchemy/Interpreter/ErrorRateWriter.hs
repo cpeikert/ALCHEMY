@@ -67,37 +67,37 @@ liftK2_ = lam $ (.:) (pure_ .: liftK_)
 after_ :: (Lambda_ expr, Monad_ expr m) => expr e ((a -> m b) -> a -> m a)
 after_ = liftA2_ $: fmap_ $: const_
 
-tellError_ :: forall w expr m zp t m' zq z e .
+tellError_ :: forall w expr m zp c (m' :: Factored) zq z e .
   (MonadWriter_ expr ErrorRateLog w, Show (ArgType zq),
    Lambda_ expr, List_ expr, ErrorRate_ expr, String_ expr,
-   Pair_ expr, ErrorRateCtx_ expr (CT m zp (Cyc t m' zq)) z) =>
-   String -> SK (Cyc t m' z) -> expr e (CT m zp (Cyc t m' zq) -> w ())
+   Pair_ expr, ErrorRateCtx_ expr (CT m zp (c m' zq)) z) =>
+   String -> SK (c m' z) -> expr e (CT m zp (c m' zq) -> w ())
 tellError_ str sk = lam $ \x -> tell_ $: (cons_ $: (pair_ $: string_ (str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: x)) $: nil_)
 
-type WriteErrorCtx expr z k w ct t m m' zp zq =
-  (MonadWriter_ expr ErrorRateLog w, MonadReader Keys k, Typeable (SK (Cyc t m' z)), 
+type WriteErrorCtx expr z k w ct c m (m' :: Factored) zp zq =
+  (MonadWriter_ expr ErrorRateLog w, MonadReader Keys k, Typeable (SK (c m' z)), 
    Lambda_ expr, List_ expr, String_ expr, Pair_ expr, ErrorRate_ expr,
-   ct ~ (CT m zp (Cyc t m' zq)), ErrorRateCtx_ expr ct z, Show (ArgType zq))
+   ct ~ (CT m zp (c m' zq)), ErrorRateCtx_ expr ct z, Show (ArgType zq))
 
 -- | Convert an object-language function to a (monadic) one that
 -- writes the error rate of its ciphertext output.
 
-liftWriteError :: forall expr z k w ct t m m' zp zq a e .
-  (WriteErrorCtx expr z k w ct t m m' zp zq)
+liftWriteError :: forall expr z k w ct c m m' zp zq a e .
+  (WriteErrorCtx expr z k w ct c m m' zp zq)
   => Proxy z
   -> String                     -- | annotation
   -> expr e (a -> ct)           -- | the function to lift
   -> k (expr e (w (a -> w ct)))
 
 liftWriteError _ str f_ = do
-  key :: Maybe (SK (Cyc t m' z)) <- lookupKey
+  key :: Maybe (SK (c m' z)) <- lookupKey
   return $ return_ $: 
     case key of 
       Just sk -> (after_ $: tellError_ str sk) .: f_
       Nothing -> return_ .: f_
               
-liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
-  (WriteErrorCtx expr z k w ct t m m' zp zq)
+liftWriteError2 :: forall expr z k w ct c m m' zp zq a b e .
+  (WriteErrorCtx expr z k w ct c m m' zp zq)
   => Proxy z
   -> String                     -- | annotation
   -> expr e (a -> b -> ct)      -- | the function to lift
@@ -105,38 +105,38 @@ liftWriteError2 :: forall expr z k w ct t m m' zp zq a b e .
 liftWriteError2 z str f_ =
   fmap ((return_ $:) . lamDB) $ liftWriteError z str $ var f_ $: v0
 
-instance (WriteErrorCtx expr z k w ct t m m' zp zq, Add_ expr ct) =>
-  Add_ (ERW expr z k w) (CT m zp (Cyc t m' zq)) where
+instance (WriteErrorCtx expr z k w ct c m m' zp zq, Add_ expr ct) =>
+  Add_ (ERW expr z k w) (CT m zp (c m' zq)) where
 
   add_ = ERW $ liftWriteError2 (Proxy::Proxy z) "add_" add_
   neg_ = ERW $ liftWriteError  (Proxy::Proxy z) "neg_" neg_
 
-instance (WriteErrorCtx expr z k w ct t m m' zp zq, Mul_ expr ct,
+instance (WriteErrorCtx expr z k w ct c m m' zp zq, Mul_ expr ct,
           -- needed because PreMul could take some crazy form
           Kleislify w (PreMul_ expr ct) ~ PreMul_ expr ct)
-         => Mul_ (ERW expr z k w) (CT m zp (Cyc t m' zq)) where
+         => Mul_ (ERW expr z k w) (CT m zp (c m' zq)) where
 
-  type PreMul_ (ERW expr z k w) (CT m zp (Cyc t m' zq)) =
-    PreMul_ expr (CT m zp (Cyc t m' zq))
+  type PreMul_ (ERW expr z k w) (CT m zp (c m' zq)) =
+    PreMul_ expr (CT m zp (c m' zq))
 
   mul_ = ERW $ liftWriteError2 (Proxy::Proxy z) "mul_" mul_
 
-instance (WriteErrorCtx expr z k w ct t m m' zp zq, AddLit_ expr ct) =>
-  AddLit_ (ERW expr z k w) (CT m zp (Cyc t m' zq)) where
+instance (WriteErrorCtx expr z k w ct c m m' zp zq, AddLit_ expr ct) =>
+  AddLit_ (ERW expr z k w) (CT m zp (c m' zq)) where
 
   addLit_ = ERW . liftWriteError (Proxy::Proxy z) "addLit_" . addLit_
 
-instance (WriteErrorCtx expr z k w ct t m m' zp zq, MulLit_ expr ct) =>
-  MulLit_ (ERW expr z k w) (CT m zp (Cyc t m' zq)) where
+instance (WriteErrorCtx expr z k w ct c m m' zp zq, MulLit_ expr ct) =>
+  MulLit_ (ERW expr z k w) (CT m zp (c m' zq)) where
 
   mulLit_ = ERW . liftWriteError (Proxy::Proxy z) "mulLit_" . mulLit_
 
-instance (WriteErrorCtx expr z k w ct t m m' zp zq,
-          Kleislify w (PreDiv2_ expr ct) ~ PreDiv2_ expr ct, ct ~ CT m zp (Cyc t m' zq),
+instance (WriteErrorCtx expr z k w ct c m m' zp zq,
+          Kleislify w (PreDiv2_ expr ct) ~ PreDiv2_ expr ct, ct ~ CT m zp (c m' zq),
           Div2_ expr ct, Applicative k)
-  => Div2_ (ERW expr z k w) (CT m zp (Cyc t m' zq)) where
-  type PreDiv2_ (ERW expr z k w) (CT m zp (Cyc t m' zq)) =
-    PreDiv2_ expr (CT m zp (Cyc t m' zq))
+  => Div2_ (ERW expr z k w) (CT m zp (c m' zq)) where
+  type PreDiv2_ (ERW expr z k w) (CT m zp (c m' zq)) =
+    PreDiv2_ expr (CT m zp (c m' zq))
 
   div2_ = ERW $ liftWriteError (Proxy::Proxy z) "div2_" div2_
 
@@ -171,24 +171,24 @@ instance (String_ expr, Applicative_ expr w, Lambda_ expr, Applicative k)
 instance (SHE_ expr, Applicative_ expr w, Lambda_ expr, Applicative k) =>
   SHE_ (ERW expr z k w) where
 
-  type ModSwitchPTCtx_   (ERW expr z k w) (CT m zp (Cyc t m' zq)) zp' =
-    (WriteErrorCtx expr z k w (CT m zp' (Cyc t m' zq)) t m m' zp' zq,
-     ModSwitchPTCtx_ expr (CT m zp (Cyc t m' zq)) zp')
-  type ModSwitchCtx_     (ERW expr z k w) (CT m zp (Cyc t m' zq)) zq' =
-    (WriteErrorCtx expr z k w (CT m zp (Cyc t m' zq')) t m m' zp zq',
-     ModSwitchCtx_ expr (CT m zp (Cyc t m' zq)) zq')
-  type AddPublicCtx_     (ERW expr z k w) (CT m zp (Cyc t m' zq))     =
-    (WriteErrorCtx expr z k w (CT m zp (Cyc t m' zq)) t m m' zp zq,
-     AddPublicCtx_ expr (CT m zp (Cyc t m' zq)))
-  type MulPublicCtx_     (ERW expr z k w) (CT m zp (Cyc t m' zq))     =
-    (WriteErrorCtx expr z k w (CT m zp (Cyc t m' zq)) t m m' zp zq,
-     MulPublicCtx_ expr (CT m zp (Cyc t m' zq)))
-  type KeySwitchQuadCtx_ (ERW expr z k w) (CT m zp (Cyc t m' zq)) gad =
-    (KeySwitchQuadCtx_ expr (CT m zp (Cyc t m' zq)) gad,
-     WriteErrorCtx expr z k w (CT m zp (Cyc t m' zq)) t m m' zp zq)
-  type TunnelCtx_ (ERW expr z k w) t e r s e' r' s' zp zq gad =
-      (TunnelCtx_ expr t e r s e' r' s' zp zq gad,
-       WriteErrorCtx expr z k w (CT s zp (Cyc t s' zq)) t s s' zp zq)
+  type ModSwitchPTCtx_   (ERW expr z k w) (CT m zp (c m' zq)) zp' =
+    (WriteErrorCtx expr z k w (CT m zp' (c m' zq)) c m m' zp' zq,
+     ModSwitchPTCtx_ expr (CT m zp (c m' zq)) zp')
+  type ModSwitchCtx_     (ERW expr z k w) (CT m zp (c m' zq)) zq' =
+    (WriteErrorCtx expr z k w (CT m zp (c m' zq')) c m m' zp zq',
+     ModSwitchCtx_ expr (CT m zp (c m' zq)) zq')
+  type AddPublicCtx_     (ERW expr z k w) (CT m zp (c m' zq))     =
+    (WriteErrorCtx expr z k w (CT m zp (c m' zq)) c m m' zp zq,
+     AddPublicCtx_ expr (CT m zp (c m' zq)))
+  type MulPublicCtx_     (ERW expr z k w) (CT m zp (c m' zq))     =
+    (WriteErrorCtx expr z k w (CT m zp (c m' zq)) c m m' zp zq,
+     MulPublicCtx_ expr (CT m zp (c m' zq)))
+  type KeySwitchQuadCtx_ (ERW expr z k w) (CT m zp (c m' zq)) gad =
+    (KeySwitchQuadCtx_ expr (CT m zp (c m' zq)) gad,
+     WriteErrorCtx expr z k w (CT m zp (c m' zq)) c m m' zp zq)
+  type TunnelCtx_ (ERW expr z k w) c e r s e' r' s' zp zq gad =
+      (TunnelCtx_ expr c e r s e' r' s' zp zq gad,
+       WriteErrorCtx expr z k w (CT s zp (c s' zq)) c s s' zp zq)
 
   modSwitchPT_   = ERW $ liftWriteError (Proxy::Proxy z) "modSwitchPT_" modSwitchPT_
   modSwitch_     = ERW $ liftWriteError (Proxy::Proxy z) "modSwitch_" modSwitch_

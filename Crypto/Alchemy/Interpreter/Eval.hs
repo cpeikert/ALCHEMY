@@ -19,6 +19,7 @@ import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.Writer
 import Data.Tuple
+import Data.Foldable
 
 import Algebra.Additive as Additive
 import Algebra.Ring     as Ring
@@ -69,28 +70,27 @@ instance Ring.C a => Mul_ E a where
 instance Ring.C a => MulLit_ E a where
   mulLit_ x = pureE (x *)
 
-instance (RescaleCyc (Cyc t) (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i),
+instance (RescaleCyc c (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i),
           Fact m)
-  => Div2_ E (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) where
-  type PreDiv2_ E (Cyc t m (ZqBasic ('PP '(Prime2, k)) i)) =
-    Cyc t m (ZqBasic ('PP '(Prime2, 'S k)) i)
+  => Div2_ E (c m (ZqBasic ('PP '(Prime2, k)) i)) where
+  type PreDiv2_ E (c m (ZqBasic ('PP '(Prime2, k)) i)) = c m (ZqBasic ('PP '(Prime2, 'S k)) i)
   -- since input is divisible by two, it doesn't matter which basis we use
   div2_ = pureE rescalePow
 
-instance (RescaleCyc (Cyc t) (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i),
+instance (RescaleCyc c (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i),
           Fact m)
-  => Div2_ E (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) where
+  => Div2_ E (PNoiseCyc h c m (ZqBasic ('PP '(Prime2, k)) i)) where
 
-  type PreDiv2_ E (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) =
-    PNoiseCyc h t m (ZqBasic ('PP '(Prime2, 'S k)) i)
+  type PreDiv2_ E (PNoiseCyc h c m (ZqBasic ('PP '(Prime2, k)) i)) =
+    PNoiseCyc h c m (ZqBasic ('PP '(Prime2, 'S k)) i)
 
   -- since input is divisible by two, it doesn't matter which basis we use
   div2_ = pureE $ PNC . rescalePow . unPNC
 
-instance (ModSwitchPTCtx t m' (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i) zq) =>
-  Div2_ E (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
-  type PreDiv2_ E (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) =
-    CT m (ZqBasic ('PP '(Prime2, 'S k)) i) (Cyc t m' zq)
+instance (ModSwitchPTCtx c m' (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i) zq) =>
+  Div2_ E (CT m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) where
+  type PreDiv2_ E (CT m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) =
+    CT m (ZqBasic ('PP '(Prime2, 'S k)) i) (c m' zq)
 
   div2_ = pureE modSwitchPT
 
@@ -119,42 +119,35 @@ instance MonadWriter w m => MonadWriter_ E w m where
 
 instance SHE_ E where
 
-  type ModSwitchPTCtx_   E (CT m zp (Cyc t m' zq)) zp' = (ModSwitchPTCtx t m' zp zp' zq)
-  type ModSwitchCtx_     E (CT m zp (Cyc t m' zq)) zq' = (RescaleCyc (Cyc t) zq zq', ToSDCtx t m' zp zq)
-  type AddPublicCtx_     E (CT m zp (Cyc t m' zq))     = (AddPublicCtx t m m' zp zq)
-  type MulPublicCtx_     E (CT m zp (Cyc t m' zq))     = (MulPublicCtx t m m' zp zq)
-  type KeySwitchQuadCtx_ E (CT m zp (Cyc t m' zq)) gad = (KeySwitchCtx gad t m' zp zq)
-  type TunnelCtx_        E t e r s e' r' s' zp zq gad  = (TunnelCtx t r s e' r' s' zp zq gad)
+  type ModSwitchPTCtx_   E (CT m zp (c m' zq)) zp' = ModSwitchPTCtx c m' zp zp' zq
+  type ModSwitchCtx_     E (CT m zp (c m' zq)) zq' = (RescaleCyc c zq zq', ToSDCtx c m' zp zq)
+  type AddPublicCtx_     E (CT m zp (c m' zq))     = (AddPublicCtx c m m' zp zq)
+  type MulPublicCtx_     E (CT m zp (c m' zq))     = (MulPublicCtx c m m' zp zq)
+  type KeySwitchQuadCtx_ E (CT m zp (c m' zq)) gad = (KeySwitchCtx gad c m' zp zq)
+  type TunnelCtx_        E c e r s e' r' s' zp zq gad  = (TunnelCtx c r s e' r' s' zp zq gad)
 
-  modSwitchPT_     = pureE   modSwitchPT
-  modSwitch_       = pureE   modSwitch
-  addPublic_       = pureE . addPublic
-  mulPublic_       = pureE . mulPublic
-  keySwitchQuad_   = pureE . keySwitchQuadCirc
-  tunnel_          = pureE . tunnel
+  modSwitchPT_   = pureE   modSwitchPT
+  modSwitch_     = pureE   modSwitch
+  addPublic_     = pureE . addPublic
+  mulPublic_     = pureE . mulPublic
+  keySwitchQuad_ = pureE . keySwitchQuadCirc
+  tunnel_        = pureE . tunnel
 
-instance LinearCyc_ E (Linear t) (Cyc t) where
-  type PreLinearCyc_ E (Cyc t) = Cyc t
-  type LinearCycCtx_ E (Linear t) (Cyc t) e r s zp =
-    (e `Divides` r, e `Divides` s, CElt t zp)
+instance LinearCyc_ E c where
+  type PreLinearCyc_ E c = c
+  type LinearCycCtx_ E c e r s zp =
+    (e `Divides` r, e `Divides` s, Ring.C (c s zp), ExtensionCyc c zp)
 
-  linearCyc_ f = pureE $ evalLin f
-
-instance LinearCyc_ E (Linear t) (PNoiseCyc p t) where
-  type PreLinearCyc_ E (PNoiseCyc p t) = PNoiseCyc p t
-  type LinearCycCtx_ E (Linear t) (PNoiseCyc p t) e r s zp =
-    (e `Divides` r, e `Divides` s, CElt t zp)
-
-  linearCyc_ f = pureE $ PNC . evalLin f . unPNC
+  linearCyc_ = pureE . evalLin
 
 -- | Uses 'errorTermUnrestricted' to compute 'errorRate'.
 instance ErrorRate_ E where
-  type ErrorRateCtx_ E (CT m zp (Cyc t m' zq)) z =
-    (ErrorTermUCtx t m' z zp zq, Mod zq, ToInteger (LiftOf zq))
+  type ErrorRateCtx_ E (CT m zp (c m' zq)) z =
+    (ErrorTermUCtx c m' z zp zq, Mod zq, ToInteger (LiftOf zq), Foldable (c m'), Functor (c m'))
 
-  errorRate_ :: forall t m' m z zp zq ct e .
-                (ErrorRateCtx_ E ct z, ct ~ CT m zp (Cyc t m' zq)) =>
-                SK (Cyc t m' z) -> E e (ct -> Double)
+  errorRate_ :: forall c (m' :: Factored) m z zp zq ct e .
+                (ErrorRateCtx_ E ct z, ct ~ CT m zp (c m' zq)) =>
+                SK (c m' z) -> E e (ct -> Double)
   errorRate_ sk = pureE $
     (/ (fromIntegral $ proxy modulus (Proxy::Proxy zq))) .
     fromIntegral . maximum . fmap abs . errorTermUnrestricted sk

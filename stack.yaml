@@ -53,7 +53,7 @@ packages:
 
 extra-deps:
 - git: git@github.com:cpeikert/lol
-  commit: alchemy-args-debruijn-monad
+  commit: master
   subdirs: 
     - lol
     - lol-apps
