@@ -4,13 +4,13 @@ synopsis:            ALCHEMY: A Language and Compiler for Homomorphic Encryption
 homepage:            https://github.com/cpeikert/ALCHEMY
 license:             GPL-3
 license-file:        LICENSE
-author:              Eric Crockett <ecrockett0@gmail.com>, Chris Peikert <cpeikert@alum.mit.edu>
-maintainer:          Eric Crockett <ecrockett0@gmail.com>
-copyright:           Eric Crockett, Chris Peikert
+author:              Eric Crockett <ecrockett0@gmail.com>, Chris Peikert <cpeikert@alum.mit.edu>, Chad Sharp <cmlsharp@umich.edu>
+maintainer:          Chris Peikert <cpeikert@alum.mit.edu>
+copyright:           Eric Crockett, Chris Peikert, Chad Sharp
 category:            Crypto
 stability:           experimental
 build-type:          Simple
-extra-source-files:  README, CHANGES.md
+extra-source-files:  README
 cabal-version:       >=1.10
 description:
         TODO
@@ -20,43 +20,43 @@ source-repository head
   location: https://github.com/cpeikert/ALCHEMY
 
 library
-  default-language:    Haskell2010
+  default-language: Haskell2010
 
-  --exposed-modules: Crypto.Alchemy
-                   --Crypto.Alchemy.Interpreter
-                   --Crypto.Alchemy.Interpreter.Dup
-                   --Crypto.Alchemy.Interpreter.ErrorRateWriter
-                   --Crypto.Alchemy.Interpreter.Eval
-                   --Crypto.Alchemy.Interpreter.KeysHints
-                   --Crypto.Alchemy.Interpreter.Params
-                   --Crypto.Alchemy.Interpreter.PT2CT
-                   --Crypto.Alchemy.Interpreter.Print
-                   --Crypto.Alchemy.Interpreter.Size
-                   --Crypto.Alchemy.Language
-                   --Crypto.Alchemy.Language.Arithmetic
-                   --Crypto.Alchemy.Language.Lambda
-                   --Crypto.Alchemy.Language.LinearCyc
-                   --Crypto.Alchemy.Language.List
-                   --Crypto.Alchemy.Language.Monad
-                   --Crypto.Alchemy.Language.Pair
-                   --Crypto.Alchemy.Language.RescaleTree
-                   --Crypto.Alchemy.Language.SHE
-                   --Crypto.Alchemy.Language.String
-                   --Crypto.Alchemy.MonadAccumulator
+  exposed-modules: Crypto.Alchemy
+                   Crypto.Alchemy.Interpreter
+                   Crypto.Alchemy.Interpreter.Dup
+                   Crypto.Alchemy.Interpreter.ErrorRateWriter
+                   Crypto.Alchemy.Interpreter.Eval
+                   Crypto.Alchemy.Interpreter.KeysHints
+                   Crypto.Alchemy.Interpreter.Params
+                   Crypto.Alchemy.Interpreter.PT2CT
+                   Crypto.Alchemy.Interpreter.Print
+                   Crypto.Alchemy.Interpreter.Size
+                   Crypto.Alchemy.Language
+                   Crypto.Alchemy.Language.Arithmetic
+                   Crypto.Alchemy.Language.Lambda
+                   Crypto.Alchemy.Language.LinearCyc
+                   Crypto.Alchemy.Language.List
+                   Crypto.Alchemy.Language.Monad
+                   Crypto.Alchemy.Language.Pair
+                   Crypto.Alchemy.Language.RescaleTree
+                   Crypto.Alchemy.Language.SHE
+                   Crypto.Alchemy.Language.String
+                   Crypto.Alchemy.MonadAccumulator
 
-  --other-modules:   Crypto.Alchemy.Interpreter.PT2CT.Noise
+  other-modules:   Crypto.Alchemy.Interpreter.PT2CT.Noise
 
-  build-depends: base >= 4.7 && < 5
-               , constraints
-               , lol >= 0.7
-               , lol-apps >= 0.2
-               , MonadRandom
-               , mtl
-               , numeric-prelude
-               , singletons
-               , tagged-transformer
-               , template-haskell
-               , type-natural
+  build-depends: base,
+                 constraints,
+                 lol >= 0.7.0.0 && < 0.8,
+                 lol-apps >= 0.2.0.0 && < 0.3,
+                 MonadRandom,
+                 mtl,
+                 numeric-prelude,
+                 singletons,
+                 tagged-transformer,
+                 template-haskell,
+                 type-natural
 
 --executable alchemy-arithmetic
   --hs-source-dirs: examples
