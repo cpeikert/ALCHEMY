@@ -35,15 +35,15 @@ import           Data.Functor.Trans.Tagged
 import           Data.Singletons.Prelude      hiding ((:+), (:<))
 import           Data.Singletons.Prelude.List (Sum)
 import           Data.Singletons.TH           hiding ((:<))
-import           Data.Type.Natural            hiding ((:+))
+import           Data.Type.Natural            as N
 import           GHC.TypeLits                 hiding (Nat)
 import qualified GHC.TypeLits                 as TL (Nat)
 import           Language.Haskell.TH
 
-import Crypto.Lol (Factored)
+import Crypto.Lol                      (Factored)
+import Crypto.Lol.Cyclotomic.Language
 import Crypto.Lol.Reflects
 import Crypto.Lol.Types.Unsafe.ZqBasic
-import Crypto.Lol.Cyclotomic.Language
 
 -- | A type representing @pNoise =~ -log(noise rate)@ of a ciphertext.
 -- We use the promoted type @'PN@ of kind @PNoise@ to distinguish this value
@@ -55,7 +55,7 @@ type PNZ = 'PN 'Z
 
 -- | Adds a @Nat@ to a @PNoise@.
 type family (:+) a b where
-  'PN a :+ b = 'PN (a :+: b)
+  'PN a :+ b = 'PN (a N.+ b)
 
 -- | A type representing the number of noise "units" in a modulus.
 -- We use the promoted type @'Units@ of kind @Units@ to distinguish this
@@ -69,32 +69,28 @@ type family UnitsToNat (u :: Units) where
 -- | A cyclotomic ring element tagged by @pNoise =~ -log(noise rate)@.
 newtype PNoiseCyc (p :: PNoise) c (m :: Factored) r = PNC { unPNC :: c m r }
 
-deriving instance (Eq             (c m r)) => Eq         (PNoiseCyc p c m r)
-deriving instance (Show           (c m r)) => Show       (PNoiseCyc p c m r)
-deriving instance (Random         (c m r)) => Random     (PNoiseCyc p c m r)
-deriving instance (Additive.C     (c m r)) => Additive.C (PNoiseCyc p c m r)
-deriving instance (Ring.C         (c m r)) => Ring.C     (PNoiseCyc p c m r)
+deriving instance (Eq             (c m r)) => Eq             (PNoiseCyc p c m r)
+deriving instance (Show           (c m r)) => Show           (PNoiseCyc p c m r)
+deriving instance (Random         (c m r)) => Random         (PNoiseCyc p c m r)
+deriving instance (Additive.C     (c m r)) => Additive.C     (PNoiseCyc p c m r)
+deriving instance (Ring.C         (c m r)) => Ring.C         (PNoiseCyc p c m r)
 deriving instance (ZeroTestable.C (c m r)) => ZeroTestable.C (PNoiseCyc p c m r)
 
 -- Crypto.Lol.Cyclotomic.Language instances. Cannot derive these since 'c' is not the last type parameter
-instance Cyclotomic c r => Cyclotomic (PNoiseCyc p c) r where
-  scalarCyc = PNC . scalarCyc
+instance Cyclotomic (c m r) => Cyclotomic (PNoiseCyc p c m r) where
   mulG = PNC . mulG . unPNC
   divG = fmap PNC . divG . unPNC
   adviseCRT = PNC . adviseCRT . unPNC
   advisePow = PNC . advisePow . unPNC
   adviseDec = PNC . adviseDec . unPNC
 
-instance GSqNorm c r => GSqNorm (PNoiseCyc p c) r where
+instance GSqNormCyc (c m) r => GSqNormCyc (PNoiseCyc p c m) r where
   gSqNorm = gSqNorm . unPNC
 
-instance GaussianCyc c q => GaussianCyc (PNoiseCyc p c) q where
+instance GaussianCyc (c m q) => GaussianCyc (PNoiseCyc p c m q) where
   tweakedGaussian = fmap PNC . tweakedGaussian
 
-instance RoundedGaussianCyc c z => RoundedGaussianCyc (PNoiseCyc p c) z where
-  roundedGaussian = fmap PNC . roundedGaussian
-
-instance CosetGaussianCyc c zp => CosetGaussianCyc (PNoiseCyc p c) zp where
+instance CosetGaussianCyc (c m zp) => CosetGaussianCyc (PNoiseCyc p c m zp) where
   cosetGaussian = (fmap PNC .) . (. unPNC) . cosetGaussian
 
 instance ExtensionCyc c r => ExtensionCyc (PNoiseCyc p c) r where
@@ -106,13 +102,7 @@ instance ExtensionCyc c r => ExtensionCyc (PNoiseCyc p c) r where
 instance CRTSetCyc c r => CRTSetCyc (PNoiseCyc p c) r where
   crtSet = fmap (map PNC) crtSet
 
-instance ReduceCyc c a b => ReduceCyc (PNoiseCyc p c) a b where
-  reduceCyc = PNC . reduceCyc . unPNC
-
-instance LiftCyc c r => LiftCyc (PNoiseCyc p c) r where
-  liftCyc = (PNC .) . (. unPNC) . liftCyc
-
-instance RescaleCyc c a b => RescaleCyc (PNoiseCyc p c) a b where
+instance RescaleCyc (c m) a b => RescaleCyc (PNoiseCyc p c m) a b where
   rescaleCyc = (PNC .) . (. unPNC) . rescaleCyc
 
 -- CJP: why should this be defined here?
@@ -147,7 +137,7 @@ type family MapNatOf a where
 singletons [d|
              -- | (Singletons version takes a TypeLit, rather than a 'Nat'.)
              take :: Nat -> [a] -> [a]
-             take Z _ = []
+             take Z _            = []
              take (S n) (x : xs) = x : take n xs
 
              -- | Given a list and a threshold h, output the length of
