@@ -4,22 +4,24 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE InstanceSigs          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
 
 module Crypto.Alchemy.Interpreter.Params
 ( Params, params ) where
 
 import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
+--import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.SHE
-import Crypto.Alchemy.Language.LinearCyc
 
 import Crypto.Alchemy.Interpreter.PT2CT.Noise
 
-import Crypto.Lol                      (Cyc, Linear, Factored)
-import Crypto.Lol.Applications.SymmSHE (CT, KSQuadCircHint, TunnelHint)
+import Crypto.Lol                      (Factored)
+import Crypto.Lol.Applications.SymmSHE (CT)
 import Crypto.Lol.Utils.ShowType
 
 import Data.Type.Natural
@@ -36,7 +38,7 @@ params :: Params expr () a -> String
 params (P str) = removeBlankLines str
   where removeBlankLines = foldr dedupLn ""
         dedupLn '\n' xs | null xs || head xs == '\n' = xs
-        dedupLn x xs = x:xs
+        dedupLn x xs    = x:xs
 
 instance Lambda_ (Params expr) where
   lamDB (P f) = P f
@@ -66,7 +68,7 @@ instance ShowType zq => Mul_ (Params expr) (CT m zp (c m' zq)) where
   mul_ = showZq @zq "mul"
 
 instance SingI (p :: Nat) => Mul_ (Params expr) (PNoiseCyc ('PN p) c m r) where
-  type PreMul_ (Params expr) (PNoiseCyc ('PN p) c m r) = 
+  type PreMul_ (Params expr) (PNoiseCyc ('PN p) c m r) =
     PreMul_ expr (PNoiseCyc ('PN p) c m r)
   mul_ = showPNoise @p "mul"
 
@@ -113,7 +115,7 @@ instance SHE_ (Params expr) where
 
   {-keySwitchQuad_ :: forall ct gad m zp c (m' :: Factored) zq env .-}
     {-(KeySwitchQuadCtx_ (Params expr) ct gad, ct ~ CT m zp (c m' zq))-}
-    {-=> KSQuadCircHint gad (c m' zq) -> Params expr env (ct -> ct)-}
+    {-=> KSHint gad (c m' zq) -> Params expr env (ct -> ct)-}
   {-keySwitchQuad_ _ = showZq @zq "keySwitchQuad"-}
 
   {-tunnel_ :: forall c e r s e' r' s' zp zq gad env .-}
