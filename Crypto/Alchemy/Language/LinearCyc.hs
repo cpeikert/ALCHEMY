@@ -7,9 +7,8 @@
 
 module Crypto.Alchemy.Language.LinearCyc where
 
-import Crypto.Lol
 import Crypto.Alchemy.Language.Lambda
-import Crypto.Lol.Factored
+import Crypto.Lol
 import GHC.Exts                       (Constraint)
 
 -- | Symantics for evaluating a linear function on cyclotomics.
