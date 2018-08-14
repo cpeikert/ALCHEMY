@@ -1,17 +1,21 @@
+{-# LANGUAGE AllowAmbiguousTypes        #-}
 {-# LANGUAGE ConstraintKinds            #-}
+{-# LANGUAGE DataKinds                  #-}
 {-# LANGUAGE FlexibleContexts           #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE LambdaCase                 #-}
 {-# LANGUAGE NoImplicitPrelude          #-}
+{-# LANGUAGE PolyKinds                  #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeApplications           #-}
+{-# LANGUAGE TypeFamilies               #-}
 
 -- | Functions for looking up/generating keys and key-switch hints.
 module Crypto.Alchemy.Interpreter.KeysHints
-{-( Keys, Hints, KeysHintsT, KeysAccumulatorCtx, lookupKey -- not lookupHint, which is too general-}
-{-, getKey, getQuadCircHint, getTunnelHint-}
-{-, runKeysHints, evalKeysHints-}
-{-)-}
+( Keys, Hints, KeysHintsT, KeysAccumulatorCtx, lookupKey -- not lookupHint, which is too general
+, getKey, getQuadCircHint, getTunnelHint
+, runKeysHints, evalKeysHints
+)
 where
 
 import Control.Monad.Random
@@ -19,11 +23,12 @@ import Control.Monad.Reader
 import Control.Monad.State
 
 import Algebra.Algebraic
-import Algebra.Ring as Ring
+import Algebra.Ring      as Ring
 import Data.Dynamic
 import Data.Functor
-import Data.Maybe   (mapMaybe)
+import Data.Maybe        (mapMaybe)
 import Data.Monoid
+import Data.Semigroup
 
 import Crypto.Alchemy.MonadAccumulator
 import Crypto.Lol
@@ -33,10 +38,10 @@ import Crypto.Lol.Applications.SymmSHE
 ---- Monad helper functions
 
 -- | Wrapper for a dynamic list of keys.
-newtype Keys = Keys { unKeys :: [Dynamic] } deriving (Monoid, Show)
+newtype Keys = Keys { unKeys :: [Dynamic] } deriving (Semigroup, Monoid, Show)
 
 -- | Wrapper for a dynamic list of hints.
-newtype Hints = Hints { unHints :: [Dynamic] } deriving (Monoid, Show)
+newtype Hints = Hints { unHints :: [Dynamic] } deriving (Semigroup, Monoid, Show)
 
 -- | Type synonym for a standard Keys/Hints accumulator
 type KeysHintsT v m a = StateT Keys (StateT Hints (ReaderT v m)) a
@@ -83,29 +88,26 @@ appendHint a = append $ Hints [toDyn a]
 (>=<) = (=<<) . liftM2 fmap const
 
 -- | Return \( r / \varphi(m') \).
-svar :: (Fact m', Algebraic v) => Proxy m' -> v -> v
-svar pm' r = r / sqrt (fromIntegral $ proxy totientFact pm')
+svar :: forall m' v . (Fact m', Algebraic v) => v -> v
+svar r = r / sqrt (fromIntegral $ totientFact @m')
 
 -- | Lookup a key, generating one if it doesn't exist, and return it.
-getKey :: forall z c m' mon v. -- z first for type applications
-  (KeysAccumulatorCtx v mon, GenSKCtx c m' z v, Typeable (c m' z))
+getKey :: forall z c m' mon v . -- z first for type applications
+  (KeysAccumulatorCtx v mon, GenSKCtx c m' z v, Fact m', Typeable (c m' z))
   => mon (SK (c m' z))
 getKey = readerToAccumulator lookupKey >>= \case
   (Just t) -> return t
   -- generate and save a key, using the adjusted variance from the monad
-  Nothing -> appendKey >=< (genSK =<< svar (Proxy::Proxy m') <$> ask)
+  Nothing -> appendKey >=< (genSK =<< svar @m' <$> ask)
 
 -- | Lookup a (quadratic, circular) key-switch hint, generating one
 -- (and the underlying key if necessary) if it doesn't exist, and
 -- return it.
 getQuadCircHint :: forall v mon c z gad m' zq' .
-  (-- constraints for getKey
-   KeysAccumulatorCtx v mon, MonadAccumulator Hints mon, GenSKCtx c m' z v, Typeable (c m' z), Ring.C (c m' z),
-   -- constraints for lookup
-   Typeable (KSQuadCircHint gad (c m' zq')),
-   -- constraints for ksQuadCircHint
-   KSHintCtx gad c m' z zq')
-  => Proxy z -> mon (KSQuadCircHint gad (c m' zq'))
+  (KeysAccumulatorCtx v mon, GenSKCtx c m' z v, Fact m', Typeable (c m' z), -- getKey
+   MonadAccumulator Hints mon, Typeable (KSHint gad (c m' zq')), -- lookupHint
+   KSHintCtx gad c m' z zq', Ring (c m' z))    -- ksQuadCircHint
+  => Proxy z -> mon (KSHint gad (c m' zq'))
 getQuadCircHint _ = readerToAccumulator lookupHint >>= \case
   (Just h) -> return h
   Nothing -> do
