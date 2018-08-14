@@ -8,6 +8,7 @@
 {-# LANGUAGE NoImplicitPrelude          #-}
 {-# LANGUAGE RankNTypes                 #-}
 {-# LANGUAGE ScopedTypeVariables        #-}
+{-# LANGUAGE TypeApplications           #-}
 {-# LANGUAGE TypeFamilies               #-}
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE UndecidableInstances       #-}
@@ -18,8 +19,8 @@ import Control.Applicative
 import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.Writer
-import Data.Tuple
 import Data.Foldable
+import Data.Tuple
 
 import Algebra.Additive as Additive
 import Algebra.Ring     as Ring
@@ -70,15 +71,13 @@ instance Ring.C a => Mul_ E a where
 instance Ring.C a => MulLit_ E a where
   mulLit_ x = pureE (x *)
 
-instance (RescaleCyc c (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i),
-          Fact m)
-  => Div2_ E (c m (ZqBasic ('PP '(Prime2, k)) i)) where
-  type PreDiv2_ E (c m (ZqBasic ('PP '(Prime2, k)) i)) = c m (ZqBasic ('PP '(Prime2, 'S k)) i)
+instance (RescaleCyc cm (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i))
+  => Div2_ E (cm (ZqBasic ('PP '(Prime2, k)) i)) where
+  type PreDiv2_ E (cm (ZqBasic ('PP '(Prime2, k)) i)) = cm (ZqBasic ('PP '(Prime2, 'S k)) i)
   -- since input is divisible by two, it doesn't matter which basis we use
   div2_ = pureE rescalePow
 
-instance (RescaleCyc c (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i),
-          Fact m)
+instance (RescaleCyc (c m) (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i))
   => Div2_ E (PNoiseCyc h c m (ZqBasic ('PP '(Prime2, k)) i)) where
 
   type PreDiv2_ E (PNoiseCyc h c m (ZqBasic ('PP '(Prime2, k)) i)) =
@@ -120,11 +119,11 @@ instance MonadWriter w m => MonadWriter_ E w m where
 instance SHE_ E where
 
   type ModSwitchPTCtx_   E (CT m zp (c m' zq)) zp' = ModSwitchPTCtx c m' zp zp' zq
-  type ModSwitchCtx_     E (CT m zp (c m' zq)) zq' = (RescaleCyc c zq zq', ToSDCtx c m' zp zq)
-  type AddPublicCtx_     E (CT m zp (c m' zq))     = (AddPublicCtx c m m' zp zq)
-  type MulPublicCtx_     E (CT m zp (c m' zq))     = (MulPublicCtx c m m' zp zq)
-  type KeySwitchQuadCtx_ E (CT m zp (c m' zq)) gad = (KeySwitchCtx gad c m' zp zq)
-  type TunnelCtx_        E c e r s e' r' s' zp zq gad  = (TunnelCtx c r s e' r' s' zp zq gad)
+  type ModSwitchCtx_     E (CT m zp (c m' zq)) zq' = ModSwitchCtx c m' zp zq zq'
+  type AddPublicCtx_     E (CT m zp (c m' zq))     = AddPublicCtx c m m' zp zq
+  type MulPublicCtx_     E (CT m zp (c m' zq))     = MulPublicCtx c m m' zp zq
+  type KeySwitchQuadCtx_ E (CT m zp (c m' zq)) gad = KeySwitchCtx gad c m' zp zq
+  type TunnelCtx_        E c e r s e' r' s' zp zq gad  = TunnelCtx c r s e' r' s' zp zq gad
 
   modSwitchPT_   = pureE   modSwitchPT
   modSwitch_     = pureE   modSwitch
@@ -140,17 +139,16 @@ instance LinearCyc_ E c where
 
   linearCyc_ = pureE . evalLin
 
--- | Uses 'errorTermUnrestricted' to compute 'errorRate'.
 instance ErrorRate_ E where
   type ErrorRateCtx_ E (CT m zp (c m' zq)) z =
-    (ErrorTermUCtx c m' z zp zq, Mod zq, ToInteger (LiftOf zq), Foldable (c m'), Functor (c m'))
+    (ErrorTermCtx c m' z zp zq, Mod zq, ToInteger (LiftOf zq), Foldable (c m'), Functor (c m'))
 
-  errorRate_ :: forall c (m' :: Factored) m z zp zq ct e .
+  errorRate_ :: forall c m' m z zp zq ct e .
                 (ErrorRateCtx_ E ct z, ct ~ CT m zp (c m' zq)) =>
                 SK (c m' z) -> E e (ct -> Double)
   errorRate_ sk = pureE $
-    (/ (fromIntegral $ proxy modulus (Proxy::Proxy zq))) .
-    fromIntegral . maximum . fmap abs . errorTermUnrestricted sk
+    (/ (fromIntegral $ modulus @zq)) .
+    fromIntegral . maximum . fmap abs . errorTerm sk
 
 instance String_ E where
   string_ = pureE
