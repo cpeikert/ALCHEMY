@@ -25,19 +25,19 @@ class SHE_ expr where
     (e' :: Factored) (r' :: Factored) (s' :: Factored)
     zp zq gad :: Constraint
 
-  modSwitchPT_ :: (ModSwitchPTCtx_ expr ct zp', ct ~ CT m zp (c (m' :: Factored) zq))
+  modSwitchPT_ :: (ModSwitchPTCtx_ expr ct zp', ct ~ CT m zp (c m' zq))
     => expr env (ct -> CT m zp' (c m' zq))
 
-  modSwitch_ :: (ModSwitchCtx_ expr ct zq', ct ~ CT m zp (c (m' :: Factored) zq))
+  modSwitch_ :: (ModSwitchCtx_ expr ct zq', ct ~ CT m zp (c m' zq))
     => expr env (ct -> CT m zp (c m' zq'))
 
-  addPublic_ :: (AddPublicCtx_ expr ct, ct ~ CT m zp (c (m' :: Factored) zq))
+  addPublic_ :: (AddPublicCtx_ expr ct, ct ~ CT m zp (c m' zq))
     => c m zp -> expr env (ct -> ct)
 
-  mulPublic_ :: (MulPublicCtx_ expr ct, ct ~ CT m zp (c (m' :: Factored) zq))
+  mulPublic_ :: (MulPublicCtx_ expr ct, ct ~ CT m zp (c m' zq))
     => c m zp -> expr env (ct -> ct)
 
-  keySwitchQuad_ :: (KeySwitchQuadCtx_ expr ct gad, ct ~ CT m zp (c (m' :: Factored) zq))
+  keySwitchQuad_ :: (KeySwitchQuadCtx_ expr ct gad, ct ~ CT m zp (c m' zq))
     => KSHint gad (c m' zq) -> expr env (ct -> ct)
 
   tunnel_ :: (TunnelCtx_ expr c e r s e' r' s' zp zq gad)
@@ -52,5 +52,5 @@ class ErrorRate_ expr where
 
   -- | Error rate of a ciphertext.  (Note that the secret key lives
   -- "outside" the object language.)
-  errorRate_ :: (ErrorRateCtx_ expr ct z, ct ~ CT m zp (c (m' :: Factored) zq))
+  errorRate_ :: (ErrorRateCtx_ expr ct z, ct ~ CT m zp (c m' zq))
              => SK (c m' z) -> expr e (ct -> Double)
