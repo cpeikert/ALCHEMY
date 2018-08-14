@@ -6,6 +6,7 @@
 {-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE RebindableSyntax      #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
@@ -67,7 +68,7 @@ rescaleTreePow2_' = tag $ lam $
   \x -> let_ (var x *: (one >+: var x)) $
     \y -> treeMul_ (Proxy::Proxy k) $ map ((div2_ $:) . (>+: var y)) zs
   where zs   = [fromInteger $ z * (-z + 1) | z <- [1..2^(kval - 1)]]
-        kval = proxy value (Proxy::Proxy k) :: Int
+        kval = value @k :: Int
 
 class TreeMul_ expr (k :: Pos) r2 where
   treeMul_ :: Proxy k
