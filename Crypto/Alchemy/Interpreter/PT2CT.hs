@@ -19,17 +19,17 @@
 
 module Crypto.Alchemy.Interpreter.PT2CT
 ( PT2CT
-{-, pt2ct, encrypt, decrypt-}
-{--- * re-exports-}
-{-, PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkModulus-}
+, pt2ct, encrypt, decrypt
+-- * re-exports
+, PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkModulus
 ) where
 
 import Control.Applicative
 import Control.Monad.Random
 import Control.Monad.Reader
 import Data.Dynamic
-import Data.Type.Natural    hiding ((:+))
-import GHC.TypeLits         hiding (type (*), Nat)
+import Data.Type.Natural    hiding (type (*))
+import GHC.TypeLits         hiding (type (*), type (+), type (-), Nat)
 
 import           Crypto.Lol                      hiding (Pos (..))
 import qualified Crypto.Lol                      as Lol
@@ -43,9 +43,9 @@ import Crypto.Alchemy.Interpreter.KeysHints
 import Crypto.Alchemy.Interpreter.PT2CT.Noise
 import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
+import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.SHE
-import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.MonadAccumulator
 
 import Algebra.Ring as Ring
@@ -70,7 +70,7 @@ newtype PT2CT
 -- representing a Gaussian parameter \( r \) of the decoding-basis
 -- coefficients for generated keys and errors.  (I.e., the scaled
 -- variance over \( R^\vee \) is \( r / \sqrt{\varphi(m')} \).)
-pt2ct :: forall m'map zqs gad z a ctex e mon .            -- this forall is for use with TypeApplications
+pt2ct :: forall m'map zqs gad z a ctex e mon . -- for type apps
   PT2CT m'map zqs gad z mon ctex e a                      -- | plaintext expression
   -> mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a)) -- | (monadic) ctex expression
 pt2ct = unPC
@@ -121,15 +121,15 @@ instance (Add_ ctex (Cyc2CT m'map zqs a), Applicative mon)
 
 instance (SHE_ ctex, Applicative mon,
           AddPublicCtx_ ctex (Cyc2CT m'map zqs (PNoiseCyc h c m zp))) =>
-  AddLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc h c m zp) where
+  AddLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (h :: PNoise) c (m :: Factored) zp) where
 
-  addLit_ (PNC a) = PC $ pure $ addPublic_ a
+  addLit_ = PC . pure . addPublic_ . unPNC
 
 instance (SHE_ ctex, Applicative mon,
           MulPublicCtx_ ctex (Cyc2CT m'map zqs (PNoiseCyc h c m zp))) =>
-  MulLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc h c m zp) where
+  MulLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (h :: PNoise) c (m :: Factored) zp) where
 
-  mulLit_ (PNC a) = PC $ pure $ mulPublic_ a
+  mulLit_ = PC . pure . mulPublic_ . unPNC
 
 type PNoise2KSZq gad zqs p = ZqPairsWithUnits zqs (KSPNoise2Units (KSPNoise gad zqs p))
 
@@ -144,19 +144,19 @@ type instance KSPNoise (BaseBGad 2) zqs p = p :+ KSAccumPNoise
 type PT2CTMulCtx m'map p zqs m zp gad ctex c z mon =
   PT2CTMulCtx' m zp p zqs gad (PNoise2KSZq gad zqs p) ctex c z mon (Lookup m m'map)
 
-type PT2CTMulCtx' m zp p zqs gad hintzq ctex c z mon m' =
+type PT2CTMulCtx' (m :: Factored) zp p zqs gad hintzq ctex c z mon (m' :: Factored) =
   PT2CTMulCtx'' p zqs gad hintzq ctex c z mon m' (CT m zp (c m'
     (PNoise2Zq zqs (Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))))))
     (CT m zp (c m' hintzq))
 
-type PT2CTMulCtx'' p zqs gad hintzq ctex c z mon m' ctin hintct =
+type PT2CTMulCtx'' p zqs gad hintzq ctex c z mon (m' :: Factored) ctin hintct =
   (Lambda_ ctex, Mul_ ctex ctin, PreMul_ ctex ctin ~ ctin, SHE_ ctex,
    ModSwitchCtx_ ctex ctin hintzq,              -- zqin -> hint zq
    ModSwitchCtx_ ctex hintct (PNoise2Zq zqs p), -- hint zq -> zq (final modulus)
    KeySwitchQuadCtx_ ctex hintct gad,
    KSHintCtx gad c m' z hintzq,
    GenSKCtx c m' z Double,
-   Typeable (c m' z), Ring.C (c m' z), Typeable (KSQuadCircHint gad (c m' hintzq)),
+   Typeable (c m' z), Ring.C (c m' z), Typeable (KSHint gad (c m' hintzq)),
    KeysAccumulatorCtx Double mon, MonadAccumulator Hints mon)
 
 instance (PT2CTMulCtx m'map p zqs m zp gad ctex c z mon)
@@ -171,9 +171,9 @@ instance (PT2CTMulCtx m'map p zqs m zp gad ctex c z mon)
      PT2CTMulCtx m'map p zqs m zp gad ctex c z mon) =>
     PT2CT m'map zqs gad z mon ctex env
     (PNoiseCyc pin c m zp -> PNoiseCyc pin c m zp -> PNoiseCyc p c m zp)
-  mul_ = PC $ 
+  mul_ = PC $
     lamM $ \x -> lamM $ \y -> do
-        hint :: KSQuadCircHint gad (c m' hintzq) <-
+        hint :: KSHint gad (c m' hintzq) <-
           getQuadCircHint (Proxy::Proxy z)
         let prod = var x *: y :: ctex _ (CT m zp (c m' (PNoise2Zq zqs pin)))
          in return $ modSwitch_ .: keySwitchQuad_ hint .: modSwitch_ $: prod
@@ -234,7 +234,7 @@ type PT2CTLinearCtx' ctex mon m'map zqs p c e r s r' s' z zp zq zqin hintzq gad 
 
 -- | The number of units a ciphertext with pNoise @p@ must have
 type family CTPNoise2Units (p :: PNoise) where
-  CTPNoise2Units ('PN p) = 'Units (p :+: MinUnits)
+  CTPNoise2Units ('PN p) = 'Units (p + MinUnits)
 
 -- | The number of units a key-switch hint with pNoise @p@ must have
 -- This is different from CTPNoise2Units because the hint coeffients are very small
@@ -245,7 +245,7 @@ type family KSPNoise2Units (p :: PNoise) where
 -- | (An upper bound on) the pNoise of a ciphertext whose modulus has
 -- exactly the given number of units
 type family Units2CTPNoise (h :: Units) where
-  Units2CTPNoise ('Units h) = 'PN (h :-: MinUnits)
+  Units2CTPNoise ('Units h) = 'PN (h - MinUnits)
 
 -- | The modulus (nested pairs) for a ciphertext with pNoise @p@
 type PNoise2Zq zqs (p :: PNoise) = ZqPairsWithUnits zqs (CTPNoise2Units p)
@@ -271,7 +271,7 @@ type family Cyc2CT (m'map :: [(Factored, Factored)]) zqs e = cte | cte -> e wher
                 ':$$: 'Text "It only converts types of the form 'PNoiseCyc p t m zp' and pairs/lists/functions thereof."))
 
 -- type-level map lookup
-type family Lookup m (map :: [(Factored, Factored)]) where
+type family Lookup (m :: Factored) (map :: [(Factored, Factored)]) :: Factored where
   Lookup m ( '(m,m') ': rest) = m'
   Lookup r ( '(m,m') ': rest) = Lookup r rest
   Lookup a '[] =
