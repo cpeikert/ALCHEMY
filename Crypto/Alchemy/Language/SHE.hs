@@ -31,10 +31,10 @@ class SHE_ expr where
   modSwitch_ :: (ModSwitchCtx_ expr ct zq', ct ~ CT m zp (c m' zq))
     => expr env (ct -> CT m zp (c m' zq'))
 
-  addPublic_ :: (AddPublicCtx_ expr ct, ct ~ CT m zp (c m' zq))
+  addPublic_ :: (AddPublicCtx_ expr ct, ct ~ CT m zp (c (m' :: Factored) zq))
     => c m zp -> expr env (ct -> ct)
 
-  mulPublic_ :: (MulPublicCtx_ expr ct, ct ~ CT m zp (c m' zq))
+  mulPublic_ :: (MulPublicCtx_ expr ct, ct ~ CT m zp (c (m' :: Factored) zq))
     => c m zp -> expr env (ct -> ct)
 
   keySwitchQuad_ :: (KeySwitchQuadCtx_ expr ct gad, ct ~ CT m zp (c m' zq))
