@@ -15,13 +15,12 @@ module Crypto.Alchemy.Interpreter.Params
 
 import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
---import Crypto.Alchemy.Language.LinearCyc
+import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.SHE
 
 import Crypto.Alchemy.Interpreter.PT2CT.Noise
 
-import Crypto.Lol                      (Factored)
-import Crypto.Lol.Applications.SymmSHE (CT)
+import Crypto.Lol.Applications.SymmSHE (CT, KSHint, TunnelHint)
 import Crypto.Lol.Utils.ShowType
 
 import Data.Type.Natural
@@ -87,46 +86,40 @@ instance SHE_ (Params expr) where
   type KeySwitchQuadCtx_ (Params expr) (CT m zp (c m' zq)) gad = (ShowType zq)
   type TunnelCtx_        (Params expr) c e r s e' r' s' zp zq gad = (ShowType zq)
 
-  modSwitchPT_ :: forall ct m zp c (m' :: Factored) zq zp' env .
+  modSwitchPT_ :: forall ct m zp c m' zq zp' env .
     (ModSwitchPTCtx_ (Params expr) ct zp', ct ~ CT m zp (c m' zq))
     => Params expr env (ct -> CT m zp' (c m' zq))
-  {-modSwitchPT_     = showZq @zq "modSwitchPT"-}
-  modSwitchPT_ = undefined
-  modSwitch_ = undefined
-  addPublic_ = undefined
-  mulPublic_ = undefined
-  keySwitchQuad_ = undefined
-  tunnel_ = undefined
+  modSwitchPT_     = showZq @zq "modSwitchPT"
 
-  {-modSwitch_ :: forall ct zq' m zp c (m' :: Factored) zq env .-}
-    {-(ModSwitchCtx_ (Params expr) ct zq', ct ~ CT m zp (c m' zq))-}
-    {-=> Params expr env (ct -> CT m zp (c m' zq'))-}
-  {-modSwitch_       = showZq @zq' $ "modSwitch " ++ showType (Proxy::Proxy zq) ++ " ->"-}
+  modSwitch_ :: forall ct zq' m zp c m' zq env .
+    (ModSwitchCtx_ (Params expr) ct zq', ct ~ CT m zp (c m' zq))
+    => Params expr env (ct -> CT m zp (c m' zq'))
+  modSwitch_       = showZq @zq' $ "modSwitch " ++ showType (Proxy::Proxy zq) ++ " ->"
 
-  {-addPublic_ :: forall ct m zp c (m' :: Factored) zq env .-}
-    {-(AddPublicCtx_ (Params expr) ct, ct ~ CT m zp (c m' zq))-}
-    {-=> c m zp -> (Params expr) env (ct -> ct)-}
-  {-addPublic_     _ = showZq @zq "addPublic"-}
+  addPublic_ :: forall ct m zp c m' zq env .
+    (AddPublicCtx_ (Params expr) ct, ct ~ CT m zp (c m' zq))
+    => c m zp -> (Params expr) env (ct -> ct)
+  addPublic_     _ = showZq @zq "addPublic"
 
-  {-mulPublic_ :: forall ct m zp c m' zq env .-}
-    {-(MulPublicCtx_ (Params expr) ct, ct ~ CT m zp (c m' zq))-}
-    {-=> c m zp -> (Params expr) env (ct -> ct)-}
-  {-mulPublic_     _ = showZq @zq "mulPublic"-}
+  mulPublic_ :: forall ct m zp c m' zq env .
+    (MulPublicCtx_ (Params expr) ct, ct ~ CT m zp (c m' zq))
+    => c m zp -> (Params expr) env (ct -> ct)
+  mulPublic_     _ = showZq @zq "mulPublic"
 
-  {-keySwitchQuad_ :: forall ct gad m zp c (m' :: Factored) zq env .-}
-    {-(KeySwitchQuadCtx_ (Params expr) ct gad, ct ~ CT m zp (c m' zq))-}
-    {-=> KSHint gad (c m' zq) -> Params expr env (ct -> ct)-}
-  {-keySwitchQuad_ _ = showZq @zq "keySwitchQuad"-}
+  keySwitchQuad_ :: forall ct gad m zp c m' zq env .
+    (KeySwitchQuadCtx_ (Params expr) ct gad, ct ~ CT m zp (c m' zq))
+    => KSHint gad (c m' zq) -> Params expr env (ct -> ct)
+  keySwitchQuad_ _ = showZq @zq "keySwitchQuad"
 
-  {-tunnel_ :: forall c e r s e' r' s' zp zq gad env .-}
-    {-(TunnelCtx_ (Params expr) c e r s e' r' s' zp zq gad)-}
-    {-=> TunnelHint gad c e r s e' r' s' zp zq-}
-       {--> Params expr env (CT r zp (c r' zq) -> CT s zp (c s' zq))-}
-  {-tunnel_ _ = showZq @zq "tunnel"-}
+  tunnel_ :: forall c e r s e' r' s' zp zq gad env .
+    (TunnelCtx_ (Params expr) c e r s e' r' s' zp zq gad)
+    => TunnelHint gad c e r s e' r' s' zp zq
+       -> Params expr env (CT r zp (c r' zq) -> CT s zp (c s' zq))
+  tunnel_ _ = showZq @zq "tunnel"
 
-{-instance SingI (p :: Nat) => LinearCyc_ (Params expr) (PNoiseCyc ('PN p) t) where-}
-  {-type PreLinearCyc_ (Params expr) (PNoiseCyc ('PN p) t) =-}
-    {-PreLinearCyc_ expr (PNoiseCyc ('PN p) t)-}
-  {-type LinearCycCtx_ (Params expr) (PNoiseCyc ('PN p) t) e r s zp = ()-}
+instance SingI (p :: Nat) => LinearCyc_ (Params expr) (PNoiseCyc ('PN p) t) where
+  type PreLinearCyc_ (Params expr) (PNoiseCyc ('PN p) t) =
+    PreLinearCyc_ expr (PNoiseCyc ('PN p) t)
+  type LinearCycCtx_ (Params expr) (PNoiseCyc ('PN p) t) e r s zp = ()
 
-  {-linearCyc_ _ = showPNoise @p "linear"-}
+  linearCyc_ _ = showPNoise @p "linear"
