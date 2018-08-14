@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
@@ -19,12 +20,13 @@ import Crypto.Alchemy.Language.Pair
 import Crypto.Alchemy.Language.SHE
 import Crypto.Alchemy.Language.String
 
-import Crypto.Lol                      (Pos (..), Prime2, PrimePower (..))
+import Crypto.Lol                      (Factored, Pos (..), Prime2,
+                                        PrimePower (..))
 import Crypto.Lol.Applications.SymmSHE (CT)
 import Crypto.Lol.Types
 
-import Control.Monad.Reader            (MonadReader)
-import Control.Monad.Writer            (MonadWriter)
+import Control.Monad.Reader (MonadReader)
+import Control.Monad.Writer (MonadWriter)
 
 -- the Int is the nesting depth of lambdas outside the expression
 newtype P e a = P { unP :: Int -> String }
@@ -72,7 +74,7 @@ instance Mul_ P a where
 instance Show a => MulLit_ P a where
   mulLit_ a = pureP $ "mulLit (" ++ show a ++ ")"
 
-instance Div2_ P (c m (ZqBasic ('PP '(Prime2, k)) i)) where
+instance Div2_ P (c (m :: Factored) (ZqBasic ('PP '(Prime2, k)) i)) where
   type PreDiv2_ P (c m (ZqBasic ('PP '(Prime2, k)) i)) =
     c m (ZqBasic ('PP '(Prime2, 'S k)) i)
   div2_ = pureP "div2"
