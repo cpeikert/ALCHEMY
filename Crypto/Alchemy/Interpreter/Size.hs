@@ -25,8 +25,8 @@ import qualified Crypto.Lol                      as L
 import           Crypto.Lol.Applications.SymmSHE (CT)
 import           Crypto.Lol.Types
 
-import Control.Monad.Reader                       (MonadReader)
-import Control.Monad.Writer                       (MonadWriter)
+import Control.Monad.Reader (MonadReader)
+import Control.Monad.Writer (MonadWriter)
 
 newtype S e a = S { size :: Int }
 
@@ -116,14 +116,8 @@ instance SHE_ S where
   keySwitchQuad_ _ = S 1
   tunnel_ _        = S 1
 
-instance LinearCyc_ S (Linear t) (Cyc t) where
-  type PreLinearCyc_ S (Cyc t) = (Cyc t)
-  type LinearCycCtx_ S (Linear t) (Cyc t) e r s zp = ()
-
-  linearCyc_ _ = S 1
-
-instance LinearCyc_ S (Linear t) (PNoiseCyc p t) where
-  type PreLinearCyc_ S (PNoiseCyc p t) = (PNoiseCyc p t)
-  type LinearCycCtx_ S (Linear t) (PNoiseCyc p t) e r s zp = ()
+instance LinearCyc_ S c where
+  type PreLinearCyc_ S c = c
+  type LinearCycCtx_ S c e r s zp = ()
 
   linearCyc_ _ = S 1
