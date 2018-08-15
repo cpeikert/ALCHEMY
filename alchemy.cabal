@@ -64,7 +64,7 @@ executable alchemy-arithmetic
   main-is: Arithmetic.hs
   ghc-options: -main-is Arithmetic
 
-  ghc-options: -rtsopts
+  other-modules: Common
 
   build-depends:
     alchemy,
