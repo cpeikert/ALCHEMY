@@ -25,7 +25,7 @@ class LinearCyc_ expr cyc where
   -- | An object-language expression representing the given linear function.
   linearCyc_ :: (LinearCycCtx_ expr cyc e r s zp)
     => Linear cyc e r s zp
-    -> expr env (PreLinearCyc_ expr cyc r zp -> cyc (s :: Factored) zp)
+    -> expr env (PreLinearCyc_ expr cyc r zp -> cyc s zp)
 
 linearCyc :: (LinearCyc_ expr cyc, LinearCycCtx_ expr cyc e r s zp,
               Lambda_ expr)
