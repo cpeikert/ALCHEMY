@@ -142,7 +142,8 @@ instance LinearCyc_ E c where
 instance ErrorRate_ E where
   type ErrorRateCtx_ E c m m' zp zq z =
     (ErrorTermCtx c m' z zp zq, Mod zq, ToInteger (LiftOf zq),
-     FoldableCyc (c m') (LiftOf zq), FunctorCyc (c m') (LiftOf zq) (LiftOf zq))
+     FoldableCyc (c m') (LiftOf zq), FunctorCyc (c m') (LiftOf zq) (LiftOf zq),
+     LiftOf (c m' zq) ~ c m' (LiftOf zq))
 
   errorRate_ :: forall c m m' zp zq z env .
                 (ErrorRateCtx_ E c m m' zp zq z) =>
