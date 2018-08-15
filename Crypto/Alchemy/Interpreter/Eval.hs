@@ -19,7 +19,6 @@ import Control.Applicative
 import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.Writer
-import Data.Foldable
 import Data.Tuple
 
 import Algebra.Additive as Additive
@@ -141,15 +140,15 @@ instance LinearCyc_ E c where
   linearCyc_ = pureE . evalLin
 
 instance ErrorRate_ E where
-  type ErrorRateCtx_ E (CT m zp (c m' zq)) z =
-    (ErrorTermCtx c m' z zp zq, Mod zq, ToInteger (LiftOf zq), Foldable (c m'), Functor (c m'))
+  type ErrorRateCtx_ E c m m' zp zq z =
+    (ErrorTermCtx c m' z zp zq, Mod zq, ToInteger (LiftOf zq),
+     FoldableCyc (c m') (LiftOf zq), FunctorCyc (c m') (LiftOf zq) (LiftOf zq))
 
-  errorRate_ :: forall c m' m z zp zq ct e .
-                (ErrorRateCtx_ E ct z, ct ~ CT m zp (c m' zq)) =>
-                SK (c m' z) -> E e (ct -> Double)
-  errorRate_ sk = pureE $
-    (/ (fromIntegral $ modulus @zq)) .
-    fromIntegral . maximum . fmap abs . errorTerm sk
+  errorRate_ :: forall c m m' zp zq z env .
+                (ErrorRateCtx_ E c m m' zp zq z) =>
+                SK (c m' z) -> E env (CT m zp (c m' zq) -> Double)
+  errorRate_ sk = pureE $ (/ (fromIntegral $ modulus @zq)) .
+                  fromIntegral . foldrDec max zero . fmapDec abs . errorTerm sk
 
 instance String_ E where
   string_ = pureE
