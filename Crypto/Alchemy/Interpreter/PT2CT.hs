@@ -221,12 +221,12 @@ instance LinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (p :: PNoise) c)
     => Linear (PNoiseCyc p c) e r s zp
     -> expr env (PNoiseCyc (p :+ TunnelPNoise) c r zp -> PNoiseCyc p c s zp)
 
-  linearCyc_ f = PC $ lamM $ \x -> do
-    hint <- getTunnelHint @gad @(PNoise2KSZq gad zqs p) (Proxy::Proxy z) f
-    return $ modSwitch_ .:    -- then scale back to the target modulus zq
-              tunnel_ hint .: -- linear w/ the hint
-                modSwitch_ $: -- scale (up) to the hint modulus zq'
-                  var x
+  linearCyc_ f = PC $ do
+    hint <- getTunnelHint @gad @(PNoise2KSZq gad zqs p) @z $ fmapLin unPNC f
+    return $
+      modSwitch_ .:             -- scale back to the target modulus zq
+      tunnel_ hint .:           -- apply linear function w/ the hint
+      modSwitch_                -- scale (up) to the hint modulus zq'
 
 ----- Type families -----
 
