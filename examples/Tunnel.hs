@@ -1,6 +1,7 @@
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE RebindableSyntax      #-}
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeApplications      #-}
@@ -38,11 +39,11 @@ type Zqs = '[ Zq $(mkModulus 537264001)
             , Zq $(mkModulus 566092801)
             ] -- good moduli, ~ 30 bits
 
-type PT = PNoiseCyc PNZ CT H3 (Zq PP8)
+type PT = PNoiseCyc PNZ (Cyc CT) H3 (Zq PP8)
 
--- specialize one of the tunnels, making it polymorphic in only the expr
+-- specialize one of the switches, making it polymorphic in only the expr
 tunnel :: _ => expr env (_ -> PT)
-tunnel = tunnel3
+tunnel = switch3
 
 main :: IO ()
 main = do
