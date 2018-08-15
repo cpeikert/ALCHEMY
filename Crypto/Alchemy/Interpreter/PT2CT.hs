@@ -141,48 +141,48 @@ type family KSPNoise gad (zqs :: [*]) (p :: PNoise) :: PNoise
 type instance KSPNoise TrivGad      zqs p = p :+ KSAccumPNoise :+ Max32BitUnits
 type instance KSPNoise (BaseBGad 2) zqs p = p :+ KSAccumPNoise
 
-type PT2CTMulCtx m'map p zqs m zp gad ctex c z mon =
-  PT2CTMulCtx' m zp p zqs gad (PNoise2KSZq gad zqs p) ctex c z mon (Lookup m m'map)
+type PT2CTMulCtx m'map zqs gad z mon ctex p c m zp = PT2CTMulCtx'
+  (Lookup m m'map)
+  (PNoise2Zq zqs (Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise))))) -- zq in
+  (PNoise2KSZq gad zqs p) -- zqhint
+  (PNoise2Zq zqs p) -- zq out
+  gad z mon ctex c m zp
 
-type PT2CTMulCtx' (m :: Factored) zp p zqs gad hintzq ctex c z mon (m' :: Factored) =
-  PT2CTMulCtx'' p zqs gad hintzq ctex c z mon m' (CT m zp (c m'
-    (PNoise2Zq zqs (Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))))))
-    (CT m zp (c m' hintzq))
-
-type PT2CTMulCtx'' p zqs gad hintzq ctex c z mon (m' :: Factored) ctin hintct =
-  (Lambda_ ctex, Mul_ ctex ctin, PreMul_ ctex ctin ~ ctin, SHE_ ctex,
-   ModSwitchCtx_ ctex ctin hintzq,              -- zqin -> hint zq
-   ModSwitchCtx_ ctex hintct (PNoise2Zq zqs p), -- hint zq -> zq (final modulus)
-   KeySwitchQuadCtx_ ctex hintct gad,
-   KSHintCtx gad c m' z hintzq,
-   GenSKCtx c m' z Double,
-   Typeable (c m' z), Ring.C (c m' z), Typeable (KSHint gad (c m' hintzq)),
+type PT2CTMulCtx' m' zqin zqhint zqout gad z mon ctex c m zp =
+  (Lambda_ ctex, SHE_ ctex,
+   Mul_ ctex (CT m zp (c m' zqin)), PreMul_ ctex (CT m zp (c m' zqin)) ~ CT m zp (c m' zqin),
+   ModSwitchCtx_ ctex c m m' zp zqin   zqhint, -- in -> hint
+   ModSwitchCtx_ ctex c m m' zp zqhint zqout,  -- hint -> out
+   KeySwitchQuadCtx_ ctex c m m' zp zqhint gad,
+   KSHintCtx gad c m' z zqhint,
+   GenSKCtx c m' z Double, Ring.C (c m' z),
+   Typeable (c m' z), Typeable (KSHint gad (c m' zqhint)),
    KeysAccumulatorCtx Double mon, MonadAccumulator Hints mon)
 
-instance (PT2CTMulCtx m'map p zqs m zp gad ctex c z mon)
+instance (PT2CTMulCtx m'map zqs gad z mon ctex p c m zp)
   => Mul_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c m zp) where
 
   type PreMul_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c m zp) =
     PNoiseCyc (Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise)))) c m zp
 
-  mul_ :: forall m' env pin hintzq .
+  mul_ :: forall m' env pin zqhint .
     (pin ~ Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise))),
-     hintzq ~ PNoise2KSZq gad zqs p, m' ~ Lookup m m'map,
+     zqhint ~ PNoise2KSZq gad zqs p, m' ~ Lookup m m'map,
      PT2CTMulCtx m'map p zqs m zp gad ctex c z mon) =>
     PT2CT m'map zqs gad z mon ctex env
     (PNoiseCyc pin c m zp -> PNoiseCyc pin c m zp -> PNoiseCyc p c m zp)
   mul_ = PC $
     lamM $ \x -> lamM $ \y -> do
-        hint :: KSHint gad (c m' hintzq) <-
-          getQuadCircHint (Proxy::Proxy z)
+        hint :: KSHint gad (c m' zqhint) <- getQuadCircHint (Proxy::Proxy z)
         let prod = var x *: y :: ctex _ (CT m zp (c m' (PNoise2Zq zqs pin)))
          in return $ modSwitch_ .: keySwitchQuad_ hint .: modSwitch_ $: prod
 
-instance (SHE_ ctex, Applicative mon, ModSwitchPTCtx_ ctex
-           (CT m (ZqBasic ('PP '(Prime2, 'Lol.S e)) i) (c (Lookup m m'map) (PNoise2Zq zqs p)))
-           (ZqBasic ('PP '(Prime2, e)) i)) =>
-  Div2_ (PT2CT m'map zqs gad z mon ctex)
-  (PNoiseCyc p c m (ZqBasic ('PP '(Prime2, e)) i)) where
+instance (SHE_ ctex, Applicative mon,
+          ModSwitchPTCtx_ ctex c m (Lookup m m'map)
+           (ZqBasic ('PP '(Prime2, 'Lol.S e)) z) (ZqBasic ('PP '(Prime2, e)) z)
+           (PNoise2Zq zqs p))
+  => Div2_ (PT2CT m'map zqs gad z mon ctex)
+         (PNoiseCyc p c m (ZqBasic ('PP '(Prime2, e)) i)) where
 
   type PreDiv2_ (PT2CT m'map zqs gad z mon ctex)
        (PNoiseCyc p c m (ZqBasic ('PP '(Prime2, e)) i)) =
