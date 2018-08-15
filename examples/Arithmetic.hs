@@ -9,10 +9,10 @@
 
 module Arithmetic where
 
-import Data.Maybe
-import Control.Monad.Writer
 import Control.Monad.Random
-import Data.Functor ((<$>))
+import Control.Monad.Writer
+import Data.Functor         ((<$>))
+import Data.Maybe
 
 import Crypto.Alchemy
 import Crypto.Lol
@@ -20,7 +20,7 @@ import Crypto.Lol.Cyclotomic.Tensor.CPP
 
 import Common
 
-type PT = PNoiseCyc PNZ CT F4 (Zq 7)
+type PT = PNoiseCyc PNZ (Cyc CT) F4 (Zq 7)
 
 -- polymorphic over expr alone
 addMul :: _ => expr env (_ -> _ -> PT)
@@ -35,7 +35,7 @@ type Zqs = '[ Zq $(mkModulus 268440577)
 
 main :: IO ()
 main = do
-  -- pretty-print and size
+  -- print and size
   putStrLn $ "PT expression: "      ++ pprint addMul
   putStrLn $ "PT expression size: " ++ show (size addMul)
 
@@ -58,7 +58,7 @@ main = do
     arg1 <- encrypt $ unPNC pt1
     arg2 <- encrypt $ unPNC pt2
 
-    -- pretty-print and params/size the compiled expression
+    -- print and params/size the compiled expression
     putStrLnIO $ "CT expression: " ++ pprint ct2
     putStrLnIO $ "CT expression params:\n" ++ params ct3
     putStrLnIO $ "CT expression size: " ++ show (size ct4)
