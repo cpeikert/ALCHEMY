@@ -28,14 +28,11 @@ import Control.Applicative
 import Control.Monad.Random
 import Control.Monad.Reader
 import Data.Dynamic
-import Data.Type.Natural    hiding (type (*))
+import Data.Type.Natural    hiding (type (*), Nat (..))
 import GHC.TypeLits         hiding (type (*), type (+), type (-), Nat)
 
-import           Crypto.Lol                      hiding (Pos (..))
-import qualified Crypto.Lol                      as Lol
-import           Crypto.Lol.Applications.SymmSHE hiding (AddPublicCtx,
-                                                  MulPublicCtx, TunnelCtx,
-                                                  decrypt, encrypt)
+import           Crypto.Lol
+import           Crypto.Lol.Applications.SymmSHE hiding (decrypt, encrypt)
 import qualified Crypto.Lol.Applications.SymmSHE as SHE
 import           Crypto.Lol.Types
 
@@ -47,8 +44,6 @@ import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.SHE
 import Crypto.Alchemy.MonadAccumulator
-
-import Algebra.Ring as Ring
 
 -- | Interprets plaintext operations as their corresponding
 -- (homomorphic) ciphertext operations.  The represented plaintext
@@ -79,8 +74,8 @@ pt2ct = unPC
 -- appropriate key (from the monad), generating one if necessary.
 encrypt :: forall mon c m m' zp zq z .
    -- CJP: DON'T LOVE THIS CHOICE OF z HERE; IT'S ARBITRARY
-   (KeysAccumulatorCtx Double mon, EncryptCtx c m m' z zp zq, z ~ LiftOf zp, GenSKCtx c m' z Double,
-   Typeable c, Typeable m', Typeable z)
+   (KeysAccumulatorCtx Double mon, EncryptCtx c m m' z zp zq,
+    z ~ LiftOf zp, GenSKCtx c m' z Double, Typeable c, Typeable m', Typeable z)
   => c m zp                  -- | plaintext
   -> mon (CT m zp (c m' zq)) -- | (monadic) ciphertext
 encrypt x = do
@@ -91,10 +86,9 @@ encrypt x = do
 -- | Decrypt a ciphertext under an appropriate key (from the monad),
 -- if one exists.
 decrypt :: forall mon c m m' z zp zq .
-  (MonadReader Keys mon,
+  (MonadReader Keys mon, DecryptCtx c m m' z zp zq,
    -- CJP: DON'T LOVE THIS CHOICE OF z HERE; IT'S ARBITRARY
-   DecryptCtx c m m' z zp zq, z ~ LiftOf zp,
-   Typeable c, Typeable m', Typeable z)
+   z ~ LiftOf zp, Typeable c, Typeable m', Typeable z)
   => CT m zp (c m' zq) -> mon (Maybe (c m zp))
 decrypt x = do
   sk :: Maybe (SK (c m' z)) <- lookupKey
@@ -155,7 +149,7 @@ type PT2CTMulCtx' m' zqin zqhint zqout gad z mon ctex c m zp =
    ModSwitchCtx_ ctex c m m' zp zqhint zqout,  -- hint -> out
    KeySwitchQuadCtx_ ctex c m m' zp zqhint gad,
    KSHintCtx gad c m' z zqhint,
-   Fact m', GenSKCtx c m' z Double, Ring.C (c m' z),
+   Fact m', GenSKCtx c m' z Double, Ring (c m' z),
    Typeable (c m' z), Typeable (KSHint gad (c m' zqhint)),
    KeysAccumulatorCtx Double mon, MonadAccumulator Hints mon)
 
@@ -179,14 +173,14 @@ instance (PT2CTMulCtx m'map zqs gad z mon ctex p c m zp)
 
 instance (SHE_ ctex, Applicative mon,
           ModSwitchPTCtx_ ctex c m (Lookup m m'map)
-           (ZqBasic ('PP '(Prime2, 'Lol.S e)) z) (ZqBasic ('PP '(Prime2, e)) z)
+           (ZqBasic ('PP '(Prime2, 'S e)) z) (ZqBasic ('PP '(Prime2, e)) z)
            (PNoise2Zq zqs p))
   => Div2_ (PT2CT m'map zqs gad z mon ctex)
          (PNoiseCyc p c m (ZqBasic ('PP '(Prime2, e)) z)) where
 
   type PreDiv2_ (PT2CT m'map zqs gad z mon ctex)
        (PNoiseCyc p c m (ZqBasic ('PP '(Prime2, e)) z)) =
-    PNoiseCyc p c m (ZqBasic ('PP '(Prime2, 'Lol.S e)) z)
+    PNoiseCyc p c m (ZqBasic ('PP '(Prime2, 'S e)) z)
 
   div2_ = PC $ pure modSwitchPT_
 
