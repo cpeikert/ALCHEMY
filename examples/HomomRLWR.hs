@@ -3,6 +3,7 @@
 {-# LANGUAGE NoImplicitPrelude         #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE PartialTypeSignatures     #-}
+{-# LANGUAGE PolyKinds                 #-}
 {-# LANGUAGE TemplateHaskell           #-}
 {-# LANGUAGE TypeApplications          #-}
 {-# LANGUAGE TypeFamilies              #-}
@@ -10,19 +11,21 @@
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# OPTIONS_GHC -fconstraint-solver-iterations=0 #-}
+{-# OPTIONS_GHC -freduction-depth=0 #-}
 
 module HomomRLWR where
 
 import Control.Monad.Random
-import Data.Functor                         ((<$>))
-import Data.Maybe                           (fromJust)
+import Data.Functor         ((<$>))
+import Data.Maybe           (fromJust)
 
+import Control.Monad.Writer
 import Crypto.Alchemy
 import Crypto.Alchemy.Language.RescaleTree
-import Crypto.Lol.Applications.SymmSHE      (mulPublic)
 import Crypto.Lol
+import Crypto.Lol.Applications.SymmSHE     (mulPublic)
 import Crypto.Lol.Cyclotomic.Tensor.CPP
-import Control.Monad.Writer
 
 import Common
 
@@ -35,8 +38,8 @@ type M'Map = '[ '(H0,H0')
               ]
 
 type Zqs = '[ Zq $(mkModulus 1543651201) -- last mul: > 2^30.5
-            , Zq $(mkModulus 689270401)  -- 3 rounding muls: > 2^29 (larger than they 
-            , Zq $(mkModulus 718099201)  -- strictly need to be to account for 
+            , Zq $(mkModulus 689270401)  -- 3 rounding muls: > 2^29 (larger than they
+            , Zq $(mkModulus 718099201)  -- strictly need to be to account for
             , Zq $(mkModulus 720720001)  -- the mulPublic)
             , Zq $(mkModulus 1556755201) -- fit 5 hops: > (last mul)
             , Zq $(mkModulus 1567238401) -- extra for KS: big
@@ -44,7 +47,7 @@ type Zqs = '[ Zq $(mkModulus 1543651201) -- last mul: > 2^30.5
 
 type K = P5
 type Gad = TrivGad
-type PT = PNoiseCyc PNZ CT H5 (Zq PP2)
+type PT = PNoiseCyc PNZ (Cyc CT) H5 (Zq PP2)
 
 ringRound :: _ => expr env (_ -> PT)
 ringRound =  untag (rescaleTreePow2_ @K) .: switch5
