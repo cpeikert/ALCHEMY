@@ -194,10 +194,6 @@ type PT2CTLinearCtx gad z mon ctex c e r s r' s' zp zqin zqhint zqout =
   (SHE_ ctex, Lambda_ ctex, Fact s', KeysAccumulatorCtx Double mon,
    TunnelCtx_ ctex c e r s (e * (r' / r)) r' s'   zp zqhint gad,
    TunnelHintCtx   c e r s (e * (r' / r)) r' s' z zp zqhint gad,
-   -- output ciphertext type
-   -- CT s zp (c s' zq)   ~ Cyc2CT m'map zqs (PNoiseCyc p c s zp),
-   -- input ciphertext type
-   -- CT r zp (c r' zqin) ~ Cyc2CT m'map zqs (PNoiseCyc (p :+ TunnelPNoise) c r zp),
    GenSKCtx c r' z Double, GenSKCtx c s' z Double,
    ModSwitchCtx_ ctex c r r' zp zqin   zqhint, -- in -> hint
    ModSwitchCtx_ ctex c s s' zp zqhint zqout,  -- hint -> out
@@ -215,7 +211,7 @@ instance LinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (p :: PNoise) c)
       (PNoise2KSZq gad zqs p)
       (PNoise2Zq zqs p))
 
-  linearCyc_ :: forall m'map zqs gad z mon ctex p c e r s zp expr env .
+  linearCyc_ :: forall e r s zp expr env .
     (expr ~ (PT2CT m'map zqs gad z mon ctex),
      LinearCycCtx_ expr (PNoiseCyc p c) e r s zp)
     => Linear (PNoiseCyc p c) e r s zp
@@ -231,24 +227,24 @@ instance LinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (p :: PNoise) c)
 ----- Type families -----
 
 -- | The number of units a ciphertext with pNoise @p@ must have
-type family CTPNoise2Units (p :: PNoise) where
+type family CTPNoise2Units p where
   CTPNoise2Units ('PN p) = 'Units (p + MinUnits)
 
 -- | The number of units a key-switch hint with pNoise @p@ must have
 -- This is different from CTPNoise2Units because the hint coeffients are very small
 -- (~8), while ciphertext coefficients can be much larger.
-type family KSPNoise2Units (p :: PNoise) where
+type family KSPNoise2Units p where
   KSPNoise2Units ('PN p) = 'Units p
 
 -- | (An upper bound on) the pNoise of a ciphertext whose modulus has
 -- exactly the given number of units
-type family Units2CTPNoise (h :: Units) where
+type family Units2CTPNoise h where
   Units2CTPNoise ('Units h) = 'PN (h - MinUnits)
 
 -- | The modulus (nested pairs) for a ciphertext with pNoise @p@
-type PNoise2Zq zqs (p :: PNoise) = ZqPairsWithUnits zqs (CTPNoise2Units p)
+type PNoise2Zq zqs p = ZqPairsWithUnits zqs (CTPNoise2Units p)
 
-type family Cyc2CT (m'map :: [(Factored, Factored)]) zqs e = cte | cte -> e where
+type family Cyc2CT m'map zqs e = cte | cte -> e where
 
   Cyc2CT m'map zqs (PNoiseCyc p c m zp) =
     CT m zp (c (Lookup m m'map) (PNoise2Zq zqs p))
@@ -269,7 +265,7 @@ type family Cyc2CT (m'map :: [(Factored, Factored)]) zqs e = cte | cte -> e wher
                 ':$$: 'Text "It only converts types of the form 'PNoiseCyc p t m zp' and pairs/lists/functions thereof."))
 
 -- type-level map lookup
-type family Lookup (m :: Factored) (map :: [(Factored, Factored)]) :: Factored where
+type family Lookup (m :: Factored) map :: Factored where
   Lookup m ( '(m,m') ': rest) = m'
   Lookup r ( '(m,m') ': rest) = Lookup r rest
   Lookup a '[] =
