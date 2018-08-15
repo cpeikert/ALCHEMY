@@ -120,14 +120,14 @@ instance (Add_ ctex (Cyc2CT m'map zqs a), Applicative mon)
   neg_ = PC $ pure neg_
 
 instance (SHE_ ctex, Applicative mon,
-          AddPublicCtx_ ctex (Cyc2CT m'map zqs (PNoiseCyc h c m zp))) =>
-  AddLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (h :: PNoise) c (m :: Factored) zp) where
+          AddPublicCtx_ ctex c m (Lookup m m'map) zp (PNoise2Zq zqs p))
+  => AddLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c m zp) where
 
   addLit_ = PC . pure . addPublic_ . unPNC
 
 instance (SHE_ ctex, Applicative mon,
-          MulPublicCtx_ ctex (Cyc2CT m'map zqs (PNoiseCyc h c m zp))) =>
-  MulLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (h :: PNoise) c (m :: Factored) zp) where
+          MulPublicCtx_ ctex c m (Lookup m m'map) zp (PNoise2Zq zqs p))
+  => MulLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c m zp) where
 
   mulLit_ = PC . pure . mulPublic_ . unPNC
 
@@ -155,7 +155,7 @@ type PT2CTMulCtx' m' zqin zqhint zqout gad z mon ctex c m zp =
    ModSwitchCtx_ ctex c m m' zp zqhint zqout,  -- hint -> out
    KeySwitchQuadCtx_ ctex c m m' zp zqhint gad,
    KSHintCtx gad c m' z zqhint,
-   GenSKCtx c m' z Double, Ring.C (c m' z),
+   Fact m', GenSKCtx c m' z Double, Ring.C (c m' z),
    Typeable (c m' z), Typeable (KSHint gad (c m' zqhint)),
    KeysAccumulatorCtx Double mon, MonadAccumulator Hints mon)
 
@@ -168,7 +168,7 @@ instance (PT2CTMulCtx m'map zqs gad z mon ctex p c m zp)
   mul_ :: forall m' env pin zqhint .
     (pin ~ Units2CTPNoise (TotalUnits zqs (CTPNoise2Units (p :+ MulPNoise))),
      zqhint ~ PNoise2KSZq gad zqs p, m' ~ Lookup m m'map,
-     PT2CTMulCtx m'map p zqs m zp gad ctex c z mon) =>
+     PT2CTMulCtx m'map zqs gad z mon ctex p c m zp) =>
     PT2CT m'map zqs gad z mon ctex env
     (PNoiseCyc pin c m zp -> PNoiseCyc pin c m zp -> PNoiseCyc p c m zp)
   mul_ = PC $
@@ -182,11 +182,11 @@ instance (SHE_ ctex, Applicative mon,
            (ZqBasic ('PP '(Prime2, 'Lol.S e)) z) (ZqBasic ('PP '(Prime2, e)) z)
            (PNoise2Zq zqs p))
   => Div2_ (PT2CT m'map zqs gad z mon ctex)
-         (PNoiseCyc p c m (ZqBasic ('PP '(Prime2, e)) i)) where
+         (PNoiseCyc p c m (ZqBasic ('PP '(Prime2, e)) z)) where
 
   type PreDiv2_ (PT2CT m'map zqs gad z mon ctex)
-       (PNoiseCyc p c m (ZqBasic ('PP '(Prime2, e)) i)) =
-    PNoiseCyc p c m (ZqBasic ('PP '(Prime2, 'Lol.S e)) i)
+       (PNoiseCyc p c m (ZqBasic ('PP '(Prime2, e)) z)) =
+    PNoiseCyc p c m (ZqBasic ('PP '(Prime2, 'Lol.S e)) z)
 
   div2_ = PC $ pure modSwitchPT_
 
