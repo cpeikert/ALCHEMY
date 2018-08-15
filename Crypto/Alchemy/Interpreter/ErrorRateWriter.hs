@@ -1,12 +1,12 @@
-{-# LANGUAGE ConstraintKinds            #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE MultiParamTypeClasses      #-}
-{-# LANGUAGE NoImplicitPrelude          #-}
-{-# LANGUAGE ScopedTypeVariables        #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE TypeFamilyDependencies     #-}
-{-# LANGUAGE UndecidableInstances       #-}
+{-# LANGUAGE ConstraintKinds        #-}
+{-# LANGUAGE FlexibleContexts       #-}
+{-# LANGUAGE FlexibleInstances      #-}
+{-# LANGUAGE MultiParamTypeClasses  #-}
+{-# LANGUAGE NoImplicitPrelude      #-}
+{-# LANGUAGE ScopedTypeVariables    #-}
+{-# LANGUAGE TypeFamilies           #-}
+{-# LANGUAGE TypeFamilyDependencies #-}
+{-# LANGUAGE UndecidableInstances   #-}
 
 module Crypto.Alchemy.Interpreter.ErrorRateWriter
 ( ERW, writeErrorRates, Kleislify, ErrorRateLog )
@@ -67,17 +67,17 @@ liftK2_ = lam $ (.:) (pure_ .: liftK_)
 after_ :: (Lambda_ expr, Monad_ expr m) => expr e ((a -> m b) -> a -> m a)
 after_ = liftA2_ $: fmap_ $: const_
 
-tellError_ :: forall w expr m zp c (m' :: Factored) zq z e .
+tellError_ :: forall w expr m zp c m' zq z e .
   (MonadWriter_ expr ErrorRateLog w, Show (ArgType zq),
    Lambda_ expr, List_ expr, ErrorRate_ expr, String_ expr,
-   Pair_ expr, ErrorRateCtx_ expr (CT m zp (c m' zq)) z) =>
+   Pair_ expr, ErrorRateCtx_ expr c m m' zp zq z) =>
    String -> SK (c m' z) -> expr e (CT m zp (c m' zq) -> w ())
 tellError_ str sk = lam $ \x -> tell_ $: (cons_ $: (pair_ $: string_ (str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: x)) $: nil_)
 
-type WriteErrorCtx expr z k w ct c m (m' :: Factored) zp zq =
-  (MonadWriter_ expr ErrorRateLog w, MonadReader Keys k, Typeable (SK (c m' z)), 
+type WriteErrorCtx expr z k w ct c m m' zp zq =
+  (MonadWriter_ expr ErrorRateLog w, MonadReader Keys k, Typeable (SK (c m' z)),
    Lambda_ expr, List_ expr, String_ expr, Pair_ expr, ErrorRate_ expr,
-   ct ~ (CT m zp (c m' zq)), ErrorRateCtx_ expr ct z, Show (ArgType zq))
+   ct ~ (CT m zp (c m' zq)), ErrorRateCtx_ expr c m m' zp zq z, Show (ArgType zq))
 
 -- | Convert an object-language function to a (monadic) one that
 -- writes the error rate of its ciphertext output.
@@ -91,11 +91,10 @@ liftWriteError :: forall expr z k w ct c m m' zp zq a e .
 
 liftWriteError _ str f_ = do
   key :: Maybe (SK (c m' z)) <- lookupKey
-  return $ return_ $: 
-    case key of 
-      Just sk -> (after_ $: tellError_ str sk) .: f_
-      Nothing -> return_ .: f_
-              
+  return $ return_ $: case key of
+    Just sk -> (after_ $: tellError_ str sk) .: f_
+    Nothing -> return_ .: f_
+
 liftWriteError2 :: forall expr z k w ct c m m' zp zq a b e .
   (WriteErrorCtx expr z k w ct c m m' zp zq)
   => Proxy z
@@ -171,24 +170,24 @@ instance (String_ expr, Applicative_ expr w, Lambda_ expr, Applicative k)
 instance (SHE_ expr, Applicative_ expr w, Lambda_ expr, Applicative k) =>
   SHE_ (ERW expr z k w) where
 
-  type ModSwitchPTCtx_   (ERW expr z k w) (CT m zp (c m' zq)) zp' =
+  type ModSwitchPTCtx_   (ERW expr z k w) c m m' zp zp' zq  =
     (WriteErrorCtx expr z k w (CT m zp' (c m' zq)) c m m' zp' zq,
-     ModSwitchPTCtx_ expr (CT m zp (c m' zq)) zp')
-  type ModSwitchCtx_     (ERW expr z k w) (CT m zp (c m' zq)) zq' =
+     ModSwitchPTCtx_ expr c m m' zp zp' zq)
+  type ModSwitchCtx_     (ERW expr z k w) c m m' zp zq  zq' =
     (WriteErrorCtx expr z k w (CT m zp (c m' zq')) c m m' zp zq',
-     ModSwitchCtx_ expr (CT m zp (c m' zq)) zq')
-  type AddPublicCtx_     (ERW expr z k w) (CT m zp (c m' zq))     =
+     ModSwitchCtx_ expr c m m' zp zq zq')
+  type AddPublicCtx_     (ERW expr z k w) c m m' zp zq      =
     (WriteErrorCtx expr z k w (CT m zp (c m' zq)) c m m' zp zq,
-     AddPublicCtx_ expr (CT m zp (c m' zq)))
-  type MulPublicCtx_     (ERW expr z k w) (CT m zp (c m' zq))     =
+     AddPublicCtx_ expr c m m' zp zq)
+  type MulPublicCtx_     (ERW expr z k w) c m m' zp zq      =
     (WriteErrorCtx expr z k w (CT m zp (c m' zq)) c m m' zp zq,
-     MulPublicCtx_ expr (CT m zp (c m' zq)))
-  type KeySwitchQuadCtx_ (ERW expr z k w) (CT m zp (c m' zq)) gad =
-    (KeySwitchQuadCtx_ expr (CT m zp (c m' zq)) gad,
-     WriteErrorCtx expr z k w (CT m zp (c m' zq)) c m m' zp zq)
+     MulPublicCtx_ expr c m m' zp zq)
+  type KeySwitchQuadCtx_ (ERW expr z k w) c m m' zp zq  gad =
+    (WriteErrorCtx expr z k w (CT m zp (c m' zq)) c m m' zp zq,
+     KeySwitchQuadCtx_ expr c m m' zp zq gad)
   type TunnelCtx_ (ERW expr z k w) c e r s e' r' s' zp zq gad =
-      (TunnelCtx_ expr c e r s e' r' s' zp zq gad,
-       WriteErrorCtx expr z k w (CT s zp (c s' zq)) c s s' zp zq)
+    (WriteErrorCtx expr z k w (CT s zp (c s' zq)) c s s' zp zq,
+     TunnelCtx_ expr c e r s e' r' s' zp zq gad)
 
   modSwitchPT_   = ERW $ liftWriteError (Proxy::Proxy z) "modSwitchPT_" modSwitchPT_
   modSwitch_     = ERW $ liftWriteError (Proxy::Proxy z) "modSwitch_" modSwitch_
@@ -200,5 +199,7 @@ instance (SHE_ expr, Applicative_ expr w, Lambda_ expr, Applicative k) =>
 instance (ErrorRate_ expr, Applicative k, Applicative_ expr w, Lambda_ expr) =>
   ErrorRate_ (ERW expr z k w) where
 
-  type ErrorRateCtx_ (ERW expr z' k w) ct z = ErrorRateCtx_ expr ct z
+  type ErrorRateCtx_ (ERW expr z k w) c m m' zp zq z' =
+    ErrorRateCtx_ expr c m m' zp zq z'
+
   errorRate_  sk = pureERW $ liftK_ $: errorRate_ sk
