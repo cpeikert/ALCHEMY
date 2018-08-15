@@ -1,14 +1,12 @@
-{-# LANGUAGE ExplicitForAll        #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE NoImplicitPrelude     #-}
 {-# LANGUAGE PartialTypeSignatures #-}
-{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 {-# LANGUAGE TypeOperators         #-}
-{-# LANGUAGE TemplateHaskell       #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
@@ -20,9 +18,7 @@ import Control.Monad.IO.Class
 import Crypto.Alchemy
 
 import Crypto.Lol
-import Crypto.Lol.Cyclotomic.Tensor         (TElt)
 import Crypto.Lol.Types
-import Crypto.Lol.Types.ZPP
 
 import Data.Time.Clock
 import System.IO
@@ -62,36 +58,35 @@ printIO = liftIO . print
 
 -- | Linear function mapping the decoding basis (relative to the
 -- largest common subring) to (the same number of) CRT slots.
-decToCRT :: forall r s t zp e . -- r first for convenient type apps
-  (e ~ FGCD r s, e `Divides` r, e `Divides` s,
-   CElt t zp, ZPP zp, TElt t (ZpOf zp))
-  => Linear t zp e r s
-decToCRT =
-  let crts = proxy crtSet (Proxy::Proxy e)
-      phir = proxy totientFact (Proxy::Proxy r)
-      phie = proxy totientFact (Proxy::Proxy e)
-      dim = phir `div` phie
-      -- only take as many crts as we need, otherwise linearDec fails
-  in linearDec $ take dim crts
+decToCRT :: forall r c e s zp . -- r first for convenient type apps
+            (e ~ FGCD r s, e `Divides` r, e `Divides` s,
+             Cyclotomic (c s zp), CRTSetCyc c zp)
+         => Linear c e r s zp
+decToCRT = let crts = proxy crtSet (Proxy::Proxy e)
+               phir = totientFact @r
+               phie = totientFact @e
+               dim = phir `div` phie
+               -- only take as many crts as we need, otherwise linearDec fails
+           in linearDec $ take dim crts
 
 -- | Switch H0 -> H1
-switch1 :: _ => expr env (_ -> PNoiseCyc p t H1 zp)
+switch1 :: _ => expr env (_ -> PNoiseCyc p c H1 zp)
 switch1 = linearCyc_ (decToCRT @H0)
 
 -- | Switch H0 -> H1 -> H2
-switch2 :: _ => expr env (_ -> PNoiseCyc p t H2 zp)
+switch2 :: _ => expr env (_ -> PNoiseCyc p c H2 zp)
 switch2 = linearCyc_ (decToCRT @H1) .: switch1
 
 -- | Switch H0 -> H1 -> H2 -> H3
-switch3 :: _ => expr env (_ -> PNoiseCyc p t H3 zp)
+switch3 :: _ => expr env (_ -> PNoiseCyc p c H3 zp)
 switch3 = linearCyc_ (decToCRT @H2) .: switch2
 
 -- | Switch H0 -> H1 -> H2 -> H3 -> H4
-switch4 :: _ => expr env (_ -> PNoiseCyc p t H4 zp)
+switch4 :: _ => expr env (_ -> PNoiseCyc p c H4 zp)
 switch4 = linearCyc_ (decToCRT @H3) .: switch3
 
 -- | Switch H0 -> H1 -> H2 -> H3 -> H4 -> H5
-switch5 :: _ => expr env (_ -> PNoiseCyc p t H5 zp)
+switch5 :: _ => expr env (_ -> PNoiseCyc p c H5 zp)
 switch5 = linearCyc_ (decToCRT @H4) .: switch4
 
 
