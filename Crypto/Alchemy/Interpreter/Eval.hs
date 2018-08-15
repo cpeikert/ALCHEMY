@@ -118,12 +118,13 @@ instance MonadWriter w m => MonadWriter_ E w m where
 
 instance SHE_ E where
 
-  type ModSwitchPTCtx_   E (CT m zp (c m' zq)) zp' = ModSwitchPTCtx c m' zp zp' zq
-  type ModSwitchCtx_     E (CT m zp (c m' zq)) zq' = ModSwitchCtx c m' zp zq zq'
-  type AddPublicCtx_     E (CT m zp (c m' zq))     = AddPublicCtx c m m' zp zq
-  type MulPublicCtx_     E (CT m zp (c m' zq))     = MulPublicCtx c m m' zp zq
-  type KeySwitchQuadCtx_ E (CT m zp (c m' zq)) gad = KeySwitchCtx gad c m' zp zq
-  type TunnelCtx_        E c e r s e' r' s' zp zq gad  = TunnelCtx c r s e' r' s' zp zq gad
+  type ModSwitchPTCtx_   E c m m' zp zp' zq  = ModSwitchPTCtx c   m' zp zp' zq
+  type ModSwitchCtx_     E c m m' zp zq  zq' = ModSwitchCtx   c   m' zp zq  zq'
+  type AddPublicCtx_     E c m m' zp zq      = AddPublicCtx   c m m' zp zq
+  type MulPublicCtx_     E c m m' zp zq      = MulPublicCtx   c m m' zp zq
+  type KeySwitchQuadCtx_ E c m m' zp zq gad  = KeySwitchCtx gad c m' zp zq
+  type TunnelCtx_        E c e r s e' r' s' zp zq gad =
+                 TunnelCtx c   r s e' r' s' zp zq gad
 
   modSwitchPT_   = pureE   modSwitchPT
   modSwitch_     = pureE   modSwitch

@@ -106,12 +106,12 @@ instance MonadWriter w m => MonadWriter_ P w m where
 
 instance SHE_ P where
 
-  type ModSwitchPTCtx_   P a zp' = ()
-  type ModSwitchCtx_     P a zq' = ()
-  type AddPublicCtx_     P (CT m zp (c m' zq)) = (Show (c m zp))
-  type MulPublicCtx_     P (CT m zp (c m' zq)) = (Show (c m zp))
-  type KeySwitchQuadCtx_ P a gad = ()
-  type TunnelCtx_        P t e r s e' r' s' zp zq gad = ()
+  type ModSwitchPTCtx_   P c m m' zp zp' zq  = ()
+  type ModSwitchCtx_     P c m m' zp zq  zq' = ()
+  type AddPublicCtx_     P c m m' zp zq      = Show (c m zp)
+  type MulPublicCtx_     P c m m' zp zq      = Show (c m zp)
+  type KeySwitchQuadCtx_ P c m m' zp zq  gad = ()
+  type TunnelCtx_        P c e r s e' r' s' zp zq gad = ()
 
   modSwitchPT_     = pureP   "modSwitchPT"
   modSwitch_       = pureP   "modSwitch"
@@ -127,5 +127,5 @@ instance LinearCyc_ P c where
   linearCyc_ _ = pureP "linearCyc <FUNC>"
 
 instance ErrorRate_ P where
-  type ErrorRateCtx_ P ct z = ()
+  type ErrorRateCtx_ P c m m' zp zq z = ()
   errorRate_ _ = pureP "errorRate <KEY>"

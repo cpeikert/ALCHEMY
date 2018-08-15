@@ -102,12 +102,12 @@ instance MonadWriter w m => MonadWriter_ S w m where
   pass_ = S 1
 
 instance SHE_ S where
-  type ModSwitchPTCtx_   S ct zp' = ()
-  type ModSwitchCtx_     S ct zq' = ()
-  type AddPublicCtx_     S ct     = ()
-  type MulPublicCtx_     S ct     = ()
-  type KeySwitchQuadCtx_ S ct gad = ()
-  type TunnelCtx_ S t e r s e' r' s' zp zq gad = ()
+  type ModSwitchPTCtx_   S c m m' zp zp' zq  = ()
+  type ModSwitchCtx_     S c m m' zp zq  zq' = ()
+  type AddPublicCtx_     S c m m' zp zq      = ()
+  type MulPublicCtx_     S c m m' zp zq      = ()
+  type KeySwitchQuadCtx_ S c m m' zp zq  gad = ()
+  type TunnelCtx_ S c e r s e' r' s' zp zq gad = ()
 
   modSwitchPT_     = S 1
   modSwitch_       = S 1

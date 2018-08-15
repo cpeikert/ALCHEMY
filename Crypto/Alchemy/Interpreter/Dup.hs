@@ -48,19 +48,19 @@ instance (Div2_ ex1 a, Div2_ ex2 a, PreDiv2_ ex1 a ~ PreDiv2_ ex2 a)
   div2_ = Dup div2_ div2_
 
 instance (SHE_ ex1, SHE_ ex2) => SHE_ (Dup ex1 ex2) where
-  type ModSwitchPTCtx_ (Dup ex1 ex2) ct zp' = (ModSwitchPTCtx_ ex1 ct zp',
-                                               ModSwitchPTCtx_ ex2 ct zp')
-  type ModSwitchCtx_ (Dup ex1 ex2) ct zq' = (ModSwitchCtx_ ex1 ct zq',
-                                             ModSwitchCtx_ ex2 ct zq')
-  type AddPublicCtx_ (Dup ex1 ex2) ct = (AddPublicCtx_ ex1 ct,
-                                         AddPublicCtx_ ex2 ct)
-  type MulPublicCtx_ (Dup ex1 ex2) ct = (MulPublicCtx_ ex1 ct,
-                                         MulPublicCtx_ ex2 ct)
-  type KeySwitchQuadCtx_ (Dup ex1 ex2) ct gad = (KeySwitchQuadCtx_ ex1 ct gad,
-                                                 KeySwitchQuadCtx_ ex2 ct gad)
-  type TunnelCtx_    (Dup ex1 ex2) t e r s e' r' s' zp zq gad =
-    (TunnelCtx_ ex1 t e r s e' r' s' zp zq gad,
-     TunnelCtx_ ex2 t e r s e' r' s' zp zq gad)
+  type ModSwitchPTCtx_ (Dup ex1 ex2) c m m' zp zp' zq =
+    (ModSwitchPTCtx_ ex1 c m m' zp zp' zq, ModSwitchPTCtx_ ex2 c m m' zp zp' zq)
+  type ModSwitchCtx_ (Dup ex1 ex2) c m m' zp zq zq' =
+    (ModSwitchCtx_ ex1 c m m' zp zq zq', ModSwitchCtx_ ex2 c m m' zp zq zq')
+  type AddPublicCtx_ (Dup ex1 ex2) c m m' zp zq =
+    (AddPublicCtx_ ex1 c m m' zp zq, AddPublicCtx_ ex2 c m m' zp zq)
+  type MulPublicCtx_ (Dup ex1 ex2) c m m' zp zq =
+    (MulPublicCtx_ ex1 c m m' zp zq, MulPublicCtx_ ex2 c m m' zp zq)
+  type KeySwitchQuadCtx_ (Dup ex1 ex2) c m m' zp zq gad =
+    (KeySwitchQuadCtx_ ex1 c m m' zp zq gad, KeySwitchQuadCtx_ ex2 c m m' zp zq gad)
+  type TunnelCtx_    (Dup ex1 ex2) c e r s e' r' s' zp zq gad =
+    (TunnelCtx_ ex1 c e r s e' r' s' zp zq gad,
+     TunnelCtx_ ex2 c e r s e' r' s' zp zq gad)
 
   modSwitchPT_     = Dup  modSwitchPT_       modSwitchPT_
   modSwitch_       = Dup  modSwitch_         modSwitch_
@@ -112,7 +112,7 @@ instance (Pair_ ex1, Pair_ ex2) => Pair_ (Dup ex1 ex2) where
 
 instance (ErrorRate_ ex1, ErrorRate_ ex2) => ErrorRate_ (Dup ex1 ex2) where
 
-  type ErrorRateCtx_ (Dup ex1 ex2) ct z = (ErrorRateCtx_ ex1 ct z,
-                                           ErrorRateCtx_ ex2 ct z)
+  type ErrorRateCtx_ (Dup ex1 ex2) c m m' zp zq z =
+    (ErrorRateCtx_ ex1 c m m' zp zq z, ErrorRateCtx_ ex2 c m m' zp zq z)
 
   errorRate_ sk = Dup (errorRate_ sk) (errorRate_ sk)

@@ -4,7 +4,6 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE InstanceSigs          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -79,42 +78,34 @@ instance SingI (p :: Nat) => Div2_ (Params expr) (PNoiseCyc ('PN p) c m r) where
 
 instance SHE_ (Params expr) where
 
-  type ModSwitchPTCtx_   (Params expr) (CT m zp (c m' zq)) zp' = ShowType zq
-  type ModSwitchCtx_     (Params expr) (CT m zp (c m' zq)) zq' = (ShowType zq, ShowType zq')
-  type AddPublicCtx_     (Params expr) (CT m zp (c m' zq)) = (ShowType zq)
-  type MulPublicCtx_     (Params expr) (CT m zp (c m' zq)) = (ShowType zq)
-  type KeySwitchQuadCtx_ (Params expr) (CT m zp (c m' zq)) gad = (ShowType zq)
-  type TunnelCtx_        (Params expr) c e r s e' r' s' zp zq gad = (ShowType zq)
+  type ModSwitchPTCtx_   (Params expr) c m m' zp zp' zq  = ShowType zq
+  type ModSwitchCtx_     (Params expr) c m m' zp zq  zq' = (ShowType zq, ShowType zq')
+  type AddPublicCtx_     (Params expr) c m m' zp zq      = ShowType zq
+  type MulPublicCtx_     (Params expr) c m m' zp zq      = ShowType zq
+  type KeySwitchQuadCtx_ (Params expr) c m m' zp zq  gad = ShowType zq
+  type TunnelCtx_        (Params expr) c e r s e' r' s' zp zq gad = ShowType zq
 
-  modSwitchPT_ :: forall ct m zp c m' zq zp' env .
-    (ModSwitchPTCtx_ (Params expr) ct zp', ct ~ CT m zp (c m' zq))
-    => Params expr env (ct -> CT m zp' (c m' zq))
-  modSwitchPT_     = showZq @zq "modSwitchPT"
+  modSwitchPT_ :: forall c m m' zp zp' zq env . ShowType zq
+    => Params expr env (CT m zp (c m' zq) -> CT m zp' (c m' zq))
+  modSwitchPT_ = showZq @zq "modSwitchPT"
 
-  modSwitch_ :: forall ct zq' m zp c m' zq env .
-    (ModSwitchCtx_ (Params expr) ct zq', ct ~ CT m zp (c m' zq))
-    => Params expr env (ct -> CT m zp (c m' zq'))
-  modSwitch_       = showZq @zq' $ "modSwitch " ++ showType (Proxy::Proxy zq) ++ " ->"
+  modSwitch_ :: forall c m m' zp zq zq' env . (ShowType zq, ShowType zq')
+    => Params expr env (CT m zp (c m' zq) -> CT m zp (c m' zq'))
+  modSwitch_ = showZq @zq' $ "modSwitch " ++ showType (Proxy::Proxy zq) ++ " ->"
 
-  addPublic_ :: forall ct m zp c m' zq env .
-    (AddPublicCtx_ (Params expr) ct, ct ~ CT m zp (c m' zq))
-    => c m zp -> (Params expr) env (ct -> ct)
-  addPublic_     _ = showZq @zq "addPublic"
+  addPublic_ :: forall c m m' zp zq pt env . ShowType zq
+    => pt -> Params expr env (CT m zp (c m' zq) -> CT m zp (c m' zq))
+  addPublic_ _ = showZq @zq "addPublic"
 
-  mulPublic_ :: forall ct m zp c m' zq env .
-    (MulPublicCtx_ (Params expr) ct, ct ~ CT m zp (c m' zq))
-    => c m zp -> (Params expr) env (ct -> ct)
-  mulPublic_     _ = showZq @zq "mulPublic"
+  mulPublic_ :: forall c m m' zp zq pt env . ShowType zq
+    => pt -> Params expr env (CT m zp (c m' zq) -> CT m zp (c m' zq))
+  mulPublic_ _ = showZq @zq "mulPublic"
 
-  keySwitchQuad_ :: forall ct gad m zp c m' zq env .
-    (KeySwitchQuadCtx_ (Params expr) ct gad, ct ~ CT m zp (c m' zq))
-    => KSHint gad (c m' zq) -> Params expr env (ct -> ct)
+  keySwitchQuad_ :: forall c m' zq gad env a . ShowType zq
+    => KSHint gad (c m' zq) -> Params expr env a
   keySwitchQuad_ _ = showZq @zq "keySwitchQuad"
 
-  tunnel_ :: forall c e r s e' r' s' zp zq gad env .
-    (TunnelCtx_ (Params expr) c e r s e' r' s' zp zq gad)
-    => TunnelHint gad c e r s e' r' s' zp zq
-       -> Params expr env (CT r zp (c r' zq) -> CT s zp (c s' zq))
+  tunnel_ :: forall th zq env a . ShowType zq => th zq -> Params expr env a
   tunnel_ _ = showZq @zq "tunnel"
 
 instance SingI (p :: Nat) => LinearCyc_ (Params expr) (PNoiseCyc ('PN p) t) where
