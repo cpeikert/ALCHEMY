@@ -120,15 +120,14 @@ getQuadCircHint _ = readerToAccumulator lookupHint >>= \case
 -- not memoized right now, but could be if we also store the linear
 -- function as part of the lookup key
 
--- EAC: https://ghc.haskell.org/trac/ghc/ticket/13490
 -- | Generate a hint for tunneling. The result is /not/ memoized.
-getTunnelHint :: forall gad zq mon c e r s e' r' s' z zp v.
+getTunnelHint :: forall gad zq z mon c e r s e' r' s' zp v.
   (KeysAccumulatorCtx v mon, GenSKCtx c r' z v, Typeable (c r' z),
    GenSKCtx c s' z v, Typeable (c s' z),
    TunnelHintCtx c e r s e' r' s' z zp zq gad)
-  => Proxy z -> Linear c e r s zp
+  => Linear c e r s zp
   -> mon (TunnelHint gad c e r s e' r' s' zp zq)
-getTunnelHint _ linf = do
+getTunnelHint f = do
   skout <- getKey @z
   skin <- getKey @z
-  tunnelHint linf skout skin
+  tunnelHint f skout skin
