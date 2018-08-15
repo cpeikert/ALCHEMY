@@ -12,7 +12,8 @@
 
 -- | Functions for looking up/generating keys and key-switch hints.
 module Crypto.Alchemy.Interpreter.KeysHints
-( Keys, Hints, KeysHintsT, KeysAccumulatorCtx, lookupKey -- not lookupHint, which is too general
+( Keys, Hints, KeysHintsT, KeysAccumulatorCtx
+, lookupKey -- not lookupHint, which is too general
 , getKey, getQuadCircHint, getTunnelHint
 , runKeysHints, evalKeysHints
 )
@@ -23,10 +24,10 @@ import Control.Monad.Reader
 import Control.Monad.State
 
 import Algebra.Algebraic
-import Algebra.Ring      as Ring
+
 import Data.Dynamic
 import Data.Functor
-import Data.Maybe        (mapMaybe)
+import Data.Maybe     (mapMaybe)
 import Data.Monoid
 import Data.Semigroup
 
@@ -34,19 +35,21 @@ import Crypto.Alchemy.MonadAccumulator
 import Crypto.Lol
 import Crypto.Lol.Applications.SymmSHE
 
-
 ---- Monad helper functions
 
 -- | Wrapper for a dynamic list of keys.
-newtype Keys = Keys { unKeys :: [Dynamic] } deriving (Semigroup, Monoid, Show)
+newtype Keys = Keys { unKeys :: [Dynamic] }
+  deriving (Semigroup, Monoid, Show)
 
 -- | Wrapper for a dynamic list of hints.
-newtype Hints = Hints { unHints :: [Dynamic] } deriving (Semigroup, Monoid, Show)
+newtype Hints = Hints { unHints :: [Dynamic] }
+  deriving (Semigroup, Monoid, Show)
 
 -- | Type synonym for a standard Keys/Hints accumulator
 type KeysHintsT v m a = StateT Keys (StateT Hints (ReaderT v m)) a
 
-type KeysAccumulatorCtx v mon = (Algebraic v, MonadReader v mon, MonadRandom mon, MonadAccumulator Keys mon)
+type KeysAccumulatorCtx v mon =
+  (Algebraic v, MonadReader v mon, MonadRandom mon, MonadAccumulator Keys mon)
 
 -- | Convenience function.
 runKeysHints :: (Functor m) => v -> KeysHintsT v m a -> m (a, Keys, Hints)
@@ -64,14 +67,14 @@ lookupDyn ds = case mapMaybe fromDynamic ds of
 
 -- | Look up a key of the desired type, if it exists.
 lookupKey :: (MonadReader Keys m, Typeable (SK (c (m' :: Factored) z)))
-             => m (Maybe (SK (c m' z)))
-lookupKey = (lookupDyn . unKeys) <$> ask
+          => m (Maybe (SK (c m' z)))
+lookupKey = asks (lookupDyn . unKeys)
 
 -- | Look up a hint of the desired type, if it exists.  (This works
 -- for both QuadCircHints and TunnelHints; the function is not
 -- specialized to enforce a particular one of these.)
 lookupHint :: (MonadReader Hints m, Typeable a) => m (Maybe a)
-lookupHint = (lookupDyn . unHints) <$> ask
+lookupHint = asks (lookupDyn . unHints)
 
 -- | Append a key to the internal state.
 appendKey :: (MonadAccumulator Keys m, Typeable (c (m' :: Factored) z))
@@ -98,7 +101,7 @@ getKey :: forall z c m' mon v . -- z first for type applications
 getKey = readerToAccumulator lookupKey >>= \case
   (Just t) -> return t
   -- generate and save a key, using the adjusted variance from the monad
-  Nothing -> appendKey >=< (genSK =<< svar @m' <$> ask)
+  Nothing -> appendKey >=< (genSK =<< asks (svar @m'))
 
 -- | Lookup a (quadratic, circular) key-switch hint, generating one
 -- (and the underlying key if necessary) if it doesn't exist, and
