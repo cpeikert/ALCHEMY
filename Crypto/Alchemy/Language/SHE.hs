@@ -13,32 +13,34 @@ import GHC.Exts
 
 class SHE_ expr where
 
-  type ModSwitchPTCtx_   expr ct zp' :: Constraint
-  type ModSwitchCtx_     expr ct zq' :: Constraint
-  type AddPublicCtx_     expr ct     :: Constraint
-  type MulPublicCtx_     expr ct     :: Constraint
-  type KeySwitchQuadCtx_ expr ct gad :: Constraint
-  type TunnelCtx_
-    expr
-    (c  :: Factored -> * -> *)
+  type ModSwitchPTCtx_   expr (c :: Factored -> * -> *)
+    (m :: Factored) (m' :: Factored) zp zp' zq :: Constraint
+  type ModSwitchCtx_     expr (c :: Factored -> * -> *)
+    (m :: Factored) (m' :: Factored) zp zq zq' :: Constraint
+  type AddPublicCtx_     expr (c :: Factored -> * -> *)
+    (m :: Factored) (m' :: Factored) zp zq :: Constraint
+  type MulPublicCtx_     expr (c :: Factored -> * -> *)
+    (m :: Factored) (m' :: Factored) zp zq :: Constraint
+  type KeySwitchQuadCtx_ expr (c :: Factored -> * -> *)
+    (m :: Factored) (m' :: Factored) zp zq gad :: Constraint
+  type TunnelCtx_        expr (c  :: Factored -> * -> *)
     (e  :: Factored) (r  :: Factored) (s  :: Factored)
-    (e' :: Factored) (r' :: Factored) (s' :: Factored)
-    zp zq gad :: Constraint
+    (e' :: Factored) (r' :: Factored) (s' :: Factored) zp zq gad :: Constraint
 
-  modSwitchPT_ :: (ModSwitchPTCtx_ expr ct zp', ct ~ CT m zp (c m' zq))
-    => expr env (ct -> CT m zp' (c m' zq))
+  modSwitchPT_ :: (ModSwitchPTCtx_ expr c m m' zp zp' zq)
+    => expr env (CT m zp (c m' zq) -> CT m zp' (c m' zq))
 
-  modSwitch_ :: (ModSwitchCtx_ expr ct zq', ct ~ CT m zp (c m' zq))
-    => expr env (ct -> CT m zp (c m' zq'))
+  modSwitch_ :: (ModSwitchCtx_ expr c m m' zp zq zq')
+    => expr env (CT m zp (c m' zq) -> CT m zp (c m' zq'))
 
-  addPublic_ :: (AddPublicCtx_ expr ct, ct ~ CT m zp (c (m' :: Factored) zq))
-    => c m zp -> expr env (ct -> ct)
+  addPublic_ :: (AddPublicCtx_ expr c m m' zp zq)
+    => c m zp -> expr env (CT m zp (c m' zq) -> CT m zp (c m' zq))
 
-  mulPublic_ :: (MulPublicCtx_ expr ct, ct ~ CT m zp (c (m' :: Factored) zq))
-    => c m zp -> expr env (ct -> ct)
+  mulPublic_ :: (MulPublicCtx_ expr c m m' zp zq)
+    => c m zp -> expr env (CT m zp (c m' zq) -> CT m zp (c m' zq))
 
-  keySwitchQuad_ :: (KeySwitchQuadCtx_ expr ct gad, ct ~ CT m zp (c m' zq))
-    => KSHint gad (c m' zq) -> expr env (ct -> ct)
+  keySwitchQuad_ :: (KeySwitchQuadCtx_ expr c m m' zp zq gad)
+    => KSHint gad (c m' zq) -> expr env (CT m zp (c m' zq) -> CT m zp (c m' zq))
 
   tunnel_ :: (TunnelCtx_ expr c e r s e' r' s' zp zq gad)
     => TunnelHint gad c e r s e' r' s' zp zq
@@ -48,9 +50,10 @@ class SHE_ expr where
 
 class ErrorRate_ expr where
 
-  type ErrorRateCtx_ expr ct z :: Constraint
+  type ErrorRateCtx_ expr (c :: Factored -> * -> *)
+    (m :: Factored) (m' :: Factored) zp zq z :: Constraint
 
   -- | Error rate of a ciphertext.  (Note that the secret key lives
   -- "outside" the object language.)
-  errorRate_ :: (ErrorRateCtx_ expr ct z, ct ~ CT m zp (c m' zq))
-             => SK (c m' z) -> expr e (ct -> Double)
+  errorRate_ :: (ErrorRateCtx_ expr c m m' zp zq z)
+             => SK (c m' z) -> expr e (CT m zp (c m' zq) -> Double)
