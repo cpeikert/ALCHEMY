@@ -4,6 +4,7 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE InstanceSigs          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE PolyKinds             #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
@@ -19,7 +20,7 @@ import Crypto.Alchemy.Language.SHE
 
 import Crypto.Alchemy.Interpreter.PT2CT.Noise
 
-import Crypto.Lol.Applications.SymmSHE (CT, KSHint, TunnelHint)
+import Crypto.Lol.Applications.SymmSHE (CT, KSHint)
 import Crypto.Lol.Utils.ShowType
 
 import Data.Type.Natural
