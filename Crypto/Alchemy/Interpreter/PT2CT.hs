@@ -190,45 +190,49 @@ instance (SHE_ ctex, Applicative mon,
 
   div2_ = PC $ pure modSwitchPT_
 
+{-
+
 type PT2CTLinearCtx ctex mon m'map zqs p c e r s r' s' z zp zq zqin gad =
   PT2CTLinearCtx' ctex mon m'map zqs p c e r s r' s' z zp zq zqin (PNoise2KSZq gad zqs p) gad
 
-type PT2CTLinearCtx' ctex mon m'map zqs p c e r s r' s' z zp zq zqin hintzq gad =
+type PT2CTLinearCtx' ctex mon m'map zqs p c e r s r' s' z zp zq zqin zqhint gad =
   (SHE_ ctex, Lambda_ ctex, Fact s', KeysAccumulatorCtx Double mon,
    -- output ciphertext type
    CT s zp (c s' zq)   ~ Cyc2CT m'map zqs (PNoiseCyc p c s zp),
    -- input ciphertext type
    CT r zp (c r' zqin) ~ Cyc2CT m'map zqs (PNoiseCyc (p :+ TunnelPNoise) c r zp),
-   TunnelCtx_ ctex c e r s (e * (r' / r)) r' s'   zp hintzq gad,
-   TunnelHintCtx  c e r s (e * (r' / r)) r' s' z zp hintzq gad,
+   TunnelCtx_ ctex c e r s (e * (r' / r)) r' s'   zp zqhint gad,
+   TunnelHintCtx  c e r s (e * (r' / r)) r' s' z zp zqhint gad,
    GenSKCtx c r' z Double, GenSKCtx c s' z Double,
-   ModSwitchCtx_ ctex (CT r zp (c r' zqin)) hintzq,
-   ModSwitchCtx_ ctex (CT s zp (c s' hintzq))  zq,
+   ModSwitchCtx_ ctex (CT r zp (c r' zqin)) zqhint,
+   ModSwitchCtx_ ctex (CT s zp (c s' zqhint))  zq,
    Typeable c, Typeable r', Typeable s', Typeable z)
 
-{-instance LinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c) where-}
+instance LinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c) where
 
-  {-type PreLinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c) =-}
-    {-PNoiseCyc (p :+ TunnelPNoise) c-}
+  type PreLinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c) =
+    PNoiseCyc (p :+ TunnelPNoise) c
 
-  {-type LinearCycCtx_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c) e r s zp =-}
-    {-(PT2CTLinearCtx ctex mon m'map zqs p c e r s (Lookup r m'map) (Lookup s m'map)-}
-      {-z zp (PNoise2Zq zqs p) (PNoise2Zq zqs (p :+ TunnelPNoise)) gad)-}
+  type LinearCycCtx_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c) e r s zp =
+    (PT2CTLinearCtx ctex mon m'map zqs p c e r s (Lookup r m'map) (Lookup s m'map)
+      z zp (PNoise2Zq zqs p) (PNoise2Zq zqs (p :+ TunnelPNoise)) gad)
 
-  {-linearCyc_ :: forall c zp e r s env expr r' s' zq pin .-}
-    {-(expr ~ PT2CT m'map zqs gad z mon ctex, s' ~ Lookup s m'map,-}
-     {-pin ~ (p :+ TunnelPNoise),-}
-     {-Cyc2CT m'map zqs (PNoiseCyc p c r zp) ~ CT r zp (c r' zq),-}
-     {-PT2CTLinearCtx ctex mon m'map zqs p c e r s (Lookup r m'map)-}
-      {-(Lookup s m'map) z zp (PNoise2Zq zqs p) (PNoise2Zq zqs pin) gad)-}
-    {-=> Linear (PNoiseCyc p c) e r s zp -> expr env (PNoiseCyc pin c r zp -> PNoiseCyc p c s zp)-}
+  linearCyc_ :: forall c zp e r s env expr r' s' zq pin .
+    (expr ~ PT2CT m'map zqs gad z mon ctex, s' ~ Lookup s m'map,
+     pin ~ (p :+ TunnelPNoise),
+     Cyc2CT m'map zqs (PNoiseCyc p c r zp) ~ CT r zp (c r' zq),
+     PT2CTLinearCtx ctex mon m'map zqs p c e r s (Lookup r m'map)
+      (Lookup s m'map) z zp (PNoise2Zq zqs p) (PNoise2Zq zqs pin) gad)
+    => Linear (PNoiseCyc p c) e r s zp -> expr env (PNoiseCyc pin c r zp -> PNoiseCyc p c s zp)
 
-  {-linearCyc_ f = PC $ lamM $ \x -> do-}
-    {-hint <- getTunnelHint @gad @(PNoise2KSZq gad zqs p) (Proxy::Proxy z) f-}
-    {-return $ modSwitch_ .:    -- then scale back to the target modulus zq-}
-              {-tunnel_ hint .: -- linear w/ the hint-}
-                {-modSwitch_ $: -- scale (up) to the hint modulus zq'-}
-                  {-var x-}
+  linearCyc_ f = PC $ lamM $ \x -> do
+    hint <- getTunnelHint @gad @(PNoise2KSZq gad zqs p) (Proxy::Proxy z) f
+    return $ modSwitch_ .:    -- then scale back to the target modulus zq
+              tunnel_ hint .: -- linear w/ the hint
+                modSwitch_ $: -- scale (up) to the hint modulus zq'
+                  var x
+
+-}
 
 ----- Type families -----
 
