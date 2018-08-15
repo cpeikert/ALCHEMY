@@ -6,7 +6,6 @@ module Crypto.Alchemy.MonadAccumulator where
 
 import Control.Monad.Cont
 import Control.Monad.Except
-import Control.Monad.List
 import Control.Monad.Random
 import Control.Monad.Reader
 import Control.Monad.RWS
@@ -50,10 +49,6 @@ instance (MonadAccumulator w m) => MonadAccumulator w (RandT g m) where
   accumulate = lift . accumulate
 
 instance (MonadAccumulator w m) => MonadAccumulator w (ExceptT e m) where
-  append = lift . append
-  accumulate = lift . accumulate
-
-instance (MonadAccumulator w m) => MonadAccumulator w (ListT m) where
   append = lift . append
   accumulate = lift . accumulate
 
