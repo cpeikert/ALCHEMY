@@ -62,6 +62,10 @@ extra-deps:
 - tagged-transformer-0.8.1
 - non-negative-0.1.2
 
+ghc-options:
+    "$locals": -fexpose-all-unfoldings -fliberate-case -fspec-constr-count=30 -fwarn-dodgy-imports
+
+
 # Override default flag values for local packages and extra-deps
 
 # Extra package databases containing global packages
