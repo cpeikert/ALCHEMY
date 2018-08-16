@@ -19,6 +19,8 @@
 {-# LANGUAGE TypeOperators              #-}
 {-# LANGUAGE UndecidableInstances       #-}
 
+{-# OPTIONS_GHC -fno-warn-unused-imports #-}
+
 module Crypto.Alchemy.Interpreter.PT2CT.Noise
 ( PNoise(..), PNZ, PNoiseCyc(..), Units(..)
 , UnitsToNat, ZqPairsWithUnits, TotalUnits, pNoiseUnit
