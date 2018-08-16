@@ -49,12 +49,12 @@ main :: IO ()
 main = do
 
   -- pretty-print the PT function
-  putStrLn $ pprint tunnel
+  putStrLn $ "Printed plaintext function: " ++ pprint tunnel
 
   -- evaluate the PT function on an input
-  print $ eval tunnel 2
+  putStrLn $ "Plaintext evaluation: " ++ show (eval tunnel 2)
 
-  putStrLn "PT expression params:"
+  putStrLn "Plaintext expression params:"
   putStrLn $ params @(PT2CT M'Map Zqs _ _ _ _) tunnel
 
   evalKeysHints 3.0 $ do
@@ -64,9 +64,8 @@ main = do
         (tunnelCT2,tunnelCT3) = dup tmp
 
     -- pretty-print and params/size the compiled expression
-    putStrLnIO $ pprint tunnelCT2
-    putStrLnIO "CT expression params:"
-    putStrLnIO $ params tunnelCT3
+    putStrLnIO $ "Printed ciphertext function: " ++ pprint tunnelCT2
+    putStrLnIO $ "Ciphertext expression params:" ++ params tunnelCT3
 
     ct1 <- encrypt 2
 
