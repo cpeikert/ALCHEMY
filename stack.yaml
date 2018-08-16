@@ -16,7 +16,7 @@
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
 
-resolver: lts-12.5
+resolver: lts-8.2
 compiler-check: newer-minor
 
 # User packages to be built.
@@ -56,6 +56,11 @@ extra-deps:
 - ghc-typelits-presburger-0.2.0.3
 - monadcryptorandom-0.7.2.1
 - type-natural-0.8.2.0
+
+# only for lts-8.2:
+- numeric-prelude-0.4.3
+- tagged-transformer-0.8.1
+- non-negative-0.1.2
 
 # Override default flag values for local packages and extra-deps
 
