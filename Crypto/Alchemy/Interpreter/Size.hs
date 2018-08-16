@@ -19,7 +19,7 @@ import Crypto.Alchemy.Language.Monad
 import Crypto.Alchemy.Language.Pair
 import Crypto.Alchemy.Language.SHE
 
-import           Crypto.Lol                      (Cyc, Linear, Prime2,
+import           Crypto.Lol                      (Cyc, Prime2,
                                                   PrimePower (..))
 import qualified Crypto.Lol                      as L
 import           Crypto.Lol.Applications.SymmSHE (CT)
