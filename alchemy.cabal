@@ -77,6 +77,26 @@ executable alchemy-arithmetic
                  time,
                  type-natural
 
+executable alchemy-tunnel
+  hs-source-dirs:   examples
+  default-language: Haskell2010
+  main-is:          Tunnel.hs
+  ghc-options: -main-is Tunnel
+
+  other-modules: Common
+
+  build-depends: alchemy,
+                 base,
+                 deepseq,
+                 lol >= 0.7.0.0 && < 0.8,
+                 lol-cpp,
+                 MonadRandom,
+                 mtl,
+                 numeric-prelude,
+                 singletons,
+                 time,
+                 type-natural
+
 executable alchemy-homomrlwr
   hs-source-dirs: examples
   default-language: Haskell2010
@@ -98,23 +118,3 @@ executable alchemy-homomrlwr
                  deepseq,
                  time,
                  MonadRandom
-
-executable alchemy-tunnel
-  hs-source-dirs:   examples
-  default-language: Haskell2010
-  main-is:          Tunnel.hs
-  ghc-options: -main-is Tunnel
-
-  other-modules: Common
-
-  build-depends: alchemy,
-                 base,
-                 deepseq,
-                 lol >= 0.7.0.0 && < 0.8,
-                 lol-cpp,
-                 MonadRandom,
-                 mtl,
-                 numeric-prelude,
-                 singletons,
-                 time,
-                 type-natural
