@@ -12,6 +12,7 @@
 
 module Tunnel where
 
+import Control.DeepSeq
 import Control.Monad.Identity
 import Control.Monad.IO.Class
 import Control.Monad.Writer
@@ -51,13 +52,17 @@ main = do
   -- pretty-print the PT function
   putStrLn $ "Printed plaintext function: " ++ pprint tunnel
 
+  putStrLn   "Generating plaintext function."
+  tunnelEval <- return $!! eval tunnel
+
   -- evaluate the PT function on an input
-  putStrLn $ "Plaintext evaluation: " ++ show (eval tunnel 2)
+  putStrLn $ "Plaintext evaluation: " ++ show (tunnelEval 2)
 
   putStrLn "Plaintext expression params:"
   putStrLn $ params @(PT2CT M'Map Zqs _ _ _ _) tunnel
 
   evalKeysHints 3.0 $ do
+    putStrLnIO "Generating ciphertext function."
     -- compile PT->CT once; interpret the result multiple ways with dup
     tunnelCT <- pt2ct @M'Map @Zqs @Gad @Int64 tunnel
     let (tunnelCT1,tmp) = dup tunnelCT
