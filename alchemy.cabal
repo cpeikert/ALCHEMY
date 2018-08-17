@@ -48,6 +48,7 @@ library
 
   build-depends: base,
                  constraints,
+                 deepseq,
                  lol >= 0.7.0.0 && < 0.8,
                  lol-apps >= 0.2.0.0 && < 0.3,
                  MonadRandom,
