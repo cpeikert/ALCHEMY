@@ -57,8 +57,7 @@ homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound
 homomRLWR = do
   s <- getRandom
   (f, keys, _) <- runKeysHints 5.0 $
-    liftM2 (.) (eval <$> homomRingRound) $
-               flip mulPublic <$> encrypt s
+    liftM2 (.) (eval <$> homomRingRound) $ flip mulPublic <$> encrypt s
   return (f, s, keys)
 
 
