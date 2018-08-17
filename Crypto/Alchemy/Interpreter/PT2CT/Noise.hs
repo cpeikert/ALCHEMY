@@ -30,6 +30,7 @@ module Crypto.Alchemy.Interpreter.PT2CT.Noise
 import           Algebra.Additive             as Additive (C)
 import           Algebra.Ring                 as Ring (C)
 import           Algebra.ZeroTestable         as ZeroTestable (C)
+import           Control.DeepSeq
 import           Control.Monad.Random
 import           Data.Singletons.Prelude
 import           Data.Singletons.Prelude.List (Sum)
@@ -68,14 +69,8 @@ type family UnitsToNat (u :: Units) where
 
 -- | A cyclotomic ring element tagged by @pNoise =~ -log(noise rate)@.
 newtype PNoiseCyc p c m r = PNC { unPNC :: c m r }
-
-deriving instance Eq               (c m r) => Eq               (PNoiseCyc p c m r)
-deriving instance Show             (c m r) => Show             (PNoiseCyc p c m r)
-deriving instance Random           (c m r) => Random           (PNoiseCyc p c m r)
-deriving instance Additive.C       (c m r) => Additive.C       (PNoiseCyc p c m r)
-deriving instance Ring.C           (c m r) => Ring.C           (PNoiseCyc p c m r)
-deriving instance ZeroTestable.C   (c m r) => ZeroTestable.C   (PNoiseCyc p c m r)
-deriving instance Cyclotomic       (c m r) => Cyclotomic       (PNoiseCyc p c m r)
+  deriving (Eq, Show, Random, Additive.C, Ring.C, ZeroTestable.C, Cyclotomic,
+            NFData)
 
 -- Crypto.Lol.Cyclotomic.Language instances. Cannot derive these since
 -- 'c' is not the last type parameter, or because of rnd wrapper
