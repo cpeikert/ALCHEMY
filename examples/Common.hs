@@ -102,7 +102,7 @@ time s m = liftIO $ do
 timeIO :: (MonadIO m) => String -> m a -> m a
 timeIO s m = do
   liftIO $ putStr' s
-  wallStart <- liftIO $ getCurrentTime
+  wallStart <- liftIO getCurrentTime
   m' <- m
   liftIO $ printTimes wallStart 1
   return m'
