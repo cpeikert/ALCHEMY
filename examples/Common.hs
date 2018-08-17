@@ -90,6 +90,12 @@ switch4 = (linearCyc_ $!! decToCRT @H3) .: switch3
 switch5 :: _ => expr env (_ -> PNoiseCyc p c H5 zp)
 switch5 = (linearCyc_ $!! decToCRT @H4) .: switch4
 
+{-# INLINABLE switch1 #-}
+{-# INLINABLE switch2 #-}
+{-# INLINABLE switch3 #-}
+{-# INLINABLE switch4 #-}
+{-# INLINABLE switch5 #-}
+
 
 -- timing functionality
 time :: (NFData a, MonadIO m) => String -> a -> m a

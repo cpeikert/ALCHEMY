@@ -58,6 +58,7 @@ type family PreRescaleTreePow2_ expr k r2 where
 
 rescaleTreePow2_ :: forall k r2 expr e . (RescaleTreePow2Ctx_ expr k r2)
   => Tagged k (expr e (PreRescaleTreePow2_ expr k r2 -> r2))
+{-# INLINABLE rescaleTreePow2_ #-}
 rescaleTreePow2_ = case (sing :: SPos k) of
                      SO     -> tag $ lam id
                      (SS _) -> rescaleTreePow2_'
