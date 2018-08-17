@@ -31,7 +31,7 @@ import           Algebra.Additive             as Additive (C)
 import           Algebra.Ring                 as Ring (C)
 import           Algebra.ZeroTestable         as ZeroTestable (C)
 import           Control.Monad.Random
-import           Data.Singletons.Prelude hiding (type (:+))
+import           Data.Singletons.Prelude
 import           Data.Singletons.Prelude.List (Sum)
 import           Data.Singletons.TH
 import           Data.Type.Natural
@@ -67,7 +67,7 @@ type family UnitsToNat (u :: Units) where
   UnitsToNat ('Units h) = h
 
 -- | A cyclotomic ring element tagged by @pNoise =~ -log(noise rate)@.
-newtype PNoiseCyc (p :: PNoise) c m r = PNC { unPNC :: c m r }
+newtype PNoiseCyc p c m r = PNC { unPNC :: c m r }
 
 deriving instance Eq               (c m r) => Eq               (PNoiseCyc p c m r)
 deriving instance Show             (c m r) => Show             (PNoiseCyc p c m r)
