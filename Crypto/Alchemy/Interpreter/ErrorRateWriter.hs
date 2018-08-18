@@ -167,8 +167,7 @@ instance (String_ expr, Applicative_ expr w, Lambda_ expr, Applicative k)
   => String_ (ERW expr z k w) where
     string_ s = pureERW $ string_ s
 
-instance (SHE_ expr, Applicative_ expr w, Lambda_ expr, Applicative k) =>
-  SHE_ (ERW expr z k w) where
+instance (SHE_ expr) => SHE_ (ERW expr z k w) where
 
   type ModSwitchPTCtx_   (ERW expr z k w) c m m' zp zp' zq  =
     (WriteErrorCtx expr z k w (CT m zp' (c m' zq)) c m m' zp' zq,
@@ -189,14 +188,14 @@ instance (SHE_ expr, Applicative_ expr w, Lambda_ expr, Applicative k) =>
     (WriteErrorCtx expr z k w (CT s zp (c s' zq)) c s s' zp zq,
      TunnelCtx_ expr c e r s e' r' s' zp zq gad)
 
-  modSwitchPT_   = ERW $ liftWriteError @z "modSwitchPT_" modSwitchPT_
-  modSwitch_     = ERW $ liftWriteError @z "modSwitch_" modSwitch_
-  addPublic_     = ERW . liftWriteError @z "addPublic_" . addPublic_
-  mulPublic_     = ERW . liftWriteError @z "mulPublic_" . mulPublic_
+  modSwitchPT_   = ERW $ liftWriteError @z "modSwitchPT_"     modSwitchPT_
+  modSwitch_     = ERW $ liftWriteError @z "modSwitch_"       modSwitch_
+  addPublic_     = ERW . liftWriteError @z "addPublic_"     . addPublic_
+  mulPublic_     = ERW . liftWriteError @z "mulPublic_"     . mulPublic_
   keySwitchQuad_ = ERW . liftWriteError @z "keySwitchQuad_" . keySwitchQuad_
-  tunnel_        = ERW . liftWriteError @z "tunnel_" . tunnel_
+  tunnel_        = ERW . liftWriteError @z "tunnel_"        . tunnel_
 
-instance (ErrorRate_ expr, Applicative k, Applicative_ expr w, Lambda_ expr) =>
+instance (ErrorRate_ expr, Applicative_ expr w, Lambda_ expr, Applicative k) =>
   ErrorRate_ (ERW expr z k w) where
 
   type ErrorRateCtx_ (ERW expr z k w) c m m' zp zq z' =
