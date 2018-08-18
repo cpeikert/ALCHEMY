@@ -169,7 +169,7 @@ instance (PT2CTMulCtx m'map zqs gad z mon ctex p c m zp)
     lamM $ \x -> lamM $ \y -> do
         hint :: KSHint gad (c m' zqhint) <- getQuadCircHint (Proxy::Proxy z)
         let prod = var x *: y :: ctex _ (CT m zp (c m' (PNoise2Zq zqs pin)))
-         in return $ modSwitch_ .: keySwitchQuad_ hint .: modSwitch_ $: prod
+         in return $! modSwitch_ #: keySwitchQuad_ hint #: modSwitch_ $: prod
 
 instance (SHE_ ctex, Applicative mon,
           ModSwitchPTCtx_ ctex c m (Lookup m m'map)
