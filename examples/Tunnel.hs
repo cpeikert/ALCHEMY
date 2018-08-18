@@ -54,15 +54,14 @@ main = do
   tunnelEval <- timeNF "Generating plaintext function..." $ eval tunnel
 
   -- evaluate the PT function on an input
-  timeNF "Evaluating on plaintext..." $ tunnelEval 2
+  _ <- timeNF "Evaluating on plaintext..." $ tunnelEval 2
 
   -- putStrLn "Plaintext expression params:"
   -- putStrLn $ params @(PT2CT M'Map Zqs _ _ _ _) tunnel
 
-  (f,c) <- timeNF "Generating ciphertext function and argument..." =<<
+  (f,c) <- timeNFIO "Generating ciphertext function and argument..." $
            evalKeysHints 3.0
-           (do
-               f <- eval <$> pt2ct @M'Map @Zqs @Gad @Int64 tunnel
+           (do f <- eval <$> pt2ct @M'Map @Zqs @Gad @Int64 tunnel
                c <- encrypt 2
                return (f,c))
 
