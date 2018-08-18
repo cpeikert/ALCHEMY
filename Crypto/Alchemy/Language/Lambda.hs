@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns          #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -46,13 +47,17 @@ let_ :: Lambda_ expr
   -> expr e b
 let_ a f = lam f $: a
 
--- | Composition.
 infixr 9 .:
-(.:) :: Lambda_ expr
+infixr 9 #:
+(.:), (#:) :: Lambda_ expr
   => expr e (b -> c)
   -> expr e (a -> b)
   -> expr e (a -> c)
+-- | Ordinary (non-strict) object-language function composition.
 f .: g = lam $ \x -> var f $: (var g $: var x)
+
+-- | Object-language function composition that is strict in both arguments.
+(#:) !f !g = f .: g
 
 class Extends m n where
   var :: (Lambda_ expr) => expr m a -> expr n a
