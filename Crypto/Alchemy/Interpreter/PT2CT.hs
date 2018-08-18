@@ -213,9 +213,9 @@ instance LinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (p :: PNoise) c)
 
   linearCyc_ f = PC $ do
     hint <- getTunnelHint @gad @(PNoise2KSZq gad zqs p) @z $ fmapLin unPNC f
-    return $
-      modSwitch_ .:             -- scale back to the target modulus zq
-      tunnel_ hint .:           -- apply linear function w/ the hint
+    return $!
+      modSwitch_ #:             -- scale back to the target modulus zq
+      tunnel_ hint #:           -- apply linear function w/ the hint
       modSwitch_                -- scale (up) to the hint modulus zq'
 
 ----- Type families -----
