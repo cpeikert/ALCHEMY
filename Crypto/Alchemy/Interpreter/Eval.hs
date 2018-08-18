@@ -136,9 +136,9 @@ instance SHE_ E where
 instance LinearCyc_ E c where
   type PreLinearCyc_ E c = c
   type LinearCycCtx_ E c e r s zp =
-    (e `Divides` r, e `Divides` s, ExtensionCyc c zp, Ring.C (c s zp), NFData (c s zp))
+    (e `Divides` r, e `Divides` s, Ring.C (c s zp), ExtensionCyc c zp)
 
-  linearCyc_ = pureE . \f -> evalLin $!! f
+  linearCyc_ = pureE . evalLin
 
 instance ErrorRate_ E where
   type ErrorRateCtx_ E c m m' zp zq z =
