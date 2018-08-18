@@ -98,13 +98,26 @@ switch5 = (linearCyc_ $!! decToCRT @H4) .: switch4
 
 
 -- timing functionality
-time :: (NFData a, MonadIO m) => String -> a -> m a
-time s m = liftIO $ do
+
+-- | time the 'seq'ing of a value
+timeWHNF :: (MonadIO m) => String -> a -> m a
+timeWHNF s m = liftIO $ do
   putStr' s
   wallStart <- getCurrentTime
-  m `deepseq` printTimes wallStart 1
-  return m
+  out <- return $! m
+  printTimes wallStart 1
+  return out
 
+-- | time the 'deepseq'ing of a value
+timeNF :: (NFData a, MonadIO m) => String -> a -> m a
+timeNF s m = liftIO $ do
+  putStr' s
+  wallStart <- getCurrentTime
+  out <- return $! force m
+  printTimes wallStart 1
+  return out
+
+{- commenting out because this doesn't deepseq
 timeIO :: (MonadIO m) => String -> m a -> m a
 timeIO s m = do
   liftIO $ putStr' s
@@ -112,6 +125,7 @@ timeIO s m = do
   m' <- m
   liftIO $ printTimes wallStart 1
   return m'
+-}
 
 -- flushes the print buffer
 putStr' :: String -> IO ()

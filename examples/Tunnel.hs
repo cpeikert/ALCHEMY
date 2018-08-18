@@ -12,10 +12,9 @@
 
 module Tunnel where
 
+import Control.Applicative
 import Control.DeepSeq
 import Control.Monad.Identity
-import Control.Monad.IO.Class
-import Control.Monad.Writer
 
 import Crypto.Alchemy
 import Crypto.Lol
@@ -52,15 +51,26 @@ main = do
   -- pretty-print the PT function
   putStrLn $ "Printed plaintext function: " ++ pprint tunnel
 
-  putStrLn   "Generating plaintext function."
-  tunnelEval <- return $!! eval tunnel
+  tunnelEval <- timeNF "Generating plaintext function..." $ eval tunnel
 
   -- evaluate the PT function on an input
-  putStrLn $ "Plaintext evaluation: " ++ show (tunnelEval 2)
+  timeNF "Evaluating on plaintext..." $ tunnelEval 2
 
-  putStrLn "Plaintext expression params:"
-  putStrLn $ params @(PT2CT M'Map Zqs _ _ _ _) tunnel
+  -- putStrLn "Plaintext expression params:"
+  -- putStrLn $ params @(PT2CT M'Map Zqs _ _ _ _) tunnel
 
+  (f,c) <- timeNF "Generating ciphertext function and argument..." =<<
+           evalKeysHints 3.0
+           (do
+               f <- eval <$> pt2ct @M'Map @Zqs @Gad @Int64 tunnel
+               c <- encrypt 2
+               return (f,c))
+
+  timeNF "Evaluating ciphertext function..." $ f c
+
+  return ()
+
+{-
   evalKeysHints 3.0 $ do
     putStrLnIO "Generating ciphertext function."
     -- compile PT->CT once; interpret the result multiple ways with dup
@@ -79,3 +89,4 @@ main = do
     let (_, errors) = runWriter $ eval tunnelCT1' >>= ($ ct1)
     putStrLnIO "Error rates: "
     liftIO $ mapM_ print errors
+-}
