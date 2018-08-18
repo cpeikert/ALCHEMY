@@ -49,7 +49,7 @@ main :: IO ()
 main = do
 
   -- pretty-print the PT function
-  putStrLn $ "Printed plaintext function: " ++ pprint tunnel
+  -- putStrLn $ "Printed plaintext function: " ++ pprint tunnel
 
   tunnelEval <- timeNF "Generating plaintext function..." $ eval tunnel
 
