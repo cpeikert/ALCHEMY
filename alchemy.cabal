@@ -111,26 +111,26 @@ executable alchemy-tunnel
                  time,
                  type-natural
 
--- executable alchemy-homomrlwr
---   hs-source-dirs: examples
---   default-language: Haskell2010
---   main-is: HomomRLWR.hs
---   ghc-options: -main-is HomomRLWR
---  if flag(llvm)
---    ghc-options: -fllvm -optlo-O3 -pgmlo opt
---   buildable: True
+executable alchemy-homomrlwr
+  hs-source-dirs: examples
+  default-language: Haskell2010
+  main-is: HomomRLWR.hs
+  ghc-options: -main-is HomomRLWR
+ if flag(llvm)
+   ghc-options: -fllvm -optlo-O3 -pgmlo opt
+  buildable: True
 
---   other-modules: Common
+  other-modules: Common
 
---   build-depends: alchemy,
---                  base,
---                  lol,
---                  lol-cpp,
---                  lol-apps,
---                  mtl,
---                  numeric-prelude,
---                  singletons,
---                  type-natural,
---                  deepseq,
---                  time,
---                  MonadRandom
+  build-depends: alchemy,
+                 base,
+                 lol,
+                 lol-cpp,
+                 lol-apps,
+                 mtl,
+                 numeric-prelude,
+                 singletons,
+                 type-natural,
+                 deepseq,
+                 time,
+                 MonadRandom
