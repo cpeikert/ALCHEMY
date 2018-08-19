@@ -58,7 +58,7 @@ extra-deps:
 - type-natural-0.8.2.0
 
 ghc-options:
-    "$locals": -O0 -fexpose-all-unfoldings -fspecialise -fspec-constr-count=30 -fwarn-dodgy-imports
+    "$locals": -fexpose-all-unfoldings -fwarn-dodgy-imports
 
 
 # Override default flag values for local packages and extra-deps
