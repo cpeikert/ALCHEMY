@@ -1,13 +1,13 @@
-{-# LANGUAGE DataKinds                 #-}
-{-# LANGUAGE FlexibleContexts          #-}
-{-# LANGUAGE NoImplicitPrelude         #-}
-{-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE PartialTypeSignatures     #-}
-{-# LANGUAGE PolyKinds                 #-}
-{-# LANGUAGE TemplateHaskell           #-}
-{-# LANGUAGE TypeApplications          #-}
-{-# LANGUAGE TypeFamilies              #-}
-{-# LANGUAGE TypeOperators             #-}
+{-# LANGUAGE BangPatterns          #-}
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE NoImplicitPrelude     #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE PolyKinds             #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
@@ -63,11 +63,11 @@ homomRLWR = do
 
 main :: IO ()
 main = do
-  (f, s, keys) <- timeIO "Generating function... " homomRLWR
+  (!f, s, keys) <- timeWHNFIO "Generating function... " homomRLWR
 
   a <- getRandom
-  ptResult  <- time "Computing plaintext result... " $ unPNC $ eval ringRound (PNC $ s * a)
-  encResult <- time "Computing encrypted result... " $ f a
+  ptResult  <- timeNF "Computing plaintext result... " $ unPNC $ eval ringRound (PNC $ s * a)
+  encResult <- timeNF "Computing encrypted result... " $ f a
 
   let decResult = fromJust $ decrypt encResult keys
   putStrLn $ if decResult == ptResult then "PASS" else "FAIL"

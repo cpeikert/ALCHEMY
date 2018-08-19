@@ -108,6 +108,15 @@ timeWHNF s m = liftIO $ do
   printTimes wallStart 1
   return out
 
+timeWHNFIO :: (MonadIO m) => String -> m a -> m a
+timeWHNFIO s mm = do
+  liftIO $ putStr' s
+  wallStart <- liftIO getCurrentTime
+  m <- mm
+  out <- return $! m
+  liftIO $ printTimes wallStart 1
+  return out
+
 -- | time the 'deepseq'ing of a value
 timeNF :: (NFData a, MonadIO m) => String -> a -> m a
 timeNF s m = liftIO $ do
