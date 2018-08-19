@@ -25,6 +25,7 @@ module Crypto.Alchemy.Interpreter.PT2CT
 ) where
 
 import Control.Applicative
+import Control.DeepSeq
 import Control.Monad.Random
 import Control.Monad.Reader
 import Data.Dynamic
@@ -147,8 +148,8 @@ type PT2CTMulCtx' m' zqin zqhint zqout gad z mon ctex c m zp =
    Mul_ ctex (CT m zp (c m' zqin)), PreMul_ ctex (CT m zp (c m' zqin)) ~ CT m zp (c m' zqin),
    ModSwitchCtx_ ctex c m m' zp zqin   zqhint, -- in -> hint
    ModSwitchCtx_ ctex c m m' zp zqhint zqout,  -- hint -> out
-   KeySwitchQuadCtx_ ctex c m m' zp zqhint gad,
-   KSHintCtx gad c m' z zqhint,
+   KeySwitchQuadCtx_ ctex c m m' zp zqhint gad, KSHintCtx gad c m' z zqhint,
+   NFData (KSHint gad (c m' zqhint)),
    Fact m', GenSKCtx c m' z Double, Ring (c m' z),
    Typeable (c m' z), Typeable (KSHint gad (c m' zqhint)),
    KeysAccumulatorCtx Double mon, MonadAccumulator Hints mon)
@@ -169,7 +170,7 @@ instance (PT2CTMulCtx m'map zqs gad z mon ctex p c m zp)
     lamM $ \x -> lamM $ \y -> do
         hint :: KSHint gad (c m' zqhint) <- getQuadCircHint (Proxy::Proxy z)
         let prod = var x *: y :: ctex _ (CT m zp (c m' (PNoise2Zq zqs pin)))
-         in return $! modSwitch_ #: keySwitchQuad_ hint #: modSwitch_ $: prod
+         in return $! modSwitch_ #: (keySwitchQuad_ $!! hint) #: modSwitch_ $: prod
 
 instance (SHE_ ctex, Applicative mon,
           ModSwitchPTCtx_ ctex c m (Lookup m m'map)
@@ -188,6 +189,7 @@ type PT2CTLinearCtx gad z mon ctex c e r s r' s' zp zqin zqhint zqout =
   (SHE_ ctex, Lambda_ ctex, Fact s', KeysAccumulatorCtx Double mon,
    TunnelCtx_ ctex c e r s (e * (r' / r)) r' s'   zp zqhint gad,
    TunnelHintCtx   c e r s (e * (r' / r)) r' s' z zp zqhint gad,
+   NFData (TunnelHint gad c e r s (e * (r' / r)) r' s' zp zqhint),
    GenSKCtx c r' z Double, GenSKCtx c s' z Double,
    ModSwitchCtx_ ctex c r r' zp zqin   zqhint, -- in -> hint
    ModSwitchCtx_ ctex c s s' zp zqhint zqout,  -- hint -> out
@@ -215,7 +217,7 @@ instance LinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (p :: PNoise) c)
     hint <- getTunnelHint @gad @(PNoise2KSZq gad zqs p) @z $ fmapLin unPNC f
     return $!
       modSwitch_ #:             -- scale back to the target modulus zq
-      tunnel_ hint #:           -- apply linear function w/ the hint
+      (tunnel_ $!! hint) #:     -- apply lin func w/ the hint (strict)
       modSwitch_                -- scale (up) to the hint modulus zq'
 
 ----- Type families -----
