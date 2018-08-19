@@ -19,8 +19,17 @@ source-repository head
   type:     git
   location: https://github.com/cpeikert/ALCHEMY
 
+Flag llvm
+  Description:  Compile via LLVM. This produces much better object code,
+                but you need to have the LLVM compiler installed.
+
+  Default:      True
+
 library
   default-language: Haskell2010
+
+  if flag(llvm)
+    ghc-options: -fllvm -optlo-O3 -pgmlo opt
 
   exposed-modules: Crypto.Alchemy
                    Crypto.Alchemy.Interpreter
@@ -64,6 +73,8 @@ executable alchemy-arithmetic
   default-language: Haskell2010
   main-is: Arithmetic.hs
   ghc-options: -main-is Arithmetic
+  if flag(llvm)
+    ghc-options: -fllvm -optlo-O3 -pgmlo opt
 
   other-modules: Common
 
@@ -83,6 +94,8 @@ executable alchemy-tunnel
   default-language: Haskell2010
   main-is:          Tunnel.hs
   ghc-options: -main-is Tunnel
+  if flag(llvm)
+    ghc-options: -fllvm -optlo-O3 -pgmlo opt
 
   other-modules: Common
 
@@ -103,6 +116,8 @@ executable alchemy-tunnel
 --   default-language: Haskell2010
 --   main-is: HomomRLWR.hs
 --   ghc-options: -main-is HomomRLWR
+--  if flag(llvm)
+--    ghc-options: -fllvm -optlo-O3 -pgmlo opt
 --   buildable: True
 
 --   other-modules: Common
