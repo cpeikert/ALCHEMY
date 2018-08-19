@@ -16,7 +16,6 @@
 module Crypto.Alchemy.Interpreter.Eval ( E, eval ) where
 
 import Control.Applicative
-import Control.DeepSeq
 import Control.Monad.Identity
 import Control.Monad.Reader
 import Control.Monad.Writer
@@ -122,16 +121,16 @@ instance SHE_ E where
   type ModSwitchCtx_     E c m m' zp zq  zq' = ModSwitchCtx   c   m' zp zq  zq'
   type AddPublicCtx_     E c m m' zp zq      = AddPublicCtx   c m m' zp zq
   type MulPublicCtx_     E c m m' zp zq      = MulPublicCtx   c m m' zp zq
-  type KeySwitchQuadCtx_ E c m m' zp zq gad  = (KeySwitchCtx gad c m' zp zq, NFData (c m' zq))
+  type KeySwitchQuadCtx_ E c m m' zp zq gad  = KeySwitchCtx gad c m' zp zq
   type TunnelCtx_        E c e r s e' r' s' zp zq gad =
-                (TunnelCtx c   r s e' r' s' zp zq gad, NFData (c s' zq))
+                 TunnelCtx c   r s e' r' s' zp zq gad
 
   modSwitchPT_   = pureE   modSwitchPT
   modSwitch_     = pureE   modSwitch
   addPublic_     = pureE . addPublic
   mulPublic_     = pureE . mulPublic
-  keySwitchQuad_ = pureE . \hint -> keySwitchQuadCirc $!! hint
-  tunnel_        = pureE . \hint -> tunnel $!! hint
+  keySwitchQuad_ = pureE . keySwitchQuadCirc
+  tunnel_        = pureE . tunnel
 
 instance LinearCyc_ E c where
   type PreLinearCyc_ E c = c
