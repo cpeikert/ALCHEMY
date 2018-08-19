@@ -13,7 +13,6 @@
 module Tunnel where
 
 import Control.Applicative
-import Control.DeepSeq
 import Control.Monad.Identity
 
 import Crypto.Alchemy
