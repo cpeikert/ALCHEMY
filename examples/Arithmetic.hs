@@ -37,7 +37,7 @@ main :: IO ()
 main = do
 {-
   -- print and size
-  putStrLn $ "PT expression: "      ++ pprint addMul
+  putStrLn $ "PT expression: "      ++ print addMul
   putStrLn $ "PT expression size: " ++ show (size addMul)
 -}
   -- evaluate on random arguments
@@ -66,7 +66,7 @@ main = do
 
 {-
     -- print and params/size the compiled expression
-    putStrLnIO $ "CT expression: " ++ pprint ct2
+    putStrLnIO $ "CT expression: " ++ print ct2
     putStrLnIO $ "CT expression params:\n" ++ params ct3
     putStrLnIO $ "CT expression size: " ++ show (size ct4)
 -}

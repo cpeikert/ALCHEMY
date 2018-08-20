@@ -7,7 +7,7 @@
 {-# LANGUAGE UndecidableInstances  #-}
 
 module Crypto.Alchemy.Interpreter.Print
-( P, pprint
+( P, print
 )
 where
 
@@ -32,8 +32,8 @@ import Control.Monad.Writer (MonadWriter)
 newtype P e a = P { unP :: Int -> String }
 
 -- | Pretty-print a closed expression.
-pprint :: P () a -> String
-pprint = flip unP 0
+print :: P () a -> String
+print = flip unP 0
 
 pureP :: String -> P e a
 pureP = P . const

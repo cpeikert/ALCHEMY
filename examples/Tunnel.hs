@@ -48,7 +48,7 @@ main :: IO ()
 main = do
 
   -- pretty-print the PT function
-  -- putStrLn $ "Printed plaintext function: " ++ pprint tunnel
+  -- putStrLn $ "Printed plaintext function: " ++ print tunnel
 
   tunnelEval <- timeNF "Generating plaintext function..." $ eval tunnel
 
@@ -77,7 +77,7 @@ main = do
         (tunnelCT2,tunnelCT3) = dup tmp
 
     -- pretty-print and params/size the compiled expression
-    putStrLnIO $ "Printed ciphertext function: " ++ pprint tunnelCT2
+    putStrLnIO $ "Printed ciphertext function: " ++ print tunnelCT2
     putStrLnIO $ "Ciphertext expression params:" ++ params tunnelCT3
 
     ct1 <- encrypt 2
