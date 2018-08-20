@@ -31,7 +31,7 @@ import Control.Monad.Writer (MonadWriter)
 -- the Int is the nesting depth of lambdas outside the expression
 newtype P e a = P { unP :: Int -> String }
 
--- | Pretty-print a closed expression.
+-- | Print a closed expression.
 print :: P () a -> String
 print = flip unP 0
 
