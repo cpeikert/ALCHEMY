@@ -29,14 +29,13 @@ import Crypto.Lol.Types
 import Control.Monad.Reader (MonadReader)
 import Control.Monad.Writer (MonadWriter)
 
-import Prelude hiding (print)
 
 -- the Int is the nesting depth of lambdas outside the expression
 newtype P e a = P { unP :: Int -> String }
 
 -- | Print a closed expression.
-print :: P () a -> String
-print = flip unP 0
+pprint :: P () a -> String
+pprint = flip unP 0
 
 pureP :: String -> P e a
 pureP = P . const

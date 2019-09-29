@@ -16,7 +16,7 @@ module Common where
 import Control.DeepSeq
 import Control.Monad.IO.Class
 
-import Crypto.Alchemy hiding (print)
+import Crypto.Alchemy
 
 import Crypto.Lol
 import Crypto.Lol.Types

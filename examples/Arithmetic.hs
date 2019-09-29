@@ -14,7 +14,7 @@ import Control.Monad.Writer
 import Data.Functor         ((<$>))
 import Data.Maybe
 
-import Crypto.Alchemy hiding (print)
+import Crypto.Alchemy
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor.CPP
 
