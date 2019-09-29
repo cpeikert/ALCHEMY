@@ -1,134 +1,146 @@
-name:                alchemy
-version:             0.1.0.0
-synopsis:            ALCHEMY: A Language and Compiler for Homomorphic Encryption Made easY
-homepage:            https://github.com/cpeikert/ALCHEMY
-license:             GPL-3
-license-file:        LICENSE
-author:              Eric Crockett <ecrockett0@gmail.com>, Chris Peikert <cpeikert@alum.mit.edu>, Chad Sharp <cmlsharp@umich.edu>
-maintainer:          Chris Peikert <cpeikert@alum.mit.edu>
-copyright:           Eric Crockett, Chris Peikert, Chad Sharp
-category:            Crypto
-stability:           experimental
-build-type:          Simple
-extra-source-files:  README
-cabal-version:       >=1.10
-description:
-        TODO
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 0129d5f49c1be5793040952049d72d21d093262298312a29ef9275457a255c04
+
+name:           alchemy
+version:        0.1.0
+synopsis:       ALCHEMY: A Language and Compiler for Homomorphic Encryption Made easY
+description:    TODO
+category:       Crypto
+stability:      experimental
+homepage:       https://github.com/cpeikert/ALCHEMY#readme
+bug-reports:    https://github.com/cpeikert/ALCHEMY/issues
+author:         Eric Crockett <ecrockett0@gmail.com>,
+                Chris Peikert <cpeikert@alum.mit.edu>,
+                Chad Sharp <cmlsharp@umich.edu>
+copyright:      Eric Crockett,
+                Chris Peikert
+license-file:   LICENSE
+build-type:     Simple
+cabal-version:  >= 1.10
+
+extra-source-files:
+    README
 
 source-repository head
-  type:     git
+  type: git
   location: https://github.com/cpeikert/ALCHEMY
 
-Flag llvm
-  Description:  Compile via LLVM. This produces much better object code,
-                but you need to have the LLVM compiler installed.
-
-  Default:      False
-
 library
+  hs-source-dirs:
+      src
+  build-depends:
+      MonadRandom
+    , base >=4.7 && <5
+    , constraints
+    , deepseq
+    , lol >=0.7
+    , lol-apps >=0.2
+    , mtl
+    , numeric-prelude
+    , singletons
+    , tagged-transformer
+    , template-haskell
+    , type-natural
+  exposed-modules:
+      Crypto.Alchemy
+      Crypto.Alchemy.Interpreter
+      Crypto.Alchemy.Interpreter.Dup
+      Crypto.Alchemy.Interpreter.ErrorRateWriter
+      Crypto.Alchemy.Interpreter.Eval
+      Crypto.Alchemy.Interpreter.KeysHints
+      Crypto.Alchemy.Interpreter.Params
+      Crypto.Alchemy.Interpreter.Print
+      Crypto.Alchemy.Interpreter.PT2CT
+      Crypto.Alchemy.Interpreter.Size
+      Crypto.Alchemy.Language
+      Crypto.Alchemy.Language.Arithmetic
+      Crypto.Alchemy.Language.Lambda
+      Crypto.Alchemy.Language.LinearCyc
+      Crypto.Alchemy.Language.List
+      Crypto.Alchemy.Language.Monad
+      Crypto.Alchemy.Language.Pair
+      Crypto.Alchemy.Language.RescaleTree
+      Crypto.Alchemy.Language.SHE
+      Crypto.Alchemy.Language.String
+      Crypto.Alchemy.MonadAccumulator
+  other-modules:
+      Crypto.Alchemy.Interpreter.PT2CT.Noise
   default-language: Haskell2010
-
-  if flag(llvm)
-    ghc-options: -fllvm -optlo-O3 -pgmlo opt
-
-  exposed-modules: Crypto.Alchemy
-                   Crypto.Alchemy.Interpreter
-                   Crypto.Alchemy.Interpreter.Dup
-                   Crypto.Alchemy.Interpreter.ErrorRateWriter
-                   Crypto.Alchemy.Interpreter.Eval
-                   Crypto.Alchemy.Interpreter.KeysHints
-                   Crypto.Alchemy.Interpreter.Params
-                   Crypto.Alchemy.Interpreter.PT2CT
-                   Crypto.Alchemy.Interpreter.Print
-                   Crypto.Alchemy.Interpreter.Size
-                   Crypto.Alchemy.Language
-                   Crypto.Alchemy.Language.Arithmetic
-                   Crypto.Alchemy.Language.Lambda
-                   Crypto.Alchemy.Language.LinearCyc
-                   Crypto.Alchemy.Language.List
-                   Crypto.Alchemy.Language.Monad
-                   Crypto.Alchemy.Language.Pair
-                   Crypto.Alchemy.Language.RescaleTree
-                   Crypto.Alchemy.Language.SHE
-                   Crypto.Alchemy.Language.String
-                   Crypto.Alchemy.MonadAccumulator
-
-  other-modules:   Crypto.Alchemy.Interpreter.PT2CT.Noise
-
-  build-depends: base,
-                 constraints,
-                 deepseq,
-                 lol >= 0.7.0.0 && < 0.8,
-                 lol-apps >= 0.2.0.0 && < 0.3,
-                 MonadRandom,
-                 mtl,
-                 numeric-prelude,
-                 singletons,
-                 tagged-transformer,
-                 template-haskell,
-                 type-natural
 
 executable alchemy-arithmetic
-  hs-source-dirs: examples
-  default-language: Haskell2010
   main-is: Arithmetic.hs
-  ghc-options: -main-is Arithmetic
-  if flag(llvm)
-    ghc-options: -fllvm -optlo-O3 -pgmlo opt
-
-  other-modules: Common
-
-  build-depends: alchemy,
-                 base,
-                 deepseq,
-                 lol >= 0.7.0.0 && < 0.8,
-                 lol-cpp,
-                 MonadRandom,
-                 mtl,
-                 numeric-prelude,
-                 time,
-                 type-natural
-
-executable alchemy-tunnel
-  hs-source-dirs:   examples
+  hs-source-dirs:
+      examples
+  ghc-options: -rtsopts -main-is Arithmetic
+  build-depends:
+      MonadRandom
+    , alchemy
+    , base >=4.7 && <5
+    , constraints
+    , deepseq
+    , lol >=0.7
+    , lol-apps >=0.2
+    , lol-cpp
+    , mtl
+    , numeric-prelude
+    , singletons
+    , tagged-transformer
+    , template-haskell
+    , time
+    , type-natural
+  other-modules:
+      Common
   default-language: Haskell2010
-  main-is:          Tunnel.hs
-  ghc-options:      -main-is Tunnel
-  if flag(llvm)
-    ghc-options: -fllvm -optlo-O3 -pgmlo opt
-
-  other-modules: Common
-
-  build-depends: alchemy,
-                 base,
-                 deepseq,
-                 lol >= 0.7.0.0 && < 0.8,
-                 lol-cpp,
-                 MonadRandom,
-                 mtl,
-                 numeric-prelude,
-                 singletons,
-                 time,
-                 type-natural
 
 executable alchemy-homomrlwr
-  hs-source-dirs:   examples
+  main-is: HomomRLWR.hs
+  hs-source-dirs:
+      examples
+  ghc-options: -rtsopts -main-is HomomRLWR -O0
+  build-depends:
+      MonadRandom
+    , alchemy
+    , base >=4.7 && <5
+    , constraints
+    , deepseq
+    , lol >=0.7
+    , lol-apps >=0.2
+    , lol-cpp
+    , mtl
+    , numeric-prelude
+    , singletons
+    , tagged-transformer
+    , template-haskell
+    , time
+    , type-natural
+  other-modules:
+      Common
   default-language: Haskell2010
-  main-is:          HomomRLWR.hs
-  ghc-options:      -main-is HomomRLWR
-  if flag(llvm)
-    ghc-options: -fllvm -optlo-O3 -pgmlo opt
 
-  other-modules: Common
-
-  build-depends: alchemy,
-                 base,
-                 deepseq,
-                 lol >= 0.7.0.0 && < 0.8,
-                 lol-cpp,
-                 MonadRandom,
-                 mtl,
-                 numeric-prelude,
-                 singletons,
-                 time,
-                 type-natural
+executable alchemy-tunnel
+  main-is: Tunnel.hs
+  hs-source-dirs:
+      examples
+  ghc-options: -rtsopts -main-is Tunnel
+  build-depends:
+      MonadRandom
+    , alchemy
+    , base >=4.7 && <5
+    , constraints
+    , deepseq
+    , lol >=0.7
+    , lol-apps >=0.2
+    , lol-cpp
+    , mtl
+    , numeric-prelude
+    , singletons
+    , tagged-transformer
+    , template-haskell
+    , time
+    , type-natural
+  other-modules:
+      Common
+  default-language: Haskell2010

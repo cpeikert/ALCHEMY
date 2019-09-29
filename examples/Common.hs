@@ -16,7 +16,7 @@ module Common where
 import Control.DeepSeq
 import Control.Monad.IO.Class
 
-import Crypto.Alchemy
+import Crypto.Alchemy hiding (print)
 
 import Crypto.Lol
 import Crypto.Lol.Types
@@ -24,6 +24,8 @@ import Crypto.Lol.Types
 import Data.Time.Clock
 import System.IO
 import Text.Printf
+
+import Prelude hiding (fromIntegral, div, (/))
 
 -- a concrete Z_{2^e} data type
 type Z2E e = ZqBasic ('PP '(Prime2, e)) Int64
@@ -76,19 +78,19 @@ switch1 = linearCyc_ $!! decToCRT @H0 -- force arg before application
 
 -- | Switch H0 -> H1 -> H2
 switch2 :: _ => expr env (_ -> PNoiseCyc p c H2 zp)
-switch2 = (linearCyc_ $!! decToCRT @H1) #: switch1 -- strict composition
+switch2 = (linearCyc_ $!! decToCRT @H1) .: switch1 -- strict composition
 
 -- | Switch H0 -> H1 -> H2 -> H3
 switch3 :: _ => expr env (_ -> PNoiseCyc p c H3 zp)
-switch3 = (linearCyc_ $!! decToCRT @H2) #: switch2
+switch3 = (linearCyc_ $!! decToCRT @H2) .: switch2
 
 -- | Switch H0 -> H1 -> H2 -> H3 -> H4
 switch4 :: _ => expr env (_ -> PNoiseCyc p c H4 zp)
-switch4 = (linearCyc_ $!! decToCRT @H3) #: switch3
+switch4 = (linearCyc_ $!! decToCRT @H3) .: switch3
 
 -- | Switch H0 -> H1 -> H2 -> H3 -> H4 -> H5
 switch5 :: _ => expr env (_ -> PNoiseCyc p c H5 zp)
-switch5 = (linearCyc_ $!! decToCRT @H4) #: switch4
+switch5 = (linearCyc_ $!! decToCRT @H4) .: switch4
 
 {-# INLINABLE switch1 #-}
 {-# INLINABLE switch2 #-}

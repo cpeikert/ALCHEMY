@@ -32,7 +32,7 @@ import           Algebra.Ring                 as Ring (C)
 import           Algebra.ZeroTestable         as ZeroTestable (C)
 import           Control.DeepSeq
 import           Control.Monad.Random
-import           Data.Singletons.Prelude
+import           Data.Singletons.Prelude hiding ((:+))
 import           Data.Singletons.Prelude.List (Sum)
 import           Data.Singletons.TH
 import           Data.Type.Natural
