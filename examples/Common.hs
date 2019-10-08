@@ -72,31 +72,37 @@ decToCRT = let crts = proxy crtSet (Proxy::Proxy e)
                -- only take as many crts as we need, otherwise linearDec fails
            in linearDec $ take dim crts
 
--- | Switch H0 -> H1
+{--- | Switch H0 -> H1-}
+{-switch1 :: (LinearCycCtx_ expr (PNoiseCyc p c) (FGCD H0 H1) H0 H1 zp, LinearCyc_ expr (PNoiseCyc p c), NFData (c H1 zp), Cyclotomic (c H1 zp), CRTSetCyc c zp) => expr env (_ -> PNoiseCyc p c H1 zp)-}
+{-switch1 = linearCyc_ $!! decToCRT @H0 -- force arg before application-}
+
+{--- | Switch H0 -> H1 -> H2-}
+{-switch2 :: (LinearCycCtx_ expr (PNoise p c) (FGCD H0 H1) H0 H1 zp, LinearCyc_ expr (PNoiseCyc p c), NFData (c H1 zp), Cyclotomic (c H1 zp) CRTSetCyc c zp, LinearCycCtx_ expr (PNoise p c) (FGCD H1 H2) H1 H2 zp, NFData (c H2 zp), Cyclotomic (c H2 zp)) => expr env (_ -> PNoiseCyc p c H2 zp)-}
+{-switch2 = (linearCyc_ $!! decToCRT @H1) .: switch1 -- strict composition-}
+
 switch1 :: _ => expr env (_ -> PNoiseCyc p c H1 zp)
-switch1 = linearCyc_ $!! decToCRT @H0 -- force arg before application
+switch1 = linearCyc_ $!! decToCRT @H0
 
--- | Switch H0 -> H1 -> H2
 switch2 :: _ => expr env (_ -> PNoiseCyc p c H2 zp)
-switch2 = (linearCyc_ $!! decToCRT @H1) .: switch1 -- strict composition
+switch2 = linearCyc_ $!! decToCRT @H1
 
--- | Switch H0 -> H1 -> H2 -> H3
-switch3 :: _ => expr env (_ -> PNoiseCyc p c H3 zp)
-switch3 = (linearCyc_ $!! decToCRT @H2) .: switch2
+{--- | Switch H0 -> H1 -> H2 -> H3-}
+{-switch3 :: _ => expr env (_ -> PNoiseCyc p c H3 zp)-}
+{-switch3 = (linearCyc_ $!! decToCRT @H2) .: switch2-}
 
--- | Switch H0 -> H1 -> H2 -> H3 -> H4
-switch4 :: _ => expr env (_ -> PNoiseCyc p c H4 zp)
-switch4 = (linearCyc_ $!! decToCRT @H3) .: switch3
+{--- | Switch H0 -> H1 -> H2 -> H3 -> H4-}
+{-switch4 :: _ => expr env (_ -> PNoiseCyc p c H4 zp)-}
+{-switch4 = (linearCyc_ $!! decToCRT @H3) .: switch3-}
 
--- | Switch H0 -> H1 -> H2 -> H3 -> H4 -> H5
-switch5 :: _ => expr env (_ -> PNoiseCyc p c H5 zp)
-switch5 = (linearCyc_ $!! decToCRT @H4) .: switch4
+{--- | Switch H0 -> H1 -> H2 -> H3 -> H4 -> H5-}
+{-switch5 :: _ => expr env (_ -> PNoiseCyc p c H5 zp)-}
+{-switch5 = (linearCyc_ $!! decToCRT @H4) .: switch4-}
 
 {-# INLINABLE switch1 #-}
-{-# INLINABLE switch2 #-}
-{-# INLINABLE switch3 #-}
-{-# INLINABLE switch4 #-}
-{-# INLINABLE switch5 #-}
+{-{-# INLINABLE switch2 #-}-}
+{-{-# INLINABLE switch3 #-}-}
+{-{-# INLINABLE switch4 #-}-}
+{-{-# INLINABLE switch5 #-}-}
 
 
 -- timing functionality

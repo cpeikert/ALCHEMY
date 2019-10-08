@@ -56,6 +56,9 @@ extra-deps:
 - ghc-typelits-presburger-0.2.0.3
 - monadcryptorandom-0.7.2.1
 - type-natural-0.8.2.0
+- template-haskell-2.10.0.0
+- template-default-0.1.2
+
 
 ghc-options:
     "$locals": -fexpose-all-unfoldings -fwarn-dodgy-imports

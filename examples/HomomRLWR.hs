@@ -11,8 +11,6 @@
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-{-# OPTIONS_GHC -fconstraint-solver-iterations=0 #-}
-{-# OPTIONS_GHC -freduction-depth=0 #-}
 
 module HomomRLWR where
 
@@ -45,11 +43,16 @@ type Zqs = '[ Zq $(mkModulus 1543651201) -- last mul: > 2^30.5
             , Zq $(mkModulus 1567238401) -- extra for KS: big
             ]
 
-type K = P5
+type K = P2
 type Gad = TrivGad
 type PT = PNoiseCyc PNZ (Cyc CT) H5 (Zq PP2)
 
-ringRound :: _ => expr env (_ -> PT)
+{-ringRound :: _ => expr env (_ -> PT)-}
+{-ringRound =  untag (rescaleTreePow2_ @K) .: switch5-}
+
+{-homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound-}
+
+ringRound :: ( => PT2CT M'Map Zqs Gad Int64 _ E env (_ -> PT)
 ringRound =  untag (rescaleTreePow2_ @K) .: switch5
 
 homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound
@@ -66,8 +69,10 @@ main = do
   (!f, s, keys) <- timeWHNFIO "Generating function... " homomRLWR
 
   a <- getRandom
-  ptResult  <- timeNF "Computing plaintext result... " $ unPNC $ eval ringRound (PNC $ s * a)
+  {-ptResult  <- timeNF "Computing plaintext result... " $ unPNC $ eval ringRound (PNC $ s * a)-}
   encResult <- timeNF "Computing encrypted result... " $ f a
+  print encResult
 
-  let decResult = fromJust $ decrypt encResult keys
-  putStrLn $ if decResult == ptResult then "PASS" else "FAIL"
+
+  {-let decResult = fromJust $ decrypt encResult keys-}
+  {-putStrLn $ if decResult == ptResult then "PASS" else "FAIL"-}

@@ -5,6 +5,8 @@
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
 
+{-# OPTIONS_GHC -fno-cse #-}
+{-# OPTIONS_GHC -fno-full-laziness #-}
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module Arithmetic where
@@ -15,12 +17,13 @@ import Data.Functor         ((<$>))
 import Data.Maybe
 
 import Crypto.Alchemy
+import Crypto.Alchemy.Interpreter.Counter.TensorOps
 import Crypto.Lol
 import Crypto.Lol.Cyclotomic.Tensor.CPP
 
 import Common
 
-type PT = PNoiseCyc PNZ (Cyc CT) F4 (Zq 7)
+type PT = PNoiseCyc PNZ (Cyc (TensorCounter CT)) F4 (Zq 7)
 
 -- polymorphic over expr alone
 addMul :: _ => expr env (_ -> _ -> PT)
@@ -76,6 +79,9 @@ main = do
     putStrLnIO "Error rates: "
     liftIO $ mapM_ print errors
 
+
+  record <- getTensorRecord
+  print record
 {-
     -- check the decrypted result
     decResult <- fromJust <$> readerToAccumulator (decrypt result)
