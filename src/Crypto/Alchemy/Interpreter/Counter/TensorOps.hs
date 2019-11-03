@@ -17,10 +17,34 @@
 {-# OPTIONS_GHC -fno-full-laziness #-}
 
 module Crypto.Alchemy.Interpreter.Counter.TensorOps
-( TensorRecord (..)
+( TensorRecord
 , getTensorRecord
 , clearTensorRecord
 , TensorCounter
+, nScalarPow         
+, nPowToDec           
+, nDecToPow           
+, nTwacePowDec        
+, nEmbedPow           
+, nEmbedDec           
+, nCoeffs             
+, nMulGPow            
+, nMulGDec            
+, nDivGPow            
+, nDivGDec            
+, nScalarCRT          
+, nMulGCRT            
+, nDivGCRT            
+, nCRT                
+, nCRTInv             
+, nTwaceCRT           
+, nEmbedCRT           
+, nTweakedGaussianDec 
+, nGSqNormDec         
+, nPlus               
+, nNegate             
+, nScale
+, module Control.Lens
 )
 where
 
@@ -84,7 +108,6 @@ incRecord s val = unsafePerformIO $ (modifyIORef' record (s +~ 1) >> return val)
 
 newtype TensorCounter t (m :: Factored) r = TC { unTC :: t m r } 
   deriving newtype (Eq, Show, Applicative, Functor, Foldable, IFunctor, Random, NFData)
-
 
 
 tcmap :: (t m r -> t' m' r') -> TensorCounter t m r -> TensorCounter t' m' r'

@@ -26,6 +26,7 @@ import Crypto.Lol.Applications.SymmSHE     (mulPublic)
 import Crypto.Lol.Cyclotomic.Tensor.CPP
 
 import Common
+import System.IO
 
 type M'Map = '[ '(H0,H0')
               , '(H1,H1')
@@ -52,7 +53,7 @@ type PT = PNoiseCyc PNZ (Cyc CT) H5 (Zq PP2)
 
 {-homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound-}
 
-ringRound :: ( => PT2CT M'Map Zqs Gad Int64 _ E env (_ -> PT)
+ringRound :: _  => PT2CT M'Map Zqs Gad Int64 _ E env (_ -> PT)
 ringRound =  untag (rescaleTreePow2_ @K) .: switch5
 
 homomRingRound = pt2ct @M'Map @Zqs @Gad @Int64 ringRound
@@ -71,7 +72,8 @@ main = do
   a <- getRandom
   {-ptResult  <- timeNF "Computing plaintext result... " $ unPNC $ eval ringRound (PNC $ s * a)-}
   encResult <- timeNF "Computing encrypted result... " $ f a
-  print encResult
+  withFile "/dev/null" WriteMode $ \handle -> hPrint handle encResult
+
 
 
   {-let decResult = fromJust $ decrypt encResult keys-}

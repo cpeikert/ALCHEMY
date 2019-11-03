@@ -14,6 +14,7 @@
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators          #-}
 {-# LANGUAGE UndecidableInstances   #-}
+{-# LANGUAGE Strict #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 

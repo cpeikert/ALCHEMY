@@ -4,11 +4,16 @@
 {-# LANGUAGE TemplateHaskell       #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
-
+{-# LANGUAGE DataKinds             #-}
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE PartialTypeSignatures #-}
+{-# LANGUAGE TemplateHaskell       #-}
+{-# LANGUAGE TypeApplications      #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE Strict #-}
+{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 {-# OPTIONS_GHC -fno-cse #-}
 {-# OPTIONS_GHC -fno-full-laziness #-}
-{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
-
 module Arithmetic where
 
 import Control.Monad.Random
@@ -57,6 +62,8 @@ main = do
     -- compile PT->CT once; interpret multiple times using dup
     -- was: ct
     ct1 <- pt2ct @M'Map @Zqs @TrivGad @Int64 addMul
+    record0 <- liftIO getTensorRecord
+    printIO record0
 {-
     let (ct1,tmp)  = dup ct
         (ct2,tmp') = dup tmp
@@ -64,8 +71,20 @@ main = do
 -}
 
     -- encrypt the arguments
-    arg1 <- encrypt $ unPNC pt1
-    arg2 <- encrypt $ unPNC pt2
+    arg1 <- encrypt pt1
+    arg2 <- encrypt pt2
+
+    printIO $ eval ct1 arg1 arg2
+    {-printIO result1-}
+    record1 <- liftIO getTensorRecord
+    printIO record1
+
+    liftIO clearTensorRecord
+
+    printIO $ eval ct1 arg1 arg2
+    record2 <- liftIO getTensorRecord
+    printIO record2
+
 
 {-
     -- print and params/size the compiled expression
@@ -74,14 +93,16 @@ main = do
     putStrLnIO $ "CT expression size: " ++ show (size ct4)
 -}
     -- evaluate with error rates
+{-
     ct1' <- readerToAccumulator $ writeErrorRates @Int64 ct1
     let (result, errors) = runWriter $ eval ct1' >>= ($ arg1) >>= ($ arg2)
     putStrLnIO "Error rates: "
     liftIO $ mapM_ print errors
+    liftIO clearTensorRecord
+-}
 
 
-  record <- getTensorRecord
-  print record
+
 {-
     -- check the decrypted result
     decResult <- fromJust <$> readerToAccumulator (decrypt result)

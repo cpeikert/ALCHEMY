@@ -1,4 +1,3 @@
-{-# LANGUAGE BangPatterns          #-}
 {-# LANGUAGE DataKinds             #-}
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
@@ -26,7 +25,7 @@ class Lambda_ expr where
   weaken  :: expr e a -> expr (e,x) a
 
 lam :: Lambda_ expr
-  => (forall x. expr (e,x) a -> expr (e,x) b)
+  => (forall x. expr (e,a) a -> expr (e,a) b)
   -> expr e (a -> b)
 lam body = lamDB $ body v0
 

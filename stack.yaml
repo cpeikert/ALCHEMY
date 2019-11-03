@@ -39,14 +39,8 @@ compiler-check: newer-minor
 # will not be run. This is useful for tweaking upstream packages.
 
 packages:
-- location: ./
+- .
 
-- location: ../Lol
-  extra-dep: true
-  subdirs:
-    - 'lol'
-    - 'lol-apps'
-    - 'lol-cpp'
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 
@@ -56,8 +50,13 @@ extra-deps:
 - ghc-typelits-presburger-0.2.0.3
 - monadcryptorandom-0.7.2.1
 - type-natural-0.8.2.0
-- template-haskell-2.10.0.0
 - template-default-0.1.2
+- git: https://github.com/cpeikert/Lol
+  commit: 2bbcecdd91c51f29a6d38322d4d65ce0603b054d 
+  subdirs:
+    - 'lol'
+    - 'lol-apps'
+    - 'lol-cpp'
 
 
 ghc-options:
