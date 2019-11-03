@@ -1,0 +1,58 @@
+name: alchemy
+version: 0.1.0
+synopsis: "ALCHEMY: A Language and Compiler for Homomorphic Encryption Made easY"
+github: cpeikert/ALCHEMY
+author:
+  - Eric Crockett <ecrockett0@gmail.com>
+  - Chris Peikert <cpeikert@alum.mit.edu>
+  - Chad Sharp <cmlsharp@umich.edu>
+copyright: 
+  - Eric Crockett
+  - Chris Peikert
+category: Crypto
+stability: experimental
+description: TODO
+extra-source-files: README
+
+dependencies: 
+  - base >= 4.7 && < 5
+  - constraints
+  - lol >= 0.7
+  - lol-apps >= 0.2
+  - MonadRandom
+  - mtl
+  - numeric-prelude
+  - singletons
+  - deepseq
+  - tagged-transformer
+  - template-haskell
+  - type-natural
+  - data-default
+  - lens
+
+library:
+  source-dirs: src
+  other-modules: Crypto.Alchemy.Interpreter.PT2CT.Noise
+
+
+_common_exe_opts: &exe_opts
+  source-dirs: examples
+  other-modules: Common
+  dependencies:
+    - alchemy
+    - lol-cpp
+    - time
+
+executables:
+  #alchemy-arithmetic: 
+    #<<: *exe_opts
+    #main: Arithmetic.hs
+    #ghc-options: -rtsopts -main-is Arithmetic
+  alchemy-homomrlwr:
+    <<: *exe_opts
+    main: HomomRLWR.hs
+    ghc-options: -main-is HomomRLWR -fomit-interface-pragmas
+  #alchemy-tunnel:
+    #<<: *exe_opts
+    #main: Tunnel.hs
+    #ghc-options: -rtsopts -main-is Tunnel
