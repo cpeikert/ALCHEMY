@@ -57,7 +57,7 @@ import Data.Constraint
 import Control.Monad.Random
 import Control.DeepSeq
 
-import Crypto.Lol                    (Fact, Factored)
+import Crypto.Lol                    (Factored)
 import Crypto.Lol.Cyclotomic.Tensor
 import Crypto.Lol.Types.IFunctor
 
