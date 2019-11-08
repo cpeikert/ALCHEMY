@@ -16,7 +16,7 @@
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
 
-resolver: lts-12.5
+resolver: lts-14.12
 compiler-check: newer-minor
 
 # User packages to be built.
@@ -48,8 +48,9 @@ extra-deps:
 
 - monadcryptorandom-0.7.2.1
 - template-default-0.1.2
+- DRBG-0.5.5
 - git: https://github.com/cpeikert/Lol
-  commit: 2bbcecdd91c51f29a6d38322d4d65ce0603b054d 
+  commit: df200e20b53424d561ed44a392d33ce7b4098e83
   subdirs:
     - 'lol'
     - 'lol-apps'

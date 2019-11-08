@@ -57,7 +57,7 @@ import Data.Constraint
 import Control.Monad.Random
 import Control.DeepSeq
 
-import Crypto.Lol (ForallFact1(..), ForallFact2(..), Fact, Factored)
+import Crypto.Lol                    (Fact, Factored)
 import Crypto.Lol.Cyclotomic.Tensor
 import Crypto.Lol.Types.IFunctor
 
@@ -123,50 +123,6 @@ instance Traversable (t m) => Traversable (TensorCounter t m) where
 instance ZeroTestable.C (t m r) => ZeroTestable.C (TensorCounter t m r) where
   isZero = ZeroTestable.isZero . unTC
 
-
-
--- CS: I tried to do an instancec for a generic constraint 'c' to remove code duplication but no dice due to 'm' not being available in the instance head
--- CS: There has to be a better way to do this though...
---
-instance ForallFact1 Functor t => ForallFact1 Functor (TensorCounter t) where
-  entailFact1 :: forall m. Fact m :- Functor (TensorCounter t m)
-  entailFact1 = Sub $ Dict \\ (entailFact1 :: Fact m :- Functor (t m))
-
-instance ForallFact1 Applicative t => ForallFact1 Applicative (TensorCounter t) where
-  entailFact1 :: forall m. Fact m :- Applicative (TensorCounter t m)
-  entailFact1 = Sub $ Dict \\ (entailFact1 :: Fact m :- Applicative (t m))
-
-instance ForallFact1 Foldable t => ForallFact1 Foldable (TensorCounter t) where
-  entailFact1 :: forall m. Fact m :- Foldable (TensorCounter t m)
-  entailFact1 = Sub $ Dict \\ (entailFact1 :: Fact m :- Foldable (t m))
-
-instance ForallFact1 Traversable t => ForallFact1 Traversable (TensorCounter t) where
-  entailFact1 :: forall m. Fact m :- Traversable (TensorCounter t m)
-  entailFact1 = Sub $ Dict \\ (entailFact1 :: Fact m :- Traversable (t m))
-
-instance ForallFact2 (Module.C r) t r => ForallFact2 (Module.C r) (TensorCounter t) r where
-  entailFact2 :: forall m . Fact m :- Module.C r (TensorCounter t m r)
-  entailFact2 = Sub $ Dict \\ (entailFact2 :: Fact m :- Module.C r (t m r))
-
-instance ForallFact2 Show t r => ForallFact2 Show (TensorCounter t) r where
-  entailFact2 :: forall m . Fact m :- Show (TensorCounter t m r)
-  entailFact2 = Sub $ Dict \\ (entailFact2 :: Fact m :- Show (t m r))
-
-instance ForallFact2 Eq t r => ForallFact2 Eq (TensorCounter t) r where
-  entailFact2 :: forall m . Fact m :- Eq (TensorCounter t m r)
-  entailFact2 = Sub $ Dict \\ (entailFact2 :: Fact m :- Eq (t m r))
-
-instance ForallFact2 ZeroTestable.C t r => ForallFact2 ZeroTestable.C (TensorCounter t) r where
-  entailFact2 :: forall m . Fact m :- ZeroTestable.C (TensorCounter t m r)
-  entailFact2 = Sub $ Dict \\ (entailFact2 :: Fact m :- ZeroTestable.C (t m r))
-
-instance ForallFact2 Random t r => ForallFact2 Random (TensorCounter t) r where
-  entailFact2 :: forall m . Fact m :- Random (TensorCounter t m r)
-  entailFact2 = Sub $ Dict \\ (entailFact2 :: Fact m :- Random (t m r))
-
-instance ForallFact2 NFData t r => ForallFact2 NFData (TensorCounter t) r where
-  entailFact2 :: forall m . Fact m :- NFData (TensorCounter t m r)
-  entailFact2 = Sub $ Dict \\ (entailFact2 :: Fact m :- NFData (t m r))
 
 instance Additive.C (t m r) => Additive.C (TensorCounter t m r) where
   zero              = TC Additive.zero

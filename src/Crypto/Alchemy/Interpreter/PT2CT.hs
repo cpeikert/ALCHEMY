@@ -6,15 +6,16 @@
 {-# LANGUAGE InstanceSigs           #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE NoImplicitPrelude      #-}
+{-# LANGUAGE NoStarIsType           #-}
 {-# LANGUAGE PartialTypeSignatures  #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
+{-# LANGUAGE Strict                 #-}
 {-# LANGUAGE TemplateHaskell        #-}
 {-# LANGUAGE TypeApplications       #-}
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE TypeOperators          #-}
 {-# LANGUAGE UndecidableInstances   #-}
-{-# LANGUAGE Strict #-}
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
@@ -31,7 +32,8 @@ import Control.Monad.Random
 import Control.Monad.Reader
 import Data.Dynamic
 import Data.Singletons.TypeLits
-import GHC.TypeLits         hiding (type (*), Nat)
+import GHC.TypeLits              (type (+), type (-), TypeError, ErrorMessage(..))
+import Data.Kind
 
 import           Crypto.Lol
 import           Crypto.Lol.Applications.SymmSHE hiding (decrypt, encrypt)
@@ -131,7 +133,7 @@ type PNoise2KSZq gad zqs p = ZqPairsWithUnits zqs (KSPNoise2Units (KSPNoise gad 
 
 -- | pNoise of a key-switch hint for a particular gadget, given the
 -- pNoise of the input ciphertext.
-type family KSPNoise gad (zqs :: [*]) (p :: PNoise) :: PNoise
+type family KSPNoise gad (zqs :: [Type]) (p :: PNoise) :: PNoise
 -- For TrivGad: key switching decreases pNoise by ~KSAccumPNoise,
 -- coefficients for TrivGad are <= Max32BitUnits units (assuming all moduli are < 32 bits)
 type instance KSPNoise TrivGad      zqs p = p :+ KSAccumPNoise :+ Max32BitUnits
