@@ -24,7 +24,8 @@ import Crypto.Alchemy.Interpreter.PT2CT.Noise
 import Crypto.Lol.Applications.SymmSHE (CT, KSHint)
 import Crypto.Lol.Utils.ShowType
 
-import Data.Type.Natural
+import Data.Singletons.Prelude
+import Data.Singletons.TypeLits
 
 -- CJP: this is a bit weird: Params lives neither "inside" nor
 -- "outside" expr. AFAICT, expr is an argument only because it is used
@@ -50,7 +51,7 @@ showZq :: forall zq expr e a . (ShowType zq) => String -> Params expr e a
 showZq str = P $ str ++ " " ++ showType (Proxy::Proxy zq)
 
 showPNoise :: forall p expr e a . (SingI (p :: Nat)) => String -> Params expr e a
-showPNoise str = P $ str ++ " " ++ show (sNatToInt (sing :: SNat p) :: Int)
+showPNoise str = P $ str ++ " " ++ show (withKnownNat (sing :: SNat p) (natVal (Proxy :: Proxy p)))
 
 instance ShowType zq => Add_ (Params expr) (CT m zp (c m' zq)) where
   add_ = showZq @zq "add"

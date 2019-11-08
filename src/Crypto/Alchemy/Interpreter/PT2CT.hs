@@ -30,8 +30,8 @@ import Control.DeepSeq
 import Control.Monad.Random
 import Control.Monad.Reader
 import Data.Dynamic
-import Data.Type.Natural    hiding (type (*), Nat (..))
-import GHC.TypeLits         hiding (type (*), type (+), type (-), Nat)
+import Data.Singletons.TypeLits
+import GHC.TypeLits         hiding (type (*), Nat)
 
 import           Crypto.Lol
 import           Crypto.Lol.Applications.SymmSHE hiding (decrypt, encrypt)
@@ -271,19 +271,19 @@ type family Lookup (m :: Factored) map :: Factored where
 -- PNoise constants
 
 -- | Amount by which pNoise decreases during a key switch (gadget-independent)
-type KSAccumPNoise = $(mkTypeNat $ ceiling $ 12 / pNoiseUnit)
+type KSAccumPNoise = $(mkTypeLit $ ceiling $ 12 / pNoiseUnit)
 
 -- | Maximum number of units in a 32-bit modulus; used to compute the pNoise
 -- of a key switch hint with TrivGad
-type Max32BitUnits = $(mkTypeNat $ ceiling $ 30.5 / pNoiseUnit)
+type Max32BitUnits = $(mkTypeLit $ ceiling $ 30.5 / pNoiseUnit)
 
 -- | Amount by which pNoise decreases from a multiplication
 -- (multiplication costs about 18 bits)
-type MulPNoise = $(mkTypeNat $ ceiling $ 18 / pNoiseUnit)
+type MulPNoise = $(mkTypeLit $ ceiling $ 18 / pNoiseUnit)
 
 -- | Number of modulus units required to correctly decrypt a ciphertext with
 -- zero pNoise. A ciphertext with zero pNoise has absolute noise ~2000.
-type MinUnits = $(mkTypeNat $ ceiling $ 12 / pNoiseUnit)
+type MinUnits = $(mkTypeLit $ ceiling $ 12 / pNoiseUnit)
 
 -- | Amount by which pNoise decreases from a ring tun
-type TunnelPNoise = $(mkTypeNat $ ceiling $ 6 / pNoiseUnit)
+type TunnelPNoise = $(mkTypeLit $ ceiling $ 6 / pNoiseUnit)
