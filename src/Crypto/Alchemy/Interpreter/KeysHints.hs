@@ -34,7 +34,7 @@ import Data.Semigroup
 
 import Crypto.Alchemy.MonadAccumulator
 import Crypto.Lol
-import Crypto.Lol.Applications.SymmSHE
+import Crypto.Lol.Applications.SymmBGV
 
 ---- Monad helper functions
 

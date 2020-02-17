@@ -12,7 +12,7 @@ import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.Monad
 import Crypto.Alchemy.Language.Pair
-import Crypto.Alchemy.Language.SHE
+import Crypto.Alchemy.Language.BGV
 import Crypto.Alchemy.Language.String
 
 dup :: Dup expr1 expr2 e a -> (expr1 e a, expr2 e a)
@@ -47,7 +47,7 @@ instance (Div2_ ex1 a, Div2_ ex2 a, PreDiv2_ ex1 a ~ PreDiv2_ ex2 a)
   type PreDiv2_ (Dup ex1 ex2) a = PreDiv2_ ex1 a
   div2_ = Dup div2_ div2_
 
-instance (SHE_ ex1, SHE_ ex2) => SHE_ (Dup ex1 ex2) where
+instance (BGV_ ex1, BGV_ ex2) => BGV_ (Dup ex1 ex2) where
   type ModSwitchPTCtx_ (Dup ex1 ex2) c m m' zp zp' zq =
     (ModSwitchPTCtx_ ex1 c m m' zp zp' zq, ModSwitchPTCtx_ ex2 c m m' zp zp' zq)
   type ModSwitchCtx_ (Dup ex1 ex2) c m m' zp zq zq' =

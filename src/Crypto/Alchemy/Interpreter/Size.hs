@@ -18,12 +18,12 @@ import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.Monad
 import Crypto.Alchemy.Language.Pair
-import Crypto.Alchemy.Language.SHE
+import Crypto.Alchemy.Language.BGV
 
 import           Crypto.Lol                      (Cyc, Prime2,
                                                   PrimePower (..))
 import qualified Crypto.Lol                      as L
-import           Crypto.Lol.Applications.SymmSHE (CT)
+import           Crypto.Lol.Applications.SymmBGV (CT)
 import           Crypto.Lol.Types
 
 import Control.Monad.Reader (MonadReader)
@@ -102,7 +102,7 @@ instance MonadWriter w m => MonadWriter_ S w m where
   listen_ = S 1
   pass_ = S 1
 
-instance SHE_ S where
+instance BGV_ S where
   type ModSwitchPTCtx_   S c m m' zp zp' zq  = ()
   type ModSwitchCtx_     S c m m' zp zq  zq' = ()
   type AddPublicCtx_     S c m m' zp zq      = ()

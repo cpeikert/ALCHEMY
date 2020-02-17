@@ -19,12 +19,12 @@
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
-module Crypto.Alchemy.Interpreter.PT2CT
-( PT2CT
-, pt2ct, encrypt, decrypt
--- * re-exports
-, PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkModulus
-) where
+module Crypto.Alchemy.Interpreter.PT2CT where
+{-( PT2CT-}
+{-, pt2ct, encrypt, decrypt-}
+{--- * re-exports-}
+{-, PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkModulus-}
+{-) where-}
 
 import Control.Applicative
 import Control.DeepSeq
@@ -36,8 +36,8 @@ import GHC.TypeLits              (type (+), type (-), TypeError, ErrorMessage(..
 import Data.Kind
 
 import           Crypto.Lol
-import           Crypto.Lol.Applications.SymmSHE hiding (decrypt, encrypt)
-import qualified Crypto.Lol.Applications.SymmSHE as SHE
+import           Crypto.Lol.Applications.SymmBGV hiding (decrypt, encrypt)
+import qualified Crypto.Lol.Applications.SymmBGV as BGV
 import           Crypto.Lol.Types
 
 import Crypto.Alchemy.Interpreter.KeysHints
@@ -46,7 +46,7 @@ import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
 import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.List
-import Crypto.Alchemy.Language.SHE
+import Crypto.Alchemy.Language.BGV
 import Crypto.Alchemy.MonadAccumulator
 
 -- | Interprets plaintext operations as their corresponding
@@ -85,18 +85,18 @@ encrypt :: forall mon c m m' zp zq z .
 encrypt x = do
   -- generate key if necessary
   (sk :: SK (c m' z)) <- getKey
-  SHE.encrypt sk x
+  BGV.encrypt sk x
 
 -- | Decrypt a ciphertext under an appropriate key (from the monad),
 -- if one exists.
-decrypt :: forall mon c m m' z zp zq .
+decrypt :: forall mon c m m' z zp zq k .
   (MonadReader Keys mon, DecryptCtx c m m' z zp zq,
    -- CJP: DON'T LOVE THIS CHOICE OF z HERE; IT'S ARBITRARY
    z ~ LiftOf zp, Typeable c, Typeable m', Typeable z)
   => CT m zp (c m' zq) -> mon (Maybe (c m zp))
 decrypt x = do
   sk :: Maybe (SK (c m' z)) <- lookupKey
-  return $ flip SHE.decrypt x <$> sk
+  return $ flip BGV.decrypt x <$> sk
 
 instance (Lambda_ ctex, Applicative mon)
   => Lambda_ (PT2CT m'map zqs gad z mon ctex) where
@@ -117,13 +117,13 @@ instance (Add_ ctex (Cyc2CT m'map zqs a), Applicative mon)
   add_ = PC $ pure add_
   neg_ = PC $ pure neg_
 
-instance (SHE_ ctex, Applicative mon,
+instance (BGV_ ctex, Applicative mon,
           AddPublicCtx_ ctex c m (Lookup m m'map) zp (PNoise2Zq zqs p))
   => AddLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c m zp) where
 
   addLit_ = PC . pure . addPublic_ . unPNC
 
-instance (SHE_ ctex, Applicative mon,
+instance (BGV_ ctex, Applicative mon,
           MulPublicCtx_ ctex c m (Lookup m m'map) zp (PNoise2Zq zqs p))
   => MulLit_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c m zp) where
 
@@ -147,7 +147,7 @@ type PT2CTMulCtx m'map zqs gad z mon ctex p c m zp = PT2CTMulCtx'
   gad z mon ctex c m zp
 
 type PT2CTMulCtx' m' zqin zqhint zqout gad z mon ctex c m zp =
-  (Lambda_ ctex, SHE_ ctex,
+  (Lambda_ ctex, BGV_ ctex,
    Mul_ ctex (CT m zp (c m' zqin)), PreMul_ ctex (CT m zp (c m' zqin)) ~ CT m zp (c m' zqin),
    ModSwitchCtx_ ctex c m m' zp zqin   zqhint, -- in -> hint
    ModSwitchCtx_ ctex c m m' zp zqhint zqout,  -- hint -> out
@@ -175,7 +175,7 @@ instance (PT2CTMulCtx m'map zqs gad z mon ctex p c m zp)
         let prod = var x *: y :: ctex _ (CT m zp (c m' (PNoise2Zq zqs pin)))
          in return $ modSwitch_ .: (keySwitchQuad_ $!! hint) .: modSwitch_ $: prod
 
-instance (SHE_ ctex, Applicative mon,
+instance (BGV_ ctex, Applicative mon,
           ModSwitchPTCtx_ ctex c m (Lookup m m'map)
            (ZqBasic ('PP '(Prime2, 'S e)) z) (ZqBasic ('PP '(Prime2, e)) z)
            (PNoise2Zq zqs p))
@@ -189,7 +189,7 @@ instance (SHE_ ctex, Applicative mon,
   div2_ = PC $ pure modSwitchPT_
 
 type PT2CTLinearCtx gad z mon ctex c e r s r' s' zp zqin zqhint zqout =
-  (SHE_ ctex, Lambda_ ctex, Fact s', KeysAccumulatorCtx Double mon,
+  (BGV_ ctex, Lambda_ ctex, Fact s', KeysAccumulatorCtx Double mon,
    TunnelCtx_ ctex c e r s (e * (r' / r)) r' s'   zp zqhint gad,
    TunnelHintCtx   c e r s (e * (r' / r)) r' s' z zp zqhint gad,
    NFData (TunnelHint gad c e r s (e * (r' / r)) r' s' zp zqhint),
@@ -273,19 +273,19 @@ type family Lookup (m :: Factored) map :: Factored where
 -- PNoise constants
 
 -- | Amount by which pNoise decreases during a key switch (gadget-independent)
-type KSAccumPNoise = $(mkTypeLit $ ceiling $ 12 / pNoiseUnit)
+type KSAccumPNoise = $(mkTypeLit 12)
 
 -- | Maximum number of units in a 32-bit modulus; used to compute the pNoise
 -- of a key switch hint with TrivGad
-type Max32BitUnits = $(mkTypeLit $ ceiling $ 30.5 / pNoiseUnit)
+type Max32BitUnits = $(mkTypeLit 31)
 
 -- | Amount by which pNoise decreases from a multiplication
 -- (multiplication costs about 18 bits)
-type MulPNoise = $(mkTypeLit $ ceiling $ 18 / pNoiseUnit)
+type MulPNoise = $(mkTypeLit 18)
 
 -- | Number of modulus units required to correctly decrypt a ciphertext with
 -- zero pNoise. A ciphertext with zero pNoise has absolute noise ~2000.
-type MinUnits = $(mkTypeLit $ ceiling $ 12 / pNoiseUnit)
+type MinUnits = $(mkTypeLit 12)
 
--- | Amount by which pNoise decreases from a ring tun
-type TunnelPNoise = $(mkTypeLit $ ceiling $ 6 / pNoiseUnit)
+-- | Amount by which pNoise decreases from a ring tunnel
+type TunnelPNoise = $(mkTypeLit 10)

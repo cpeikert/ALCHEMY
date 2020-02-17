@@ -19,7 +19,7 @@ import Control.Monad.Reader
 import Data.Typeable
 
 import Crypto.Lol
-import Crypto.Lol.Applications.SymmSHE (CT, SK)
+import Crypto.Lol.Applications.SymmBGV (CT, SK)
 import Crypto.Lol.Utils.ShowType
 
 import Crypto.Alchemy.Interpreter.KeysHints
@@ -28,7 +28,7 @@ import Crypto.Alchemy.Language.Lambda
 import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.Monad
 import Crypto.Alchemy.Language.Pair
-import Crypto.Alchemy.Language.SHE
+import Crypto.Alchemy.Language.BGV
 import Crypto.Alchemy.Language.String
 
 -- | A transformer that additionally logs the sizes of the noise terms
@@ -167,7 +167,7 @@ instance (String_ expr, Applicative_ expr w, Lambda_ expr, Applicative k)
   => String_ (ERW expr z k w) where
     string_ s = pureERW $ string_ s
 
-instance (SHE_ expr) => SHE_ (ERW expr z k w) where
+instance (BGV_ expr) => BGV_ (ERW expr z k w) where
 
   type ModSwitchPTCtx_   (ERW expr z k w) c m m' zp zp' zq  =
     (WriteErrorCtx expr z k w (CT m zp' (c m' zq)) c m m' zp' zq,

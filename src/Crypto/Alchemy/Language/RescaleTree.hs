@@ -17,13 +17,17 @@
 -}
 
 module Crypto.Alchemy.Language.RescaleTree
-( rescaleTreePow2_, RescaleTreePow2Ctx_, PreRescaleTreePow2_ )
+  {-(rescaleTree4_, rescaleTree8_, rescaleTree16_, rescaleTree32_)-}
 where
+
+
+{-import qualified Algebra.Ring as  (C)-}
 
 import Data.Constraint
 
 import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
+import Crypto.Alchemy.Interpreter.Eval
 
 import Crypto.Lol
 -- EAC: shouldn't have to import this
@@ -31,6 +35,37 @@ import Crypto.Lol
 -- EAC: Yes, but it should be exported by Lol.
 import Crypto.Lol.Reflects
 import Data.Singletons
+
+makeZs :: (Lambda_ expr, Div2_ expr b, AddLit_ expr (PreDiv2_ expr b),
+           Extends m e, Ring (PreDiv2_ expr b))
+           => Integer -> expr m (PreDiv2_ expr b) -> [expr e b]
+makeZs n y = map ((div2_ $:) . (>+: var y)) [fromInteger $ z * (-z + 1) | z <- [1..n]]
+
+
+type RescaleLayer_ expr b b1 b2 = (Lambda_ expr, b1 ~ PreDiv2_ expr b, b2 ~ PreMul_ expr b1, Div2_ expr b, Mul_ expr b1)
+
+condenseTree  :: RescaleLayer_ expr b b1 b2 => [expr e b2] -> [expr e b]
+condenseTree = map ((div2_ $:) . uncurry (*:)) . pairs
+
+type RescaleTree4Ctx_  expr b b1 b2                   = (RescaleLayer_ expr b b1 b2, AddLit_ expr b1, Ring b1, AddLit_ expr b2, Ring b2)
+type RescaleTree8Ctx_  expr b b1 b2 b3 b4             = (RescaleLayer_ expr b b1 b2, RescaleTree4Ctx_  expr b2 b3 b4)
+type RescaleTree16Ctx_ expr b b1 b2 b3 b4 b5 b6       = (RescaleLayer_ expr b b1 b2, RescaleTree8Ctx_  expr b2 b3 b4 b5 b6)
+type RescaleTree32Ctx_ expr b b1 b2 b3 b4 b5 b6 b7 b8 = (RescaleLayer_ expr b b1 b2, RescaleTree16Ctx_ expr b2 b3 b4 b5 b6 b7 b8)
+
+rescaleTree4_  :: RescaleTree4Ctx_ expr b b1 b2 => expr e (b2 -> b)
+rescaleTree4_ = lam $ \x -> let_ (var x *: (one >+: var x)) $ \y -> head $ makeZs 1 y
+
+rescaleTree8_ :: RescaleTree8Ctx_ expr b b1 b2 b3 b4 => expr e (b4 -> b)
+rescaleTree8_ = lam $ \x -> let_ (var x *: (one >+: var x)) $ \y -> head . condenseTree $ makeZs 2 y
+
+rescaleTree16_ :: RescaleTree16Ctx_ expr b b1 b2 b3 b4 b5 b6 => expr e (b6 -> b)
+rescaleTree16_ = lam $ \x -> let_ (var x *: (one >+: var x)) $ \y -> head . condenseTree . condenseTree $ makeZs 4 y
+
+rescaleTree32_ :: RescaleTree32Ctx_ expr b b1 b2 b3 b4 b5 b6 b7 b8 => expr e (b8 -> b)
+rescaleTree32_ = lam $ \x -> let_ (var x *: (one >+: var x)) $ \y -> head . condenseTree . condenseTree . condenseTree $ makeZs 8 y
+
+
+-- Reconsider the more general version below if GHCI ever gets its stuff together regarding nested type families
 
 type RescaleTreePow2Ctx_ expr k r2 =
   (Lambda_ expr, PosC k, RescaleTreePow2Ctx_' expr k r2)

@@ -28,7 +28,7 @@ import Crypto.Lol.Cyclotomic.Tensor.CPP
 
 import Common
 
-type PT = PNoiseCyc PNZ (Cyc (TensorCounter CT)) F4 (Zq 7)
+type PT = PNoiseCyc PNZ (Cyc CT) F4 (Zq 7)
 
 -- polymorphic over expr alone
 addMul :: _ => expr env (_ -> _ -> PT)
@@ -51,8 +51,8 @@ main = do
   -- evaluate on random arguments
   pt1 <- getRandom
   pt2 <- getRandom
+  let ptresult = eval addMul (PNC pt1) (PNC pt2)
 {-
-  let ptresult = eval addMul pt1 pt2
   putStrLn $ "PT evaluation result: " ++ show ptresult
 
   putStrLn $ "PT expression params:\n" ++ params @(PT2CT M'Map Zqs _ _ _ _) addMul
@@ -62,8 +62,6 @@ main = do
     -- compile PT->CT once; interpret multiple times using dup
     -- was: ct
     ct1 <- pt2ct @M'Map @Zqs @TrivGad @Int64 addMul
-    record0 <- liftIO getTensorRecord
-    printIO record0
 {-
     let (ct1,tmp)  = dup ct
         (ct2,tmp') = dup tmp
@@ -74,16 +72,9 @@ main = do
     arg1 <- encrypt pt1
     arg2 <- encrypt pt2
 
-    printIO $ eval ct1 arg1 arg2
-    {-printIO result1-}
-    record1 <- liftIO getTensorRecord
-    printIO record1
+    let result = eval ct1 arg1 arg2
 
-    liftIO clearTensorRecord
 
-    printIO $ eval ct1 arg1 arg2
-    record2 <- liftIO getTensorRecord
-    printIO record2
 
 
 {-
@@ -103,9 +94,7 @@ main = do
 
 
 
-{-
     -- check the decrypted result
     decResult <- fromJust <$> readerToAccumulator (decrypt result)
     putStrLnIO $ "Decrypted evaluation result: " ++ show decResult
     putStrLnIO $ if decResult == unPNC ptresult then "PASS" else "FAIL"
--}

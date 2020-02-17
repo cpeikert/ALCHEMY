@@ -170,4 +170,4 @@ instance TensorGSqNorm t r => TensorGSqNorm (TensorCounter t) r where
   gSqNormDec !(TC t) = incRecord nGSqNormDec $ gSqNormDec t
 
 instance TensorCRTSet t fp => TensorCRTSet (TensorCounter t) fp where
-  crtSetDec = fmap (map TC)  crtSetDec
+  crtSetDec = fmap (map TC) crtSetDec

@@ -1,4 +1,8 @@
 alchemy.cabal
 **/*.prof
-**/.stack-work
+**/.stack-work*
 **/TAGS
+*.dump-spec
+*.dyn_hi
+*.hi
+*.o

@@ -21,11 +21,11 @@
 
 {-# OPTIONS_GHC -fno-warn-unused-binds   #-}
 
-module Crypto.Alchemy.Interpreter.PT2CT.Noise
-( PNoise(..), PNZ, PNoiseCyc(..), Units(..)
-, UnitsToNat, ZqPairsWithUnits, TotalUnits, pNoiseUnit
-, TaggedModulus, mkModulus, mkTypeLit, (:+)
-) where
+module Crypto.Alchemy.Interpreter.PT2CT.Noise where
+{-( PNoise(..), PNZ, PNoiseCyc(..), Units(..)-}
+{-, UnitsToNat, ZqPairsWithUnits, TotalUnits, pNoiseUnit-}
+{-, TaggedModulus, mkModulus, mkTypeLit, (:+)-}
+{-) where-}
 
 import           Algebra.Additive             as Additive (C)
 import           Algebra.Ring                 as Ring (C)
@@ -172,20 +172,14 @@ type family L2P a where
   L2P (a ': b) = (a, L2P b)
 
 
--- | "Bits" per noise unit.
-pNoiseUnit :: Double
-pNoiseUnit = 6.1
-
-
 mkTypeLit :: Integer -> TypeQ
-mkTypeLit = litT . numTyLit
-
+mkTypeLit = litT . numTyLit 
 -- | TH splice for a 'TaggedModulus' of the given integer with the number
 -- of noise units it can hold.
 mkModulus :: Integer -> TypeQ
 mkModulus q =
-  let units = floor $ logBase 2 (fromInteger q) / pNoiseUnit
-  in conT 'TMod `appT` mkTypeLit q `appT` mkTypeLit units
+  let units = floor $ logBase 2 (fromInteger q) 
+   in conT 'TMod `appT` mkTypeLit q `appT` mkTypeLit units
 
 
 -- CS: Alternative implementation of ZqPairsWithUnits that could maybe(?) be used to implement compile-time modulii checking w/o all the duplicate error messages.

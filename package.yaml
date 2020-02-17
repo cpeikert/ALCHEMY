@@ -51,7 +51,7 @@ executables:
     <<: *exe_opts
     main: HomomRLWR.hs
     ghc-options: -main-is HomomRLWR -fomit-interface-pragmas
-  #alchemy-tunnel:
-    #<<: *exe_opts
-    #main: Tunnel.hs
-    #ghc-options: -rtsopts -main-is Tunnel
+  alchemy-tunnel:
+    <<: *exe_opts
+    main: Tunnel.hs
+    ghc-options: -rtsopts -main-is Tunnel

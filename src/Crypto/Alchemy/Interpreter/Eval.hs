@@ -32,11 +32,11 @@ import Crypto.Alchemy.Language.LinearCyc
 import Crypto.Alchemy.Language.List
 import Crypto.Alchemy.Language.Monad
 import Crypto.Alchemy.Language.Pair
-import Crypto.Alchemy.Language.SHE
+import Crypto.Alchemy.Language.BGV
 import Crypto.Alchemy.Language.String
 
 import Crypto.Lol
-import Crypto.Lol.Applications.SymmSHE
+import Crypto.Lol.Applications.SymmBGV
 import Crypto.Lol.Types
 
 -- | Metacircular evaluator.
@@ -116,7 +116,7 @@ instance MonadWriter w m => MonadWriter_ E w m where
   listen_ = pureE listen
   pass_   = pureE pass
 
-instance SHE_ E where
+instance BGV_ E where
 
   type ModSwitchPTCtx_   E c m m' zp zp' zq  = ModSwitchPTCtx c   m' zp zp' zq
   type ModSwitchCtx_     E c m m' zp zq  zq' = ModSwitchCtx   c   m' zp zq  zq'

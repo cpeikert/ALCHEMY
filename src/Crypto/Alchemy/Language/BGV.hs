@@ -2,16 +2,16 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies          #-}
 
-module Crypto.Alchemy.Language.SHE where
+module Crypto.Alchemy.Language.BGV where
 
 import Crypto.Lol                      (Factored)
-import Crypto.Lol.Applications.SymmSHE (CT, KSHint, SK, TunnelHint)
+import Crypto.Lol.Applications.SymmBGV (CT, KSHint, SK, TunnelHint)
 import GHC.Exts
 
 -- | Symantics for somewhat-homomorphic encryption operations (not
 -- including those defined in 'Crypto.Alchemy.Language.Arithmetic').
 
-class SHE_ expr where
+class BGV_ expr where
 
   type ModSwitchPTCtx_   expr (c :: Factored -> * -> *)
     (m :: Factored) (m' :: Factored) zp zp' zq :: Constraint

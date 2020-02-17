@@ -17,11 +17,11 @@ module Crypto.Alchemy.Interpreter.Params
 import Crypto.Alchemy.Language.Arithmetic
 import Crypto.Alchemy.Language.Lambda
 import Crypto.Alchemy.Language.LinearCyc
-import Crypto.Alchemy.Language.SHE
+import Crypto.Alchemy.Language.BGV
 
 import Crypto.Alchemy.Interpreter.PT2CT.Noise
 
-import Crypto.Lol.Applications.SymmSHE (CT, KSHint)
+import Crypto.Lol.Applications.SymmBGV (CT, KSHint)
 import Crypto.Lol.Utils.ShowType
 
 import Data.Singletons.Prelude
@@ -79,7 +79,7 @@ instance SingI (p :: Nat) => Div2_ (Params expr) (PNoiseCyc ('PN p) c m r) where
 
   div2_ = showPNoise @p "div2"
 
-instance SHE_ (Params expr) where
+instance BGV_ (Params expr) where
 
   type ModSwitchPTCtx_   (Params expr) c m m' zp zp' zq  = ShowType zq
   type ModSwitchCtx_     (Params expr) c m m' zp zq  zq' = (ShowType zq, ShowType zq')
