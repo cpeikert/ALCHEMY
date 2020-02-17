@@ -47,10 +47,10 @@ executables:
     #<<: *exe_opts
     #main: Arithmetic.hs
     #ghc-options: -rtsopts -main-is Arithmetic
-  alchemy-homomrlwr:
-    <<: *exe_opts
-    main: HomomRLWR.hs
-    ghc-options: -main-is HomomRLWR -fomit-interface-pragmas
+  #alchemy-homomrlwr:
+    #<<: *exe_opts
+    #main: HomomRLWR.hs
+    #ghc-options: -main-is HomomRLWR -fomit-interface-pragmas
   alchemy-tunnel:
     <<: *exe_opts
     main: Tunnel.hs

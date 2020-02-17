@@ -21,11 +21,11 @@
 
 {-# OPTIONS_GHC -fno-warn-unused-binds   #-}
 
-module Crypto.Alchemy.Interpreter.PT2CT.Noise where
-{-( PNoise(..), PNZ, PNoiseCyc(..), Units(..)-}
-{-, UnitsToNat, ZqPairsWithUnits, TotalUnits, pNoiseUnit-}
-{-, TaggedModulus, mkModulus, mkTypeLit, (:+)-}
-{-) where-}
+module Crypto.Alchemy.Interpreter.PT2CT.Noise
+( PNoise(..), PNZ, PNoiseCyc(..), Units(..)
+, UnitsToNat, ZqPairsWithUnits, TotalUnits
+, TaggedModulus, mkModulus, mkTypeLit, (:+)
+) where
 
 import           Algebra.Additive             as Additive (C)
 import           Algebra.Ring                 as Ring (C)
@@ -178,7 +178,7 @@ mkTypeLit = litT . numTyLit
 -- of noise units it can hold.
 mkModulus :: Integer -> TypeQ
 mkModulus q =
-  let units = floor $ logBase 2 (fromInteger q) 
+  let units = floor $ logBase 2 (fromInteger q)
    in conT 'TMod `appT` mkTypeLit q `appT` mkTypeLit units
 
 

@@ -81,9 +81,9 @@ instance Div2_ P (c (m :: Factored) (ZqBasic ('PP '(Prime2, k)) i)) where
     c m (ZqBasic ('PP '(Prime2, 'S k)) i)
   div2_ = pureP "div2"
 
-instance Div2_ P (CT m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) where
-  type PreDiv2_ P (CT m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) =
-    CT m (ZqBasic ('PP '(Prime2, 'S k)) i) (c m' zq)
+instance Div2_ P (CT d m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) where
+  type PreDiv2_ P (CT d m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) =
+    CT d m (ZqBasic ('PP '(Prime2, 'S k)) i) (c m' zq)
 
   div2_ = pureP "div2"
 
@@ -113,6 +113,9 @@ instance BGV_ P where
   type AddPublicCtx_     P c m m' zp zq      = Show (c m zp)
   type MulPublicCtx_     P c m m' zp zq      = Show (c m zp)
   type KeySwitchQuadCtx_ P c m m' zp zq  gad = ()
+  type AddCTCtx_     P c m m' zp zq      = ()
+  type NegateCTCtx_     P c m m' zp zq      = ()
+  type MulCTCtx_     P c m m' zp zq      = ()
   type TunnelCtx_        P c e r s e' r' s' zp zq gad = ()
 
   modSwitchPT_     = pureP   "modSwitchPT"
@@ -120,6 +123,9 @@ instance BGV_ P where
   addPublic_     p = pureP $ "addPublic (" ++ show p ++ ")"
   mulPublic_     p = pureP $ "mulPublic (" ++ show p ++ ")"
   keySwitchQuad_ _ = pureP   "keySwitchQuad <HINT>"
+  addCT_           = pureP   "addCT"
+  negateCT_        = pureP   "negateCT"
+  mulCT_           = pureP   "mulCT"
   tunnel_        _ = pureP   "tunnel <HINT>"
 
 instance LinearCyc_ P c where

@@ -87,9 +87,9 @@ instance (RescaleCyc (c m) (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Pri
   div2_ = pureE $ PNC . rescalePow . unPNC
 
 instance (ModSwitchPTCtx c m' (ZqBasic ('PP '(Prime2, 'S k)) i) (ZqBasic ('PP '(Prime2, k)) i) zq) =>
-  Div2_ E (CT m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) where
-  type PreDiv2_ E (CT m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) =
-    CT m (ZqBasic ('PP '(Prime2, 'S k)) i) (c m' zq)
+  Div2_ E (CT d m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) where
+  type PreDiv2_ E (CT d m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) =
+    CT d m (ZqBasic ('PP '(Prime2, 'S k)) i) (c m' zq)
 
   div2_ = pureE modSwitchPT
 
@@ -123,6 +123,9 @@ instance BGV_ E where
   type AddPublicCtx_     E c m m' zp zq      = AddPublicCtx   c m m' zp zq
   type MulPublicCtx_     E c m m' zp zq      = MulPublicCtx   c m m' zp zq
   type KeySwitchQuadCtx_ E c m m' zp zq gad  = KeySwitchCtx gad c m' zp zq
+  type AddCTCtx_         E c m m' zp zq      = AddCTCtx       c m m' zp zq
+  type NegateCTCtx_      E c m m' zp zq      = NegateCTCtx    c   m'    zq
+  type MulCTCtx_         E c m m' zp zq      = MulCTCtx       c   m' zp zq
   type TunnelCtx_        E c e r s e' r' s' zp zq gad =
                  TunnelCtx c   r s e' r' s' zp zq gad
 
@@ -131,6 +134,9 @@ instance BGV_ E where
   addPublic_     = pureE . addPublic
   mulPublic_     = pureE . mulPublic
   keySwitchQuad_ = pureE . keySwitchQuadCirc
+  addCT_         = pureE   addCT
+  negateCT_      = pureE   negateCT
+  mulCT_         = pureE   mulCT
   tunnel_        = pureE . tunnel
 
 instance LinearCyc_ E c where
@@ -146,9 +152,9 @@ instance ErrorRate_ E where
      FoldableCyc (c m') (LiftOf zq), FunctorCyc (c m') (LiftOf zq) (LiftOf zq),
      LiftOf (c m' zq) ~ c m' (LiftOf zq))
 
-  errorRate_ :: forall c m m' zp zq z env .
+  errorRate_ :: forall c m m' zp zq z env d .
                 (ErrorRateCtx_ E c m m' zp zq z) =>
-                SK (c m' z) -> E env (CT m zp (c m' zq) -> Double)
+                SK (c m' z) -> E env (CT d m zp (c m' zq) -> Double)
   errorRate_ sk = pureE $ (/ (fromIntegral $ modulus @zq)) .
                   fromIntegral . foldrDec max zero . fmapDec abs . errorTerm sk
 

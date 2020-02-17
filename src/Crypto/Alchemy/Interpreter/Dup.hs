@@ -58,6 +58,12 @@ instance (BGV_ ex1, BGV_ ex2) => BGV_ (Dup ex1 ex2) where
     (MulPublicCtx_ ex1 c m m' zp zq, MulPublicCtx_ ex2 c m m' zp zq)
   type KeySwitchQuadCtx_ (Dup ex1 ex2) c m m' zp zq gad =
     (KeySwitchQuadCtx_ ex1 c m m' zp zq gad, KeySwitchQuadCtx_ ex2 c m m' zp zq gad)
+  type AddCTCtx_ (Dup ex1 ex2) c m m' zp zq =
+    (AddCTCtx_ ex1 c m m' zp zq, AddCTCtx_ ex2 c m m' zp zq)
+  type NegateCTCtx_ (Dup ex1 ex2) c m m' zp zq =
+    (NegateCTCtx_ ex1 c m m' zp zq, NegateCTCtx_ ex2 c m m' zp zq)
+  type MulCTCtx_ (Dup ex1 ex2) c m m' zp zq =
+    (MulCTCtx_ ex1 c m m' zp zq, MulCTCtx_ ex2 c m m' zp zq)
   type TunnelCtx_    (Dup ex1 ex2) c e r s e' r' s' zp zq gad =
     (TunnelCtx_ ex1 c e r s e' r' s' zp zq gad,
      TunnelCtx_ ex2 c e r s e' r' s' zp zq gad)
@@ -67,6 +73,9 @@ instance (BGV_ ex1, BGV_ ex2) => BGV_ (Dup ex1 ex2) where
   addPublic_     p = Dup (addPublic_ p)     (addPublic_ p)
   mulPublic_     p = Dup (mulPublic_ p)     (mulPublic_ p)
   keySwitchQuad_ h = Dup (keySwitchQuad_ h) (keySwitchQuad_ h)
+  addCT_           = Dup addCT_              addCT_
+  negateCT_        = Dup negateCT_           negateCT_
+  mulCT_           = Dup mulCT_              mulCT_
   tunnel_        h = Dup (tunnel_ h)        (tunnel_ h)
 
 instance (LinearCyc_ ex1 rep, LinearCyc_ ex2 rep,

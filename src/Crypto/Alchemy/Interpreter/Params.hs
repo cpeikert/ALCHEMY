@@ -9,6 +9,7 @@
 {-# LANGUAGE Strict                #-}
 {-# LANGUAGE TypeApplications      #-}
 {-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE UndecidableInstances  #-}
 
 module Crypto.Alchemy.Interpreter.Params
@@ -53,7 +54,7 @@ showZq str = P $ str ++ " " ++ showType (Proxy::Proxy zq)
 showPNoise :: forall p expr e a . (SingI (p :: Nat)) => String -> Params expr e a
 showPNoise str = P $ str ++ " " ++ show (withKnownNat (sing :: SNat p) (natVal (Proxy :: Proxy p)))
 
-instance ShowType zq => Add_ (Params expr) (CT m zp (c m' zq)) where
+instance ShowType zq => Add_ (Params expr) (CT d m zp (c m' zq)) where
   add_ = showZq @zq "add"
   neg_ = showZq @zq "neg"
 
@@ -64,8 +65,8 @@ instance SingI (p :: Nat) => Add_ (Params expr) (PNoiseCyc ('PN p) c m r) where
 instance SingI (p :: Nat) => AddLit_ (Params expr) (PNoiseCyc ('PN p) c m r) where
   addLit_ _ = showPNoise @p "addLit"
 
-instance ShowType zq => Mul_ (Params expr) (CT m zp (c m' zq)) where
-  type PreMul_ (Params expr) (CT m zp (c m' zq)) = (CT m zp (c m' zq))
+instance ShowType zq => Mul_ (Params expr) (CT d m zp (c m' zq)) where
+  type PreMul_ (Params expr) (CT d m zp (c m' zq)) = (CT d m zp (c m' zq))
   mul_ = showZq @zq "mul"
 
 instance SingI (p :: Nat) => Mul_ (Params expr) (PNoiseCyc ('PN p) c m r) where
@@ -86,30 +87,47 @@ instance BGV_ (Params expr) where
   type AddPublicCtx_     (Params expr) c m m' zp zq      = ShowType zq
   type MulPublicCtx_     (Params expr) c m m' zp zq      = ShowType zq
   type KeySwitchQuadCtx_ (Params expr) c m m' zp zq  gad = ShowType zq
+  type AddCTCtx_         (Params expr) c m m' zp zq      = ShowType zq
+  type NegateCTCtx_      (Params expr) c m m' zp zq      = ShowType zq
+  type MulCTCtx_         (Params expr) c m m' zp zq      = ShowType zq
   type TunnelCtx_        (Params expr) c e r s e' r' s' zp zq gad = ShowType zq
 
-  modSwitchPT_ :: forall c m m' zp zp' zq env . ShowType zq
-    => Params expr env (CT m zp (c m' zq) -> CT m zp' (c m' zq))
+  modSwitchPT_ :: forall c m m' zp zp' zq d env . ShowType zq
+    => Params expr env (CT d m zp (c m' zq) -> CT d m zp' (c m' zq))
   modSwitchPT_ = showZq @zq "modSwitchPT"
 
-  modSwitch_ :: forall c m m' zp zq zq' env . (ShowType zq, ShowType zq')
-    => Params expr env (CT m zp (c m' zq) -> CT m zp (c m' zq'))
+  modSwitch_ :: forall c m m' zp zq zq' d env . (ShowType zq, ShowType zq')
+    => Params expr env (CT d m zp (c m' zq) -> CT d m zp (c m' zq'))
   modSwitch_ = showZq @zq' $ "modSwitch " ++ showType (Proxy::Proxy zq) ++ " ->"
 
-  addPublic_ :: forall c m m' zp zq pt env . ShowType zq
-    => pt -> Params expr env (CT m zp (c m' zq) -> CT m zp (c m' zq))
+  addPublic_ :: forall c m m' zp zq pt d env . ShowType zq
+    => pt -> Params expr env (CT d m zp (c m' zq) -> CT d m zp (c m' zq))
   addPublic_ _ = showZq @zq "addPublic"
 
-  mulPublic_ :: forall c m m' zp zq pt env . ShowType zq
-    => pt -> Params expr env (CT m zp (c m' zq) -> CT m zp (c m' zq))
+  mulPublic_ :: forall c m m' zp zq pt d env . ShowType zq
+    => pt -> Params expr env (CT d m zp (c m' zq) -> CT d m zp (c m' zq))
   mulPublic_ _ = showZq @zq "mulPublic"
 
   keySwitchQuad_ :: forall c m' zq gad env a . ShowType zq
     => KSHint gad (c m' zq) -> Params expr env a
   keySwitchQuad_ _ = showZq @zq "keySwitchQuad"
 
+  addCT_ :: forall c m m' zp zq env d1 d2. ShowType zq
+    => Params expr env (CT d1 m zp (c m' zq) -> CT d2 m zp (c m' zq) -> CT (Max d1 d2) m zp (c m' zq))
+  addCT_ = showZq @zq "addCT" 
+
+  negateCT_ :: forall c m m' zp zq env d. ShowType zq
+    => Params expr env (CT d m zp (c m' zq) -> CT d m zp (c m' zq))
+  negateCT_ = showZq @zq "negateCT"
+
+  mulCT_ :: forall c m m' zp zq env d1 d2. ShowType zq
+    => Params expr env (CT d1 m zp (c m' zq) -> CT d2 m zp (c m' zq) -> CT (d1 + d2) m zp (c m' zq))
+  mulCT_ = showZq @zq "negateCT"
+
+
   tunnel_ :: forall th zq env a . ShowType zq => th zq -> Params expr env a
   tunnel_ _ = showZq @zq "tunnel"
+
 
 instance SingI (p :: Nat) => LinearCyc_ (Params expr) (PNoiseCyc ('PN p) t) where
   type PreLinearCyc_ (Params expr) (PNoiseCyc ('PN p) t) =

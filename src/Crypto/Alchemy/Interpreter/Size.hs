@@ -63,9 +63,9 @@ instance Div2_ S (PNoiseCyc h t m (ZqBasic ('PP '(Prime2, k)) i)) where
     PNoiseCyc h t m (ZqBasic ('PP '(Prime2, 'L.S k)) i)
   div2_ = S 1
 
-instance Div2_ S (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
-  type PreDiv2_ S (CT m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) =
-    CT m (ZqBasic ('PP '(Prime2, 'L.S k)) i) (Cyc t m' zq)
+instance Div2_ S (CT d m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) where
+  type PreDiv2_ S (CT d m (ZqBasic ('PP '(Prime2, k)) i) (Cyc t m' zq)) =
+    CT d m (ZqBasic ('PP '(Prime2, 'L.S k)) i) (Cyc t m' zq)
   div2_ = S 1
 
 instance Lambda_ S where
@@ -108,6 +108,9 @@ instance BGV_ S where
   type AddPublicCtx_     S c m m' zp zq      = ()
   type MulPublicCtx_     S c m m' zp zq      = ()
   type KeySwitchQuadCtx_ S c m m' zp zq  gad = ()
+  type AddCTCtx_         S c m m' zp zq      = () 
+  type NegateCTCtx_      S c m m' zp zq      = ()
+  type MulCTCtx_         S c m m' zp zq      = ()
   type TunnelCtx_ S c e r s e' r' s' zp zq gad = ()
 
   modSwitchPT_     = S 1
@@ -115,7 +118,11 @@ instance BGV_ S where
   addPublic_ _     = S 1
   mulPublic_ _     = S 1
   keySwitchQuad_ _ = S 1
+  addCT_           = S 1
+  negateCT_        = S 1
+  mulCT_           = S 1
   tunnel_ _        = S 1
+
 
 instance LinearCyc_ S c where
   type PreLinearCyc_ S c = c

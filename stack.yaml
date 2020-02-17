@@ -50,7 +50,7 @@ extra-deps:
 - template-default-0.1.2
 - DRBG-0.5.5
 - git: https://github.com/cpeikert/Lol
-  commit: d349b6895c43c702b35feada1328f86b29c0704c
+  commit: 60d7b3d38fc4279a60d6932a433ed2e4c22cc287
   subdirs:
     - 'lol'
     - 'lol-apps'

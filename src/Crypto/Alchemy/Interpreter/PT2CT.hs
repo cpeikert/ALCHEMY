@@ -19,12 +19,12 @@
 
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
-module Crypto.Alchemy.Interpreter.PT2CT where
-{-( PT2CT-}
-{-, pt2ct, encrypt, decrypt-}
-{--- * re-exports-}
-{-, PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkModulus-}
-{-) where-}
+module Crypto.Alchemy.Interpreter.PT2CT
+( PT2CT
+, pt2ct, encrypt, decrypt
+-- * re-exports
+, PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkModulus
+) where
 
 import Control.Applicative
 import Control.DeepSeq
@@ -81,7 +81,7 @@ encrypt :: forall mon c m m' zp zq z .
    (KeysAccumulatorCtx Double mon, EncryptCtx c m m' z zp zq,
     z ~ LiftOf zp, GenSKCtx c m' z Double, Typeable c, Typeable m', Typeable z)
   => c m zp                  -- | plaintext
-  -> mon (CT m zp (c m' zq)) -- | (monadic) ciphertext
+  -> mon (CT 1 m zp (c m' zq)) -- | (monadic) ciphertext
 encrypt x = do
   -- generate key if necessary
   (sk :: SK (c m' z)) <- getKey
@@ -89,11 +89,11 @@ encrypt x = do
 
 -- | Decrypt a ciphertext under an appropriate key (from the monad),
 -- if one exists.
-decrypt :: forall mon c m m' z zp zq k .
+decrypt :: forall mon c m m' z zp zq k d .
   (MonadReader Keys mon, DecryptCtx c m m' z zp zq,
    -- CJP: DON'T LOVE THIS CHOICE OF z HERE; IT'S ARBITRARY
    z ~ LiftOf zp, Typeable c, Typeable m', Typeable z)
-  => CT m zp (c m' zq) -> mon (Maybe (c m zp))
+  => CT d m zp (c m' zq) -> mon (Maybe (c m zp))
 decrypt x = do
   sk :: Maybe (SK (c m' z)) <- lookupKey
   return $ flip BGV.decrypt x <$> sk
@@ -111,11 +111,13 @@ instance (List_ ctex, Applicative mon)
   nil_  = PC $ pure nil_
   cons_ = PC $ pure cons_
 
-instance (Add_ ctex (Cyc2CT m'map zqs a), Applicative mon)
-  => Add_ (PT2CT m'map zqs gad z mon ctex) a where
+instance (BGV_ ctex, Applicative mon,
+          AddCTCtx_ ctex c m (Lookup m m'map) zp (PNoise2Zq zqs p),
+          NegateCTCtx_ ctex c m (Lookup m m'map) zp (PNoise2Zq zqs p))
+  => Add_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c m zp) where
 
-  add_ = PC $ pure add_
-  neg_ = PC $ pure neg_
+  add_ = PC $ pure addCT_
+  neg_ = PC $ pure negateCT_
 
 instance (BGV_ ctex, Applicative mon,
           AddPublicCtx_ ctex c m (Lookup m m'map) zp (PNoise2Zq zqs p))
@@ -147,8 +149,7 @@ type PT2CTMulCtx m'map zqs gad z mon ctex p c m zp = PT2CTMulCtx'
   gad z mon ctex c m zp
 
 type PT2CTMulCtx' m' zqin zqhint zqout gad z mon ctex c m zp =
-  (Lambda_ ctex, BGV_ ctex,
-   Mul_ ctex (CT m zp (c m' zqin)), PreMul_ ctex (CT m zp (c m' zqin)) ~ CT m zp (c m' zqin),
+  (Lambda_ ctex, BGV_ ctex, MulCTCtx_ ctex c m m' zp zqin,
    ModSwitchCtx_ ctex c m m' zp zqin   zqhint, -- in -> hint
    ModSwitchCtx_ ctex c m m' zp zqhint zqout,  -- hint -> out
    KeySwitchQuadCtx_ ctex c m m' zp zqhint gad, KSHintCtx gad c m' z zqhint,
@@ -172,7 +173,7 @@ instance (PT2CTMulCtx m'map zqs gad z mon ctex p c m zp)
   mul_ = PC $
     lamM $ \x -> lamM $ \y -> do
         hint :: KSHint gad (c m' zqhint) <- getQuadCircHint (Proxy::Proxy z)
-        let prod = var x *: y :: ctex _ (CT m zp (c m' (PNoise2Zq zqs pin)))
+        let prod =(mulCT_ $: (var x) $: y) :: ctex _ (CT _ m zp (c m' (PNoise2Zq zqs pin)))
          in return $ modSwitch_ .: (keySwitchQuad_ $!! hint) .: modSwitch_ $: prod
 
 instance (BGV_ ctex, Applicative mon,
@@ -246,7 +247,7 @@ type PNoise2Zq zqs p = ZqPairsWithUnits zqs (CTPNoise2Units p)
 type family Cyc2CT m'map zqs e = cte | cte -> e where
 
   Cyc2CT m'map zqs (PNoiseCyc p c m zp) =
-    CT m zp (c (Lookup m m'map) (PNoise2Zq zqs p))
+    CT 1 m zp (c (Lookup m m'map) (PNoise2Zq zqs p))
 
   -- for environments
   Cyc2CT m'map zqs (a,b)    = (Cyc2CT m'map zqs a,   Cyc2CT m'map zqs b)
@@ -273,19 +274,19 @@ type family Lookup (m :: Factored) map :: Factored where
 -- PNoise constants
 
 -- | Amount by which pNoise decreases during a key switch (gadget-independent)
-type KSAccumPNoise = $(mkTypeLit 12)
+type KSAccumPNoise = 12
 
 -- | Maximum number of units in a 32-bit modulus; used to compute the pNoise
 -- of a key switch hint with TrivGad
-type Max32BitUnits = $(mkTypeLit 31)
+type Max32BitUnits = 31
 
 -- | Amount by which pNoise decreases from a multiplication
 -- (multiplication costs about 18 bits)
-type MulPNoise = $(mkTypeLit 18)
+type MulPNoise = 18
 
 -- | Number of modulus units required to correctly decrypt a ciphertext with
 -- zero pNoise. A ciphertext with zero pNoise has absolute noise ~2000.
-type MinUnits = $(mkTypeLit 12)
+type MinUnits = 12
 
--- | Amount by which pNoise decreases from a ring tunnel
-type TunnelPNoise = $(mkTypeLit 10)
+-- | Amount by which pNoise decreases from a ring tun
+type TunnelPNoise = 10
