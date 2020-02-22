@@ -282,7 +282,7 @@ type Max32BitUnits = 31
 
 -- | Amount by which pNoise decreases from a multiplication
 -- (multiplication costs about 18 bits)
-type MulPNoise = 18
+type MulPNoise = 20
 
 -- | Number of modulus units required to correctly decrypt a ciphertext with
 -- zero pNoise. A ciphertext with zero pNoise has absolute noise ~2000.
