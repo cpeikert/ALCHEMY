@@ -39,30 +39,29 @@ mkRescaleName :: Integer -> Name
 mkRescaleName b = mkName $ "rescaleTree" ++ show (2^b :: Integer) ++ "_"
 
 mkRescaleSig :: Integer -> DecQ
-mkRescaleSig b = let expr = mkName "expr"
-                     e = mkName "e"
-                     bs = map mkName ["b" ++ show i | i <- [0..2*(b-1)]]
-                     constrs = cxt $ mkConstraints (varT expr) (map varT bs)
-                     arr = [t| $(varT expr) $(varT e) ($(varT $ last bs) -> $(varT $ head bs))|]
-                  in sigD (mkRescaleName b) $ forallT (map plainTV $ expr:e:bs) constrs arr
+mkRescaleSig b 
+  | b < 2     = error "mkRescaleSig: internal error" -- Should never occur due to checks in mkRescaleTree
+  | otherwise = let expr = mkName "expr"
+                    e = mkName "e"
+                    bs = map mkName ["b" ++ show i | i <- [0..2*(b-1)]]
+                    constrs = cxt $ mkConstraints (varT expr) (map varT bs)
+                    arr = [t| $(varT expr) $(varT e) ($(varT $ last bs) -> $(varT $ head bs))|]
+                 in sigD (mkRescaleName b) $ forallT (map plainTV $ expr:e:bs) constrs arr
 
 
-
-{-mkCondenses :: Integer -> ExpQ-}
-{-mkCondenses 2 = [e| head |]-}
-{-mkCondenses b = [e| $(mkCondenses (b - 1)) . $condenseTree |]-}
-  {-where condenseTree = [e| map ((div2_ $:) . uncurry (*:)) . pairs|]-}
 
 mkRescaleBody :: Integer -> DecsQ
-mkRescaleBody b = 
-  [d|
-    $(varP $ mkRescaleName b) = 
-      lam $ \x -> let_ (var x *: (one >+: var x)) $ 
-                       \y -> $(mkCondenses b) $ map ((div2_ $:) . (>+: var y)) 
-                                                [fromInteger $ z * (-z + 1) | z <- [1 .. $(litE $ integerL (b-1))]]
-  |]
-  where mkCondenses 2 = [e| head |]
-        mkCondenses b = [e| $(mkCondenses (b - 1)) . map ((div2_ $:) . uncurry (*:)) . pairs |]
+mkRescaleBody b 
+  | b < 2     = error "mkRescaleBody: internal error" -- Should never occur due to checks in mkRescaleTree
+  | otherwise = 
+      [d|
+        $(varP $ mkRescaleName b) = 
+          lam $ \x -> let_ (var x *: (one >+: var x)) $ 
+                         \y -> $(mkCondenses b) $ map ((div2_ $:) . (>+: var y)) 
+                                                  [fromInteger $ z * (-z + 1) | z <- [1 .. $(litE $ integerL (b-1))]]
+      |]
+      where mkCondenses 2 = [e| head |]
+            mkCondenses b = [e| $(mkCondenses (b - 1)) . map ((div2_ $:) . uncurry (*:)) . pairs |]
 
 mkRescaleTree :: Integer -> DecsQ
 mkRescaleTree m = 
