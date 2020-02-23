@@ -1,17 +1,5 @@
-{-# LANGUAGE ConstraintKinds       #-}
-{-# LANGUAGE DataKinds             #-}
-{-# LANGUAGE FlexibleContexts      #-}
-{-# LANGUAGE FlexibleInstances     #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE PartialTypeSignatures #-}
 {-# LANGUAGE RebindableSyntax      #-}
-{-# LANGUAGE ScopedTypeVariables   #-}
-{-# LANGUAGE TypeApplications      #-}
-{-# LANGUAGE TypeFamilies          #-}
-{-# LANGUAGE UndecidableInstances  #-}
-{-# LANGUAGE TemplateHaskell  #-}
-
-{-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
+{-# LANGUAGE TemplateHaskell       #-}
 
 module Crypto.Alchemy.Language.RescaleTree.TH 
 ( module X
@@ -31,8 +19,8 @@ import Control.Monad                      as X
 
 mkConstraints :: TypeQ -> [TypeQ] -> [TypeQ]
 mkConstraints expr (b0:b1:b2:bs) = constr : constrs
-  where constr  = [t| (Lambda_ $expr, $b1 ~ PreDiv2_ $expr $b0, $b2 ~ PreMul_ $expr $b1, Div2_ $expr $b0, Mul_ $expr $b1)|]
-        constrs = if null bs then [[t| (AddLit_ $expr $b1, Ring $b1, AddLit_ $expr $b2, Ring $b2)|]]
+  where constr  = [t| (Lambda_ $expr, $b1 ~ PreDiv2_ $expr $b0, $b2 ~ PreMul_ $expr $b1, Div2_ $expr $b0, Mul_ $expr $b1) |]
+        constrs = if null bs then [[t| (AddLit_ $expr $b1, Ring $b1, AddLit_ $expr $b2, Ring $b2) |]]
                              else mkConstraints expr (b2:bs) 
 
 mkRescaleName :: Integer -> Name
@@ -41,11 +29,11 @@ mkRescaleName b = mkName $ "rescaleTree" ++ show (2^b :: Integer) ++ "_"
 mkRescaleSig :: Integer -> DecQ
 mkRescaleSig b 
   | b < 2     = error "mkRescaleSig: internal error" -- Should never occur due to checks in mkRescaleTree
-  | otherwise = let expr = mkName "expr"
-                    e = mkName "e"
-                    bs = map mkName ["b" ++ show i | i <- [0..2*(b-1)]]
+  | otherwise = let expr    = mkName "expr"
+                    e       = mkName "e"
+                    bs      = map mkName ["b" ++ show i | i <- [0..2*(b-1)]]
                     constrs = cxt $ mkConstraints (varT expr) (map varT bs)
-                    arr = [t| $(varT expr) $(varT e) ($(varT $ last bs) -> $(varT $ head bs))|]
+                    arr     = [t| $(varT expr) $(varT e) ($(varT $ last bs) -> $(varT $ head bs)) |]
                  in sigD (mkRescaleName b) $ forallT (map plainTV $ expr:e:bs) constrs arr
 
 
