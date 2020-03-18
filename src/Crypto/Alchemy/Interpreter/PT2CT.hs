@@ -58,10 +58,10 @@ newtype PT2CT
   gad      -- | gadget type for key-switch hints
   z        -- | integral type for secret keys
   mon      -- | monad for creating keys/noise
-  ctex     -- | interpreter of ciphertext operations
+  expr     -- | interpreter of ciphertext operations
   e        -- | environment
   a        -- | plaintext type; use 'PNoiseCyc p t m zp' for cyclotomics
-  = PC { unPC :: mon (ctex (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a)) }
+  = PC { unPC :: mon (expr (Cyc2CT m'map zqs e) (Cyc2CT m'map zqs a)) }
 
 -- | Transform a plaintext expression to a (monadic) ciphertext
 -- expression.  In addition to being a 'MonadAccumulator' for 'Keys'
@@ -223,6 +223,11 @@ instance LinearCyc_ (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc (p :: PNoise) c)
       modSwitch_ .:             -- scale back to the target modulus zq
       (tunnel_ $!! hint) .:     -- apply lin func w/ the hint (strict)
       modSwitch_                -- scale (up) to the hint modulus zq'
+
+
+instance (BGV_ ctex, ModSwitchCtx_ ctex c m (Lookup m m'map) zp (PNoise2Zq zqs p) (PNoise2Zq zqs p'), p' :<= p, Functor mon, Lambda_ ctex) => Loosen (PT2CT m'map zqs gad z mon ctex) (PNoiseCyc p c m zp) (PNoiseCyc p' c m zp) where
+  loosen = PC . fmap (modSwitch_ $:) . unPC
+
 
 ----- Type families -----
 

@@ -8,7 +8,7 @@
 {-# LANGUAGE UndecidableInstances  #-}
 
 module Crypto.Alchemy.Interpreter.Print
-( P, print
+( P(..), pprint -- TODO: remove (..) when done testing sort
 )
 where
 
@@ -86,6 +86,9 @@ instance Div2_ P (CT d m (ZqBasic ('PP '(Prime2, k)) i) (c m' zq)) where
     CT d m (ZqBasic ('PP '(Prime2, 'S k)) i) (c m' zq)
 
   div2_ = pureP "div2"
+
+instance Loosen P a a' where
+  loosen _ = pureP "loosen"
 
 instance Functor_ P f where
   fmap_ = pureP "fmap"

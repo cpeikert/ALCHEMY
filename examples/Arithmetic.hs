@@ -28,11 +28,14 @@ import Crypto.Lol.Cyclotomic.Tensor.CPP
 
 import Common
 
-type PT = PNoiseCyc PNZ (Cyc CT) F4 (Zq 7)
+type PT (p :: PNoise) = PNoiseCyc p (Cyc CT) F4 (Zq 7)
 
 -- polymorphic over expr alone
-addMul :: _ => expr env (_ -> _ -> PT)
-addMul = lam2 $ \x y -> (var x +: var y) *: var y
+addMul :: _ => expr env (PT _ -> PT _ -> PT PNZ)
+addMul = lam2 $ \x y -> (var x *: var y) +: vr y
+
+addMul' :: _ => expr env (PT _ -> PT _ -> PT PNZ)
+addMul' = lam2 $ \x y -> (vr x *: vr y) +: vr y
 
 type M'Map = '[ '(F4, F512) ]
 
@@ -51,7 +54,7 @@ main = do
   -- evaluate on random arguments
   pt1 <- getRandom
   pt2 <- getRandom
-  let ptresult = eval addMul (PNC pt1) (PNC pt2)
+  {-let ptresult = eval addMul (PNC pt1) (PNC pt2)-}
 {-
   putStrLn $ "PT evaluation result: " ++ show ptresult
 
@@ -73,6 +76,7 @@ main = do
     arg2 <- encrypt pt2
 
     let result = eval ct1 arg1 arg2
+    printIO result
 
 
 
@@ -95,6 +99,6 @@ main = do
 
 
     -- check the decrypted result
-    decResult <- fromJust <$> readerToAccumulator (decrypt result)
-    putStrLnIO $ "Decrypted evaluation result: " ++ show decResult
-    putStrLnIO $ if decResult == unPNC ptresult then "PASS" else "FAIL"
+    {-decResult <- fromJust <$> readerToAccumulator (decrypt result)-}
+    {-putStrLnIO $ "Decrypted evaluation result: " ++ show decResult-}
+    {-putStrLnIO $ if decResult == unPNC ptresult then "PASS" else "FAIL"-}

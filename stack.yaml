@@ -49,6 +49,11 @@ extra-deps:
 - monadcryptorandom-0.7.2.1
 - template-default-0.1.2
 - DRBG-0.5.5
+- vec-0.3
+- fin-0.1.1
+- ghc-typelits-presburger-0.3.0.0
+- equational-reasoning-0.6.0.1
+
 - git: https://github.com/cpeikert/Lol
   commit: 60d7b3d38fc4279a60d6932a433ed2e4c22cc287
   subdirs:

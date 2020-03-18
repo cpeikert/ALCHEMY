@@ -54,14 +54,23 @@ infixr 9 .:
 -- | Ordinary (non-strict) object-language function composition.
 f .: g = lam $ \x -> var f $: (var g $: var x)
 
-class Extends m n where
+class Extends n m where
   var :: (Lambda_ expr) => expr m a -> expr n a
 
 instance {-# OVERLAPS #-} Extends m m where
   var = id
 
-instance (Extends m n, x ~ (n, e)) => Extends m x where
+instance (Extends n m, x ~ (n, e)) => Extends x m where
   var = weaken . var
+
+
+
+class Loosen expr a a' where
+  loosen :: expr e a -> expr e a'
+
+
+vr :: (Extends n m, Loosen expr a a', Lambda_ expr) => expr m a -> expr n a'
+vr = var . loosen
 
 -- Some useful target language functions
 const_ :: Lambda_ expr => expr e (a -> b -> a)

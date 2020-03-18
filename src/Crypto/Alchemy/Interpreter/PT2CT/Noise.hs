@@ -24,7 +24,7 @@
 module Crypto.Alchemy.Interpreter.PT2CT.Noise
 ( PNoise(..), PNZ, PNoiseCyc(..), Units(..)
 , UnitsToNat, ZqPairsWithUnits, TotalUnits
-, TaggedModulus, mkModulus, mkTypeLit, (:+)
+, TaggedModulus, mkModulus, mkTypeLit, (:+), (:<=),
 ) where
 
 import           Algebra.Additive             as Additive (C)
@@ -55,6 +55,11 @@ type PNZ = 'PN 0
 -- | Adds a @Nat@ to a @PNoise@.
 type family (:+) a b where
   'PN a :+ b = 'PN (a + b)
+
+type family (:<=?) a b where
+  ('PN a) :<=? ('PN b) = a <= b
+
+type (:<=) a b = (a :<=? b) ~ 'True
 
 -- | A type representing the number of noise "units" in a modulus.
 -- We use the promoted type @'Units@ of kind @Units@ to distinguish this

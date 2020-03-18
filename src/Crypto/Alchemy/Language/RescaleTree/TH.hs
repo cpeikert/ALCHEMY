@@ -45,11 +45,12 @@ mkRescaleBody b
       [d|
         $(varP $ mkRescaleName b) = 
           lam $ \x -> let_ (var x *: (one >+: var x)) $ 
-                         \y -> $(mkCondenses b) $ map ((div2_ $:) . (>+: var y)) 
-                                                  [fromInteger $ z * (-z + 1) | z <- [1 .. $(litE $ integerL (b-1))]]
+                      \y -> $(mkCondenses b) $ map ((div2_ $:) . (>+: var y) . fromInteger) $zs
+                                                  
       |]
       where mkCondenses 2 = [e| head |]
             mkCondenses b = [e| $(mkCondenses (b - 1)) . map ((div2_ $:) . uncurry (*:)) . pairs |]
+            zs            = listE $ [litE $ integerL $ z * (-z + 1) | z <- [1..b-1]]
 
 mkRescaleTree :: Integer -> DecsQ
 mkRescaleTree m = 

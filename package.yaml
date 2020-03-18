@@ -28,6 +28,10 @@ dependencies:
   - template-haskell
   - data-default
   - lens
+  - vec
+  - fin
+  - ghc-typelits-presburger
+  - equational-reasoning
 
 library:
   source-dirs: src
@@ -44,14 +48,14 @@ _common_exe_opts: &exe_opts
     - time
 
 executables:
-  #alchemy-arithmetic: 
-    #<<: *exe_opts
-    #main: Arithmetic.hs
-    #ghc-options: -rtsopts -main-is Arithmetic
-  alchemy-homomrlwr:
+  alchemy-arithmetic: 
     <<: *exe_opts
-    main: HomomRLWR.hs
-    ghc-options: -main-is HomomRLWR -fomit-interface-pragmas
+    main: Arithmetic.hs
+    ghc-options: -rtsopts -main-is Arithmetic
+  #alchemy-homomrlwr:
+    #<<: *exe_opts
+    #main: HomomRLWR.hs
+    #ghc-options: -main-is HomomRLWR -fomit-interface-pragmas
   #alchemy-tunnel:
     #<<: *exe_opts
     #main: Tunnel.hs
