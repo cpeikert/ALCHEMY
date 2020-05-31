@@ -9,9 +9,10 @@
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE UndecidableInstances   #-}
+{-# LANGUAGE PolyKinds   #-}
 
 module Crypto.Alchemy.Interpreter.ErrorRateWriter
-( ERW, writeErrorRates, Kleislify, ErrorRateLog )
+( ERW (..), writeErrorRates, Kleislify, ErrorRateLog )
 where
 
 import Control.Applicative
@@ -35,7 +36,7 @@ import Crypto.Alchemy.Language.String
 -- of any ciphertexts created during interpretation.
 newtype ERW
   expr                          -- | the underlying interpreter
-  z                             -- | (phantom) integral type for secret keys
+  (z :: *)                      -- | (phantom) integral type for secret keys
   k                             -- | (reader) monad that supplies the
                                 -- keys for extracting error
   w                             -- | (writer) monad for logging error rates
@@ -43,18 +44,20 @@ newtype ERW
   a                             -- | represented type
   = ERW { unERW :: k (expr (Kleislify w e) (w (Kleislify w a))) }
 
--- Convert object-language arrows into Kleisli arrows
-type family Kleislify w a = r | r -> a where
-  Kleislify w (a -> b) = Kleislify w a -> w (Kleislify w b)
-  Kleislify w (a, b)   = (Kleislify w a, Kleislify w b)
-  Kleislify w [a]      = [Kleislify w a]
-  Kleislify _ a        = a
+type family Kleislify (w :: * -> *) (a :: *) = (r :: *) | r -> a
+type instance Kleislify w (a -> b) = Kleislify w a -> w (Kleislify w b)
+type instance Kleislify w [a] = [Kleislify w a]
+type instance Kleislify w (a, b) = (Kleislify w a, Kleislify w b)
+type instance Kleislify w () = ()
+type instance Kleislify w (CT d m zp r'q) = CT d m zp r'q
+type instance Kleislify w Double = Double
+type instance Kleislify w Char = Char -- For String
 
 type ErrorRateLog = [(String,Double)]
 
 -- | Transform an expression into (a monadic) one that logs error
 -- rates, where the needed keys are obtained from the monad.
-writeErrorRates :: forall z k w expr e a .
+writeErrorRates :: forall z e k w expr a .
   ERW expr z k w e a -> k (expr (Kleislify w e) (w (Kleislify w a)))
 writeErrorRates = unERW
 
@@ -75,7 +78,6 @@ tellError_ :: forall w expr m zp c m' zq z e d .
    Pair_ expr, ErrorRateCtx_ expr c m m' zp zq z) =>
    String -> SK (c m' z) -> expr e (CT d m zp (c m' zq) -> w ())
 tellError_ str sk = lam $ \x -> tell_ $: (cons_ $: (pair_ $: string_ (str ++ showType (Proxy::Proxy zq)) $: (errorRate_ sk $: x)) $: nil_)
-
 
 
 type WriteErrorCtx expr z k w c m m' zp zq =
@@ -108,7 +110,6 @@ liftWriteError2 str f_ =
 
 instance (WriteErrorCtx expr z k w c m m' zp zq, Add_ expr (CT d m zp (c m' zq))) =>
   Add_ (ERW expr z k w) (CT d m zp (c m' zq)) where
-
   add_ = ERW $ liftWriteError2 @z "add_" add_
   neg_ = ERW $ liftWriteError  @z "neg_" neg_
 
