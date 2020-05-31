@@ -31,7 +31,7 @@ import Common
 type PT = PNoiseCyc PNZ (Cyc CT) F4 (Zq 7)
 
 -- polymorphic over expr alone
-addMul :: _ => expr env (_ -> _ -> PT)
+addMul :: _ => expr () (_ -> _ -> PT)
 addMul = lam2 $ \x y -> (var x +: var y) *: var y
 
 type M'Map = '[ '(F4, F512) ]
@@ -72,7 +72,7 @@ main = do
     arg1 <- encrypt pt1
     arg2 <- encrypt pt2
 
-    let result = eval ct1 arg1 arg2
+    {-let result = eval ct1 arg1 arg2-}
 
 
 
@@ -84,17 +84,17 @@ main = do
     putStrLnIO $ "CT expression size: " ++ show (size ct4)
 -}
     -- evaluate with error rates
-{-
+
     ct1' <- readerToAccumulator $ writeErrorRates @Int64 ct1
     let (result, errors) = runWriter $ eval ct1' >>= ($ arg1) >>= ($ arg2)
     putStrLnIO "Error rates: "
     liftIO $ mapM_ print errors
-    liftIO clearTensorRecord
--}
+    {-liftIO clearTensorRecord-}
 
 
 
-    -- check the decrypted result
-    decResult <- fromJust <$> readerToAccumulator (decrypt result)
-    putStrLnIO $ "Decrypted evaluation result: " ++ show decResult
-    putStrLnIO $ if decResult == unPNC ptresult then "PASS" else "FAIL"
+
+    {--- check the decrypted result-}
+    {-decResult <- fromJust <$> readerToAccumulator (decrypt result)-}
+    {-putStrLnIO $ "Decrypted evaluation result: " ++ show decResult-}
+    {-putStrLnIO $ if decResult == unPNC ptresult then "PASS" else "FAIL"-}

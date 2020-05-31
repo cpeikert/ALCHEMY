@@ -20,7 +20,7 @@
 {-# OPTIONS_GHC -fno-warn-partial-type-signatures #-}
 
 module Crypto.Alchemy.Interpreter.PT2CT
-( PT2CT
+( PT2CT (..)
 , pt2ct, encrypt, decrypt
 -- * re-exports
 , PNoise(..), Units(..), PNoiseCyc(..), PNZ, (:+), mkModulus
@@ -244,25 +244,13 @@ type family Units2CTPNoise h where
 -- | The modulus (nested pairs) for a ciphertext with pNoise @p@
 type PNoise2Zq zqs p = ZqPairsWithUnits zqs (CTPNoise2Units p)
 
-type family Cyc2CT m'map zqs e = cte | cte -> e where
+type family Cyc2CT (m'map :: [(Factored, Factored)]) (zqs :: [Type]) e = cte | cte -> e
+type instance Cyc2CT m'map zqs (a,b) = (Cyc2CT m'map zqs a, Cyc2CT m'map zqs b)
+type instance Cyc2CT m'map zqs () = ()
+type instance Cyc2CT m'map zqs [a] = [Cyc2CT m'map zqs a]
+type instance Cyc2CT m'map zqs (a -> b) = Cyc2CT m'map zqs a -> Cyc2CT m'map zqs b
+type instance Cyc2CT m'map zqs (PNoiseCyc p c m zp) = CT 1 m zp (c (Lookup m m'map) (PNoise2Zq zqs p))
 
-  Cyc2CT m'map zqs (PNoiseCyc p c m zp) =
-    CT 1 m zp (c (Lookup m m'map) (PNoise2Zq zqs p))
-
-  -- for environments
-  Cyc2CT m'map zqs (a,b)    = (Cyc2CT m'map zqs a,   Cyc2CT m'map zqs b)
-  Cyc2CT m'map zqs ()       = ()
-
-  -- for lists
-  Cyc2CT m'map zqs [a]      = [Cyc2CT m'map zqs a]
-
-  -- for functions
-  Cyc2CT m'map zqs (a -> b) = (Cyc2CT m'map zqs a -> Cyc2CT m'map zqs b)
-
-  Cyc2CT m'map zqs c = Tagged c
-    (TypeError ('Text "Type family 'Cyc2CT' can't convert type '"
-                ':<>: 'ShowType c ':<>: 'Text "'."
-                ':$$: 'Text "It only converts types of the form 'PNoiseCyc p t m zp' and pairs/lists/functions thereof."))
 
 -- type-level map lookup
 type family Lookup (m :: Factored) map :: Factored where
