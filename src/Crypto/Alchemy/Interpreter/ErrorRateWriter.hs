@@ -4,12 +4,12 @@
 {-# LANGUAGE FlexibleInstances      #-}
 {-# LANGUAGE MultiParamTypeClasses  #-}
 {-# LANGUAGE NoImplicitPrelude      #-}
+{-# LANGUAGE PolyKinds              #-}
 {-# LANGUAGE ScopedTypeVariables    #-}
 {-# LANGUAGE TypeApplications       #-}
 {-# LANGUAGE TypeFamilies           #-}
 {-# LANGUAGE TypeFamilyDependencies #-}
 {-# LANGUAGE UndecidableInstances   #-}
-{-# LANGUAGE PolyKinds   #-}
 
 module Crypto.Alchemy.Interpreter.ErrorRateWriter
 ( ERW (..), writeErrorRates, Kleislify, ErrorRateLog )
